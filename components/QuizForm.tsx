@@ -24,6 +24,8 @@ const QuizForm: FC<Props> = ({
 }) => {
   const { register, handleSubmit, reset, watch } = useForm();
   const [showCorrectAnswer, setShowCorrectAnswer] = useState<boolean>(false);
+  const [isThinking, setIsThinking] = useState<boolean>(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
   const [lastIndex, setLastIndex] = useState<number>(1);
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [savedAnswers, setSavedAnswers] = useState<{
@@ -53,10 +55,48 @@ const QuizForm: FC<Props> = ({
     }
   };
 
+  const explainCorrectAnswer = async () => {
+    try {
+      const prompt = `${question} These are the answers provided: ${options.map(
+        (option) => `${option.text}: ${option.isAnswer}`,
+      )}`;
+      console.log(prompt);
+
+      const response = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "mistral",
+          prompt: prompt,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const responseData = await response.json();
+
+      if (responseData && "response" in responseData) {
+        console.log("Response:", responseData);
+        setExplanation(responseData.response);
+      } else {
+        console.error("Response does not contain explanation:", responseData);
+      }
+    } catch (error) {
+      console.error("Error fetching explanation:", error);
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
   if (isLoading) return <p>Loading...</p>;
   //Error Handling for loading issues
   if (!questionSet) return <p>Loading questions failed</p>;
-  
+
   const { question, options, images } = questionSet!;
   const watchInput = watch(`options.${currentQuestionIndex}`);
 
@@ -201,6 +241,9 @@ const QuizForm: FC<Props> = ({
           </li>
         ))}
       </ul>
+      {explanation && (
+        <p className="text-white md:px-12 mb-16 select-none">{explanation}</p>
+      )}
       <div className="flex justify-center flex-col sm:flex-row">
         <Button
           type="submit"
@@ -209,6 +252,20 @@ const QuizForm: FC<Props> = ({
           disabled={showCorrectAnswer}
         >
           Reveal Answer
+        </Button>
+        <Button
+          type="button"
+          intent="secondary"
+          size="medium"
+          disabled={isThinking}
+          onClick={() => {
+            setShowCorrectAnswer(true);
+            setIsThinking(true);
+            explainCorrectAnswer();
+            reset();
+          }}
+        >
+          {isThinking ? "Thinking..." : "Explain"}
         </Button>
         <Button
           type="button"
