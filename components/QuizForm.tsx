@@ -274,6 +274,7 @@ const QuizForm: FC<Props> = ({
           disabled={currentQuestionIndex < lastIndex}
           onClick={() => {
             setShowCorrectAnswer(false);
+            setExplanation(null);
             setSavedAnswers((prev) => ({
               ...prev,
               [currentQuestionIndex]: watchInput,
