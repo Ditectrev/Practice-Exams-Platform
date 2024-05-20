@@ -57,11 +57,9 @@ const QuizForm: FC<Props> = ({
 
   const explainCorrectAnswer = async () => {
     try {
-      console.log(options);
       const prompt = `${question} Explain why these answers are correct: ${options
         .filter((o) => o.isAnswer == true)
         .map((o) => o.text)}`;
-      console.log(prompt);
 
       const response = await fetch("http://localhost:11434/api/generate", {
         method: "POST",
