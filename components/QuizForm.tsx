@@ -80,7 +80,6 @@ const QuizForm: FC<Props> = ({
       const responseData = await response.json();
 
       if (responseData && "response" in responseData) {
-        console.log("Response:", responseData);
         setExplanation(responseData.response);
       } else {
         console.error("Response does not contain explanation:", responseData);
