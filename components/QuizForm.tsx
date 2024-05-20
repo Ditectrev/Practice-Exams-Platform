@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 import { useForm, FieldValues } from "react-hook-form";
 import { Question } from "./types";
 import Image from "next/image";
@@ -25,6 +25,7 @@ const QuizForm: FC<Props> = ({
   const { register, handleSubmit, reset, watch } = useForm();
   const [showCorrectAnswer, setShowCorrectAnswer] = useState<boolean>(false);
   const [isThinking, setIsThinking] = useState<boolean>(false);
+  const [ollamaAvailable, setOllamaAvailable] = useState<boolean>(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [lastIndex, setLastIndex] = useState<number>(1);
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
@@ -35,6 +36,21 @@ const QuizForm: FC<Props> = ({
     url: string;
     alt: string;
   } | null>(null);
+
+  useEffect(() => {
+    const checkOllamaStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:11434");
+        if (response.ok) {
+          setOllamaAvailable(true);
+        }
+      } catch (error) {
+        console.error("Error checking server status:", error);
+      }
+    };
+
+    checkOllamaStatus();
+  }, []);
 
   const onSubmit = (data: FieldValues) => {
     setSavedAnswers((prev) => ({
@@ -251,20 +267,22 @@ const QuizForm: FC<Props> = ({
         >
           Reveal Answer
         </Button>
-        <Button
-          type="button"
-          intent="secondary"
-          size="medium"
-          disabled={isThinking}
-          onClick={() => {
-            setShowCorrectAnswer(true);
-            setIsThinking(true);
-            explainCorrectAnswer();
-            reset();
-          }}
-        >
-          {isThinking ? "Thinking..." : "Explain"}
-        </Button>
+        {ollamaAvailable && (
+          <Button
+            type="button"
+            intent="secondary"
+            size="medium"
+            disabled={isThinking}
+            onClick={() => {
+              setShowCorrectAnswer(true);
+              setIsThinking(true);
+              explainCorrectAnswer();
+              reset();
+            }}
+          >
+            {isThinking ? "Thinking..." : "Explain"}
+          </Button>
+        )}
         <Button
           type="button"
           intent="primary"
