@@ -1,10 +1,16 @@
 import { type ReactNode } from "react";
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import TopNav from "@azure-fundamentals/components/TopNav";
 import Footer from "@azure-fundamentals/components/Footer";
 import ApolloProvider from "@azure-fundamentals/components/ApolloProvider";
 import Cookie from "@azure-fundamentals/components/Cookie";
 import "styles/globals.css";
+
+export const viewport: Viewport = {
+  themeColor: "#3f51b5",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   appleWebApp: {
@@ -71,7 +77,6 @@ export const metadata: Metadata = {
     follow: true,
     index: true,
   },
-  themeColor: "#3f51b5",
   title: {
     default: "🧪 Practice Exams Platform | Ditectrev",
     template: "🧪 Practice Exams Platform | Ditectrev",
@@ -89,10 +94,6 @@ export const metadata: Metadata = {
     ],
     site: "@ditectrev",
     title: "🧪 Practice Exams Platform | Ditectrev",
-  },
-  viewport: {
-    initialScale: 1,
-    width: "device-width",
   },
 };
 
