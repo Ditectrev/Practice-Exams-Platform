@@ -46,3 +46,6 @@ next-env.d.ts
 **/public/sw.js
 **/public/worker-*.js
 **/public/sw.js.map
+
+bundles
+.env
