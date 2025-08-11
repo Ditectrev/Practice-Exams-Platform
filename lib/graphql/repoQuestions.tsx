@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 const scrapeQuestions = (markdownText: string) => {
   const regex =
     /### (.*?)\s*\r?\n\r?\n((?:\!\[.*?\]\(.*?\)\s*\r?\n\r?\n)*?)((?:- \[(?:x| )\] .*?\r?\n)+)/gs;
@@ -53,6 +54,23 @@ export const fetchQuestions = async (link: string) => {
     const markdown = await res.text();
 
     return scrapeQuestions(markdown);
+  } catch (err: any) {
+    console.error(err.message);
+  }
+};
+
+export const fetchQuestionsAndChecksum = async (
+  link: string,
+): Promise<{ questions: any[]; checksum: string } | undefined> => {
+  try {
+    const res = await fetch(link);
+    if (!res.ok) {
+      throw new Error(res.statusText);
+    }
+    const markdown = await res.text();
+    const questions = scrapeQuestions(markdown);
+    const checksum = createHash("sha256").update(markdown).digest("hex");
+    return { questions, checksum };
   } catch (err: any) {
     console.error(err.message);
   }
