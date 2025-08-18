@@ -6,6 +6,7 @@ import SelectionInput from "./SelectionInput";
 import { Button } from "./Button";
 import NumberInputComponent from "./NumberInputComponent";
 import LoadingIndicator from "./LoadingIndicator";
+import { SiHelpdesk } from "react-icons/si";
 
 const QuizForm: FC<Props> = ({
   isLoading,
@@ -284,7 +285,19 @@ const QuizForm: FC<Props> = ({
         ))}
       </ul>
       {explanation && (
-        <p className="text-white md:px-12 mb-16 select-none">{explanation}</p>
+        <div className="md:px-12 mb-16">
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-full flex items-center justify-center">
+                <SiHelpdesk className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Explanation</h3>
+            </div>
+            <div className="text-slate-200 leading-relaxed whitespace-pre-line">
+              {explanation}
+            </div>
+          </div>
+        </div>
       )}
       <div className="flex justify-center flex-col sm:flex-row">
         <Button
@@ -300,6 +313,7 @@ const QuizForm: FC<Props> = ({
             type="button"
             intent="secondary"
             size="medium"
+            variant="outlined"
             disabled={isThinking}
             onClick={() => {
               setShowCorrectAnswer(true);
