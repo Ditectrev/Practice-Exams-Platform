@@ -5,12 +5,15 @@ import GitHubButton from "react-github-btn";
 import HomeButton from "./HomeButton";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
 
 const TopNav = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isAuthenticated, signOut } = useAuth();
   const [windowWidth, setWindowWidth] = useState<number>(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     setWindowWidth(window.innerWidth);
@@ -18,6 +21,12 @@ const TopNav = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setShowUserMenu(false);
+    router.push("/");
   };
 
   return (
@@ -44,6 +53,57 @@ const TopNav = () => {
         </p>
       </div>
       <div className="flex items-center pt-1 w-1/2">
+        {/* Authentication Status */}
+        {isAuthenticated && user && (
+          <div className="relative mr-4">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition-colors"
+            >
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {user.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : user.email.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="hidden sm:block text-sm">
+                {user.name || user.email.split("@")[0]}
+              </span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-slate-600 z-50">
+                <div className="py-2">
+                  <div className="px-4 py-2 text-sm text-slate-300 border-b border-slate-600">
+                    Signed in as{" "}
+                    <span className="font-medium">{user.email}</span>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {windowWidth < 640 && (
           <div
             onClick={toggleMobileMenu}
@@ -86,6 +146,24 @@ const TopNav = () => {
         )}
         {isMobileMenuOpen && windowWidth < 640 && (
           <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-90 flex flex-col items-center justify-center z-50">
+            {isAuthenticated && user && (
+              <div className="mb-4 text-center">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <span className="text-white text-lg font-medium">
+                    {user.name
+                      ? user.name.charAt(0).toUpperCase()
+                      : user.email.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-white text-sm mb-2">{user.email}</p>
+                <button
+                  onClick={handleSignOut}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
             <a
               href="https://apps.apple.com/app/cloudmaster-swift/id6503601139"
               className="mb-4 text-white text-xl"
