@@ -60,18 +60,29 @@ This guide will help you set up Appwrite authentication for your Practice Exams 
 Create a `.env.local` file in your project root with:
 
 ```bash
-NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id_here
+APPWRITE_PUBLIC_ENDPOINT=https://[REGION].cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=your_project_id_here
 ```
 
 Replace `your_project_id_here` with your actual Appwrite project ID.
 
 ## Step 4: Update Callback URLs
 
-In your Appwrite project settings, add these callback URLs:
+In your Appwrite project settings, you need to configure callback URLs for OAuth providers:
 
-- **Success URL**: `https://yourdomain.com/auth/callback?success=true`
-- **Failure URL**: `https://yourdomain.com/auth/callback?failure=true`
+### For Google OAuth:
+
+1. Go to **Auth** → **OAuth2 Providers** → **Google**
+2. In the Google OAuth configuration, you'll see a **Redirect URL** field
+3. Set this to: `https://yourdomain.com/auth/callback`
+
+### For Apple OAuth:
+
+1. Go to **Auth** → **OAuth2 Providers** → **Apple**
+2. In the Apple OAuth configuration, you'll see a **Redirect URL** field
+3. Set this to: `https://yourdomain.com/auth/callback`
+
+**Note**: The success/failure URLs mentioned in the original documentation are not standard Appwrite settings. Appwrite handles OAuth redirects automatically to the redirect URL you specify above. The success/failure parameters are handled by your application logic in the callback route.
 
 ## Step 5: Test Authentication
 

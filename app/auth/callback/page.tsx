@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthService } from "../../../lib/appwrite/auth";
 import LoadingIndicator from "../../../components/LoadingIndicator";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
@@ -30,6 +32,8 @@ export default function AuthCallback() {
         }
 
         if (success === "true") {
+          // Refresh auth context to update authentication state
+          await refreshUser();
           setStatus("success");
           setMessage("Authentication successful! Redirecting...");
           setTimeout(() => router.push("/"), 2000);
@@ -40,6 +44,8 @@ export default function AuthCallback() {
         if (userId && secret) {
           const result = await AuthService.updateEmailSession(userId, secret);
           if (result.success) {
+            // Refresh auth context to update authentication state
+            await refreshUser();
             setStatus("success");
             setMessage("Email verified successfully! Redirecting...");
             setTimeout(() => router.push("/"), 2000);
@@ -61,7 +67,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router, searchParams, refreshUser]);
 
   if (status === "loading") {
     return (

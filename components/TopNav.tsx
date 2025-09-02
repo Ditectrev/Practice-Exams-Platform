@@ -86,15 +86,17 @@ const TopNav = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-slate-600 z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-lg border border-slate-600 z-50">
                 <div className="py-2">
-                  <div className="px-4 py-2 text-sm text-slate-300 border-b border-slate-600">
-                    Signed in as{" "}
-                    <span className="font-medium">{user.email}</span>
+                  <div className="px-4 py-2 text-sm text-slate-300 border-b border-slate-600 text-center">
+                    <div>Signed in as</div>
+                    <div className="font-medium text-white mt-1 break-all">
+                      {user.email}
+                    </div>
                   </div>
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                    className="w-full text-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
                   >
                     Sign Out
                   </button>

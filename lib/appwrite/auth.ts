@@ -19,28 +19,11 @@ export class AuthService {
     email: string,
   ): Promise<{ success: boolean; error?: AuthError }> {
     try {
-      await account.createMagicURLSession(
+      await (account as any).createMagicURLSession(
         ID.unique(),
         email,
         `${window.location.origin}/auth/callback`,
       );
-      return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          message: error.message || "Failed to send OTP",
-          code: error.code,
-        },
-      };
-    }
-  }
-
-  static async createEmailOTPSession(
-    email: string,
-  ): Promise<{ success: boolean; error?: AuthError }> {
-    try {
-      await account.createEmailSession(email, "123456"); // 6-digit OTP
       return { success: true };
     } catch (error: any) {
       return {
@@ -79,11 +62,14 @@ export class AuthService {
     try {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const url = await account.createOAuth2Session(
-        "google",
+        "google" as any,
         redirectUrl,
         redirectUrl,
       );
-      window.location.href = url.toString();
+
+      if (typeof url === "string") {
+        window.location.href = url;
+      }
       return { success: true };
     } catch (error: any) {
       return {
@@ -104,11 +90,14 @@ export class AuthService {
     try {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const url = await account.createOAuth2Session(
-        "apple",
+        "apple" as any,
         redirectUrl,
         redirectUrl,
       );
-      window.location.href = url.toString();
+
+      if (typeof url === "string") {
+        window.location.href = url;
+      }
       return { success: true };
     } catch (error: any) {
       return {
