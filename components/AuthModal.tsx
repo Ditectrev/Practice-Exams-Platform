@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./Button";
 
@@ -15,10 +15,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   trialExpired = false,
 }) => {
-  const { signInWithEmail, signInWithGoogle, signInWithApple } = useAuth();
+  const { signInWithEmail, verifyEmailOTP, signInWithGoogle, signInWithApple } =
+    useAuth();
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [message, setMessage] = useState("");
+  const [step, setStep] = useState<"email" | "otp">("email");
+  const [lastUsedMethod, setLastUsedMethod] = useState<{
+    type: string;
+    value: string;
+  } | null>(null);
+
+  // Load last used method from localStorage
+  useEffect(() => {
+    if (isOpen) {
+      const saved = localStorage.getItem("lastUsedAuthMethod");
+      if (saved) {
+        try {
+          setLastUsedMethod(JSON.parse(saved));
+        } catch (e) {
+          // Invalid JSON, ignore
+        }
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -31,11 +55,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       const result = await signInWithEmail(email.trim());
-      if (result.success) {
-        setMessage("Check your email for the login link!");
-        setEmail("");
+      if (result.success && result.userId) {
+        setUserId(result.userId);
+        // Save last used method
+        const method = { type: "email", value: email.trim() };
+        setLastUsedMethod(method);
+        localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
+        setStep("otp");
+        setMessage("");
       } else {
-        setMessage(result.error || "Failed to send login link");
+        setMessage(result.error || "Failed to send OTP");
       }
     } catch (error) {
       setMessage("An error occurred. Please try again.");
@@ -44,9 +73,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleOTPVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp.trim() || !userId) return;
+
+    setIsVerifying(true);
+    setMessage("");
+
+    try {
+      const result = await verifyEmailOTP(userId, otp.trim());
+      if (result.success) {
+        setIsVerifying(false);
+        setIsRedirecting(true);
+        setMessage("Redirecting...");
+        setTimeout(() => {
+          onClose();
+          setStep("email");
+          setEmail("");
+          setOtp("");
+          setUserId(null);
+          setIsRedirecting(false);
+        }, 2000);
+      } else {
+        setIsVerifying(false);
+        setMessage(result.error || "Invalid OTP code");
+      }
+    } catch (error) {
+      setIsVerifying(false);
+      setMessage("An error occurred. Please try again.");
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      // Save last used method
+      const method = { type: "google", value: "Google" };
+      setLastUsedMethod(method);
+      localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
       await signInWithGoogle();
     } catch (error) {
       setMessage("Failed to sign in with Google");
@@ -57,6 +121,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleAppleSignIn = async () => {
     setIsLoading(true);
     try {
+      // Save last used method
+      const method = { type: "apple", value: "Apple" };
+      setLastUsedMethod(method);
+      localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
       await signInWithApple();
     } catch (error) {
       setMessage("Failed to sign in with Apple");
@@ -89,34 +157,169 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Email OTP Sign In */}
-        <form onSubmit={handleEmailSignIn} className="mb-6">
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-slate-300 mb-2"
+        {step === "email" ? (
+          <form onSubmit={handleEmailSignIn} className="mb-6">
+            <div className="mb-4">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-slate-300 mb-2"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              intent="primary"
+              size="medium"
+              disabled={isLoading}
+              className="w-full relative flex items-center justify-center"
             >
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+              {isLoading && (
+                <svg
+                  className="animate-spin mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {isLoading ? "Sending..." : "Continue with Email"}
+              {!isLoading && lastUsedMethod?.type === "email" && (
+                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                  Last Used
+                </span>
+              )}
+            </Button>
+          </form>
+        ) : (
+          <div className="mb-6">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Verification
+              </h3>
+              <p className="text-slate-300 text-sm">
+                If you have an account, we have sent a code to{" "}
+                <span className="font-medium text-white">
+                  {lastUsedMethod?.value}
+                </span>
+                .
+                <br />
+                Enter it below.
+              </p>
+            </div>
+
+            <form onSubmit={handleOTPVerification} className="mb-4">
+              <div className="mb-4">
+                <div className="flex gap-2 justify-center">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      value={otp[index] || ""}
+                      onChange={(e) => {
+                        const newOtp = otp.split("");
+                        newOtp[index] = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 1);
+                        setOtp(newOtp.join(""));
+                        // Auto-focus next input
+                        if (e.target.value && index < 5) {
+                          const nextInput = document.getElementById(
+                            `otp-${index + 1}`,
+                          );
+                          nextInput?.focus();
+                        }
+                      }}
+                      className="w-12 h-12 text-center text-lg font-mono bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      maxLength={1}
+                      id={`otp-${index}`}
+                      required
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {(isVerifying || isRedirecting) && (
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2 text-white">
+                    <span>{isVerifying ? "Verifying" : "Redirecting"}</span>
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                intent="primary"
+                size="medium"
+                disabled={isVerifying || isRedirecting || otp.length !== 6}
+                className="w-full"
+              >
+                {isVerifying
+                  ? "Verifying..."
+                  : isRedirecting
+                  ? "Redirecting..."
+                  : "Verify Code"}
+              </Button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStep("email");
+                setOtp("");
+                setUserId(null);
+                setMessage("");
+                setIsVerifying(false);
+                setIsRedirecting(false);
+              }}
+              className="w-full text-center text-sm text-blue-400 hover:text-blue-300"
+            >
+              ← Back
+            </button>
           </div>
-          <Button
-            type="submit"
-            intent="primary"
-            size="medium"
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? "Sending..." : "Send Login Link"}
-          </Button>
-        </form>
+        )}
 
         {/* Divider */}
         <div className="flex items-center mb-6">
@@ -133,7 +336,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             size="medium"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3"
+            className="w-full flex items-center justify-center gap-3 relative"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -154,6 +357,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
             </svg>
             Continue with Google
+            {!isLoading && lastUsedMethod?.type === "google" && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                Last Used
+              </span>
+            )}
           </Button>
 
           <Button
@@ -162,7 +370,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             size="medium"
             onClick={handleAppleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3"
+            className="w-full flex items-center justify-center gap-3 relative"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -171,6 +379,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
             </svg>
             Continue with Apple
+            {!isLoading && lastUsedMethod?.type === "apple" && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                Last Used
+              </span>
+            )}
           </Button>
         </div>
 

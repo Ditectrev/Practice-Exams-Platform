@@ -15,21 +15,38 @@ export interface AuthError {
 
 export class AuthService {
   // Email OTP Authentication
-  static async createEmailSession(
+  static async createEmailOTPSession(
     email: string,
-  ): Promise<{ success: boolean; error?: AuthError }> {
+  ): Promise<{ success: boolean; error?: AuthError; userId?: string }> {
     try {
-      await (account as any).createMagicURLSession(
-        ID.unique(),
-        email,
-        `${window.location.origin}/auth/callback`,
-      );
-      return { success: true };
+      // Create email token (sends 6-digit OTP to email)
+      const sessionToken = await account.createEmailToken(ID.unique(), email);
+      return { success: true, userId: sessionToken.userId };
     } catch (error: any) {
       return {
         success: false,
         error: {
           message: error.message || "Failed to send OTP",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Verify Email OTP
+  static async verifyEmailOTP(
+    userId: string,
+    otp: string,
+  ): Promise<{ success: boolean; error?: AuthError }> {
+    try {
+      // Create session with userId and OTP
+      await account.createSession(userId, otp);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to verify OTP",
           code: error.code,
         },
       };
