@@ -24,6 +24,16 @@ jobs:
           node-version: "20.x"
         env:
           NODE_VERSION: "20.x"
+          # Pass environment variables to the Node.js setup
+          NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+          NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+          NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
+          NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
+          NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
+          AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
+          AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
+          AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
