@@ -100,6 +100,8 @@ export class AuthService {
   }
 
   // Apple OAuth
+  // NOTE: Apple Sign-In doesn't work with localhost in development
+  // Apple requires a proper domain for redirect URIs. Test this in production.
   static async createAppleSession(): Promise<{
     success: boolean;
     error?: AuthError;

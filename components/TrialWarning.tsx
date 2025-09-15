@@ -1,15 +1,46 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTrialTimer } from "../hooks/useTrialTimer";
+import { useSecureTrial } from "../hooks/useSecureTrial";
 import { AuthModal } from "./AuthModal";
 
 export const TrialWarning: React.FC = () => {
-  const { trialExpired, timeRemaining, formatTimeRemaining, isInTrial } =
-    useTrialTimer();
+  const {
+    trialExpired,
+    timeRemaining,
+    formatTimeRemaining,
+    isInTrial,
+    trialBlocked,
+    isLoading,
+  } = useSecureTrial();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  if (!isInTrial && !trialExpired) return null;
+  if (isLoading) {
+    return (
+      <div className="fixed top-4 left-8 md:left-8 md:top-4 left-1/2 top-4 -translate-x-1/2 md:left-8 md:-translate-x-0 bg-blue-600 text-white px-8 py-3 rounded-lg shadow-lg z-40">
+        <div className="flex items-center gap-4">
+          <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span className="font-medium">Checking trial status...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isInTrial && !trialExpired && !trialBlocked) return null;
 
   return (
     <>
@@ -42,7 +73,7 @@ export const TrialWarning: React.FC = () => {
         </div>
       )}
 
-      {trialExpired && (
+      {(trialExpired || trialBlocked) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md text-center">
             <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
