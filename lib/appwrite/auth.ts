@@ -14,13 +14,23 @@ export interface AuthError {
 }
 
 export class AuthService {
+  // Check if Appwrite is available
+  private static checkAppwriteAvailable() {
+    if (!account) {
+      throw new Error(
+        "Appwrite is not initialized. Please check your environment variables.",
+      );
+    }
+  }
+
   // Email OTP Authentication
   static async createEmailOTPSession(
     email: string,
   ): Promise<{ success: boolean; error?: AuthError; userId?: string }> {
     try {
+      this.checkAppwriteAvailable();
       // Create email token (sends 6-digit OTP to email)
-      const sessionToken = await account.createEmailToken(ID.unique(), email);
+      const sessionToken = await account!.createEmailToken(ID.unique(), email);
       return { success: true, userId: sessionToken.userId };
     } catch (error: any) {
       return {
@@ -39,8 +49,9 @@ export class AuthService {
     otp: string,
   ): Promise<{ success: boolean; error?: AuthError }> {
     try {
+      this.checkAppwriteAvailable();
       // Create session with userId and OTP
-      await account.createSession(userId, otp);
+      await account!.createSession(userId, otp);
       return { success: true };
     } catch (error: any) {
       return {
@@ -58,7 +69,8 @@ export class AuthService {
     secret: string,
   ): Promise<{ success: boolean; error?: AuthError }> {
     try {
-      await account.updateMagicURLSession(userId, secret);
+      this.checkAppwriteAvailable();
+      await account!.updateMagicURLSession(userId, secret);
       return { success: true };
     } catch (error: any) {
       return {
@@ -77,8 +89,9 @@ export class AuthService {
     error?: AuthError;
   }> {
     try {
+      this.checkAppwriteAvailable();
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      const url = await account.createOAuth2Session(
+      const url = await account!.createOAuth2Session(
         "google" as any,
         redirectUrl,
         redirectUrl,
@@ -107,8 +120,9 @@ export class AuthService {
     error?: AuthError;
   }> {
     try {
+      this.checkAppwriteAvailable();
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      const url = await account.createOAuth2Session(
+      const url = await account!.createOAuth2Session(
         "apple" as any,
         redirectUrl,
         redirectUrl,
@@ -135,7 +149,8 @@ export class AuthService {
     error?: AuthError;
   }> {
     try {
-      const user = await account.get();
+      this.checkAppwriteAvailable();
+      const user = await account!.get();
       return {
         user: {
           $id: user.$id,
@@ -157,7 +172,8 @@ export class AuthService {
   // Sign out
   static async signOut(): Promise<{ success: boolean; error?: AuthError }> {
     try {
-      await account.deleteSession("current");
+      this.checkAppwriteAvailable();
+      await account!.deleteSession("current");
       return { success: true };
     } catch (error: any) {
       return {
@@ -173,7 +189,8 @@ export class AuthService {
   // Check if user is authenticated
   static async isAuthenticated(): Promise<boolean> {
     try {
-      await account.get();
+      this.checkAppwriteAvailable();
+      await account!.get();
       return true;
     } catch {
       return false;

@@ -58,7 +58,6 @@ const wrappedHandler = async (req: Request) => {
   try {
     return await handler(req);
   } catch (error) {
-    console.error("GraphQL Error:", error);
     return new Response(
       JSON.stringify({
         errors: [{ message: "Internal server error" }],

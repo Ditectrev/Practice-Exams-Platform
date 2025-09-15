@@ -126,6 +126,11 @@ export const useSecureTrial = () => {
   // Check if user already has an active trial
   const checkExistingTrial = async (): Promise<TrialRecord | null> => {
     try {
+      // Check if Appwrite is available
+      if (!databases) {
+        return null;
+      }
+
       const sessionId = await getSessionId();
       const deviceFingerprint = getDeviceFingerprint();
       const ipAddress = await getUserIP();
@@ -194,7 +199,6 @@ export const useSecureTrial = () => {
 
       return null;
     } catch (error) {
-      console.error("Error checking existing trial:", error);
       return null;
     }
   };
@@ -202,6 +206,11 @@ export const useSecureTrial = () => {
   // Create a new trial record
   const createTrial = async (): Promise<TrialRecord | null> => {
     try {
+      // Check if Appwrite is available
+      if (!databases) {
+        return null;
+      }
+
       const sessionId = await getSessionId();
       const deviceFingerprint = getDeviceFingerprint();
       const ipAddress = await getUserIP();
@@ -254,7 +263,6 @@ export const useSecureTrial = () => {
 
       return trialRecord as unknown as TrialRecord;
     } catch (error) {
-      console.error("Error creating trial:", error);
       // Clear the creation flag on error
       if (typeof window !== "undefined") {
         localStorage.removeItem("creating_trial");
@@ -266,6 +274,11 @@ export const useSecureTrial = () => {
   // Mark trial as expired
   const expireTrial = async (trialId: string) => {
     try {
+      // Check if Appwrite is available
+      if (!databases) {
+        return;
+      }
+
       await databases.updateDocument(
         DATABASE_ID,
         TRIAL_COLLECTION_ID,
@@ -337,7 +350,6 @@ export const useSecureTrial = () => {
           }
         }
       } catch (error) {
-        console.error("Error initializing trial:", error);
         // Don't block access on error - allow trial to proceed
         setTrialStartTime(Date.now());
         setTimeRemaining(TRIAL_DURATION_MS);

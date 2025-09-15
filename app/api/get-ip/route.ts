@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ip });
   } catch (error) {
-    console.error("Error getting IP:", error);
     return NextResponse.json({ error: "Failed to get IP" }, { status: 500 });
   }
 }
