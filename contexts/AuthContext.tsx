@@ -88,7 +88,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       const result = await AuthService.createGoogleSession();
-      return result;
+      return {
+        success: result.success,
+        error: result.error?.message,
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
@@ -97,7 +100,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithApple = async () => {
     try {
       const result = await AuthService.createAppleSession();
-      return result;
+      return {
+        success: result.success,
+        error: result.error?.message,
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
