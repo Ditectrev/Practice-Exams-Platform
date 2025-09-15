@@ -40,7 +40,20 @@ jobs:
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
           ###### End of Repository/Build Configurations ######
         env:
+          # Google Analytics
           NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
+
+          # Appwrite Configuration
+          NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+          NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+          NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
+          NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
+
+          # Azure Cosmos DB Configuration
+          AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
+          AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
+          AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
