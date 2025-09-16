@@ -28,8 +28,8 @@ The new system tracks trials **server-side** using:
 1. **Go to your Appwrite Console**
 2. **Create a new database**:
 
-   - Database ID: `trial_tracking`
-   - Name: `Trial Tracking`
+   - Database ID: `abc_123`
+   - Name: `ABC 123`
    - Description: `Database for tracking user trials`
 
 3. **Create a collection**:
