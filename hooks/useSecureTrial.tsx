@@ -122,6 +122,35 @@ export const useSecureTrial = () => {
     return sessionId;
   };
 
+  // Check if device has ever used a trial (additional security layer)
+  const hasUsedTrialBefore = (): boolean => {
+    try {
+      // Check multiple storage mechanisms for trial usage evidence
+      const localTrialId = localStorage.getItem("currentTrialId");
+      const sessionId = localStorage.getItem("trial_session_id");
+      const fallbackId = localStorage.getItem("ip_fallback_id");
+
+      // Also check sessionStorage (survives page refresh but not tab close)
+      const sessionTrialUsed = sessionStorage.getItem("trial_ever_used");
+
+      // If any evidence of previous trial exists, consider it used
+      return !!(localTrialId || sessionId || fallbackId || sessionTrialUsed);
+    } catch (error) {
+      // If we can't check, assume trial was used (security-first)
+      return true;
+    }
+  };
+
+  // Mark that this device/session has used a trial
+  const markTrialAsUsed = (): void => {
+    try {
+      sessionStorage.setItem("trial_ever_used", "true");
+      localStorage.setItem("trial_ever_used", Date.now().toString());
+    } catch (error) {
+      // Ignore storage errors
+    }
+  };
+
   // Check if user already has an active trial
   const checkExistingTrial = async (): Promise<TrialRecord | null> => {
     try {
@@ -254,10 +283,11 @@ export const useSecureTrial = () => {
         },
       );
 
-      // Store trial ID for later reference
+      // Store trial ID for later reference and mark trial as used
       if (typeof window !== "undefined") {
         localStorage.setItem("currentTrialId", trialRecord.$id);
         localStorage.removeItem("creating_trial"); // Clear the creation flag
+        markTrialAsUsed(); // Mark that this device has used a trial
       }
 
       return trialRecord as unknown as TrialRecord;
@@ -287,7 +317,7 @@ export const useSecureTrial = () => {
         },
       );
     } catch (error) {
-      console.error("Error expiring trial:", error);
+      // Ignore errors
     }
   };
 
@@ -306,6 +336,17 @@ export const useSecureTrial = () => {
       }
 
       try {
+        // First check if this device has ever used a trial (additional security)
+        if (hasUsedTrialBefore()) {
+          // Device has evidence of previous trial usage - block access immediately
+          setTrialExpired(true);
+          setTrialBlocked(true);
+          setTimeRemaining(0);
+          setTrialStartTime(null);
+          setIsLoading(false);
+          return;
+        }
+
         // Check if user already has an active trial
         const existingTrial = await checkExistingTrial();
 
@@ -332,28 +373,56 @@ export const useSecureTrial = () => {
             }
           }
         } else {
-          // No existing trial, create a new one
-          const newTrial = await createTrial();
-
-          if (newTrial) {
-            setTrialStartTime(newTrial.start_time);
-            setTimeRemaining(TRIAL_DURATION_MS);
-            setTrialExpired(false);
-            setTrialBlocked(false);
+          // No existing trial found on server
+          // Check if device has evidence of previous trial usage
+          if (hasUsedTrialBefore()) {
+            // Device shows evidence of previous trial - block access for security
+            setTrialExpired(true);
+            setTrialBlocked(true);
+            setTimeRemaining(0);
+            setTrialStartTime(null);
           } else {
-            // Failed to create trial - allow access but log error
-            setTrialStartTime(Date.now());
-            setTimeRemaining(TRIAL_DURATION_MS);
-            setTrialExpired(false);
-            setTrialBlocked(false);
+            // Genuinely new device/session - create a new trial
+            const newTrial = await createTrial();
+
+            if (newTrial) {
+              setTrialStartTime(newTrial.start_time);
+              setTimeRemaining(TRIAL_DURATION_MS);
+              setTrialExpired(false);
+              setTrialBlocked(false);
+            } else {
+              // Failed to create trial - be conservative and block access
+              setTrialExpired(true);
+              setTrialBlocked(true);
+              setTimeRemaining(0);
+              setTrialStartTime(null);
+            }
           }
         }
       } catch (error) {
-        // Don't block access on error - allow trial to proceed
-        setTrialStartTime(Date.now());
-        setTimeRemaining(TRIAL_DURATION_MS);
-        setTrialExpired(false);
-        setTrialBlocked(false);
+        setTrialExpired(true);
+        setTrialBlocked(true);
+        setTimeRemaining(0);
+        setTrialStartTime(null);
+
+        // Check localStorage for any existing trial state to prevent bypass
+        const localTrialId = localStorage.getItem("currentTrialId");
+        const localSessionId = localStorage.getItem("trial_session_id");
+
+        // If we have local trial data, assume trial was already used (security-first approach)
+        if (localTrialId || localSessionId) {
+          setTrialExpired(true);
+          setTrialBlocked(true);
+          setTimeRemaining(0);
+          setTrialStartTime(null);
+        } else {
+          // Only allow new trial if no local evidence of previous trial exists
+          // This is a fallback for genuine first-time users with network issues
+          setTrialStartTime(Date.now());
+          setTimeRemaining(TRIAL_DURATION_MS);
+          setTrialExpired(false);
+          setTrialBlocked(false);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -374,13 +443,14 @@ export const useSecureTrial = () => {
         setTrialExpired(true);
         setTrialBlocked(true);
         setTimeRemaining(0);
-        // Mark trial as expired in database
+        // Mark trial as expired in database and locally
         if (typeof window !== "undefined") {
           const trialId = localStorage.getItem("currentTrialId");
           if (trialId) {
             expireTrial(trialId);
             localStorage.removeItem("currentTrialId");
           }
+          markTrialAsUsed(); // Ensure trial usage is marked locally
         }
       } else {
         setTimeRemaining(remaining);

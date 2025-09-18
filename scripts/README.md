@@ -138,6 +138,35 @@ node scripts/test-ip-flexibility.js
 
 ---
 
+### 🔧 `test-trial-bypass-fix.js`
+
+**Purpose**: Verify that trial bypass vulnerabilities have been fixed
+
+**Usage**:
+
+```bash
+node scripts/test-trial-bypass-fix.js
+```
+
+**What it tests**:
+
+1. Fresh user with no previous trial (should allow trial)
+2. User with expired trial ID in localStorage (should block)
+3. User with session ID from previous trial (should block)
+4. User with fallback IP ID (should block)
+5. User with sessionStorage trial marker (should block)
+6. User who cleared localStorage but not sessionStorage (should block)
+7. User with multiple evidence sources (should block)
+
+**What it validates**:
+
+- The `hasUsedTrialBefore()` function correctly detects previous trial usage
+- Multiple storage mechanisms prevent bypass attempts
+- Security-first approach blocks suspicious activity
+- Only completely fresh devices get trial access
+
+---
+
 ## Common Debugging Scenarios
 
 ### 🐛 "Trial expired popup showing for all users"
@@ -155,7 +184,8 @@ node scripts/test-ip-flexibility.js
 ### 🧪 "Testing if system works"
 
 1. Run `test-trial-system.js` to verify all functionality
-2. Use `monitor-trials.js` to watch real-time activity
+2. Run `test-trial-bypass-fix.js` to verify bypass prevention
+3. Use `monitor-trials.js` to watch real-time activity
 
 ### 🌐 "Testing IP-based security"
 
@@ -201,4 +231,5 @@ NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id
 - **Be careful with `--all` flag** - it deletes everything!
 - **Check the console output** for detailed error messages
 - **Run `test-trial-system.js`** after making changes to verify everything works
+- **Run `test-trial-bypass-fix.js`** to verify bypass prevention is working
 - **Test with different browsers** to ensure IP-based blocking works
