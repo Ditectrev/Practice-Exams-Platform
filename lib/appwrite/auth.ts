@@ -64,25 +64,6 @@ export class AuthService {
     }
   }
 
-  static async updateEmailSession(
-    userId: string,
-    secret: string,
-  ): Promise<{ success: boolean; error?: AuthError }> {
-    try {
-      this.checkAppwriteAvailable();
-      await account!.updateMagicURLSession(userId, secret);
-      return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          message: error.message || "Failed to verify OTP",
-          code: error.code,
-        },
-      };
-    }
-  }
-
   // Google OAuth
   static async createGoogleSession(): Promise<{
     success: boolean;

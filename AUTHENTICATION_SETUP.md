@@ -52,7 +52,7 @@ This guide will help you set up Appwrite authentication for your Practice Exams 
 
 1. Go to **Auth** → **Templates**
 2. Customize the email templates for:
-   - Magic URL (email OTP)
+   - Email OTP verification
    - Email verification
 
 ## Step 3: Environment Variables
@@ -99,7 +99,7 @@ In your Appwrite project settings, you need to configure callback URLs for OAuth
 
 ### Authentication Methods
 
-- **Email OTP**: Magic link authentication via email
+- **Email OTP**: 6-digit verification code sent via email
 - **Google OAuth**: Sign in with Google account
 - **Apple OAuth**: Sign in with Apple ID
 

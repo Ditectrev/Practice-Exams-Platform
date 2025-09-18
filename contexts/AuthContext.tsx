@@ -7,10 +7,10 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signInWithEmail: (
+  sendEmailOTP: (
     email: string,
   ) => Promise<{ success: boolean; error?: string; userId?: string }>;
-  verifyEmailOTP: (
+  verifyOTPAndSignIn: (
     userId: string,
     otp: string,
   ) => Promise<{ success: boolean; error?: string }>;
@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signInWithEmail = async (email: string) => {
+  const sendEmailOTP = async (email: string) => {
     try {
       const result = await AuthService.createEmailOTPSession(email);
       if (result.success) {
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const verifyEmailOTP = async (userId: string, otp: string) => {
+  const verifyOTPAndSignIn = async (userId: string, otp: string) => {
     try {
       const result = await AuthService.verifyEmailOTP(userId, otp);
       if (result.success) {
@@ -127,8 +127,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isLoading,
     isAuthenticated,
-    signInWithEmail,
-    verifyEmailOTP,
+    sendEmailOTP,
+    verifyOTPAndSignIn,
     signInWithGoogle,
     signInWithApple,
     signOut,

@@ -59,7 +59,6 @@ export const useSecureTrial = () => {
   const getUserIP = async (): Promise<string> => {
     // Try multiple IP services for better reliability
     const ipServices = [
-      "/api/get-ip", // Local API route first
       "https://api.ipify.org?format=json",
       "https://ipapi.co/json/",
       "https://api.ip.sb/geoip",

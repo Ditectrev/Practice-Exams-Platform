@@ -15,8 +15,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   trialExpired = false,
 }) => {
-  const { signInWithEmail, verifyEmailOTP, signInWithGoogle, signInWithApple } =
-    useAuth();
+  const {
+    sendEmailOTP,
+    verifyOTPAndSignIn,
+    signInWithGoogle,
+    signInWithApple,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setMessage("");
 
     try {
-      const result = await signInWithEmail(email.trim());
+      const result = await sendEmailOTP(email.trim());
       if (result.success && result.userId) {
         setUserId(result.userId);
         // Save last used method
@@ -81,7 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setMessage("");
 
     try {
-      const result = await verifyEmailOTP(userId, otp.trim());
+      const result = await verifyOTPAndSignIn(userId, otp.trim());
       if (result.success) {
         setIsVerifying(false);
         setIsRedirecting(true);

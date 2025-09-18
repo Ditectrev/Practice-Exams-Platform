@@ -19,8 +19,6 @@ function AuthCallbackContent() {
     const handleCallback = async () => {
       try {
         // Check if this is an OAuth callback
-        const userId = searchParams.get("userId");
-        const secret = searchParams.get("secret");
         const success = searchParams.get("success");
         const failure = searchParams.get("failure");
 
@@ -37,23 +35,6 @@ function AuthCallbackContent() {
           setStatus("success");
           setMessage("Authentication successful! Redirecting...");
           setTimeout(() => router.push("/"), 2000);
-          return;
-        }
-
-        // Handle magic link callback
-        if (userId && secret) {
-          const result = await AuthService.updateEmailSession(userId, secret);
-          if (result.success) {
-            // Refresh auth context to update authentication state
-            await refreshUser();
-            setStatus("success");
-            setMessage("Email verified successfully! Redirecting...");
-            setTimeout(() => router.push("/"), 2000);
-          } else {
-            setStatus("error");
-            setMessage(result.error?.message || "Verification failed");
-            setTimeout(() => router.push("/"), 3000);
-          }
           return;
         }
 
