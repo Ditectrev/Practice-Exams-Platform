@@ -1,0 +1,180 @@
+import { account } from "./config";
+import { ID } from "appwrite";
+
+export interface AuthUser {
+  $id: string;
+  email: string;
+  name?: string;
+  emailVerification: boolean;
+}
+
+export interface AuthError {
+  message: string;
+  code?: number;
+}
+
+export class AuthService {
+  // Check if Appwrite is available
+  private static checkAppwriteAvailable() {
+    if (!account) {
+      throw new Error(
+        "Appwrite is not initialized. Please check your environment variables.",
+      );
+    }
+  }
+
+  // Email OTP Authentication
+  static async createEmailOTPSession(
+    email: string,
+  ): Promise<{ success: boolean; error?: AuthError; userId?: string }> {
+    try {
+      this.checkAppwriteAvailable();
+      // Create email token (sends 6-digit OTP to email)
+      const sessionToken = await account!.createEmailToken(ID.unique(), email);
+      return { success: true, userId: sessionToken.userId };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to send OTP",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Verify Email OTP
+  static async verifyEmailOTP(
+    userId: string,
+    otp: string,
+  ): Promise<{ success: boolean; error?: AuthError }> {
+    try {
+      this.checkAppwriteAvailable();
+      // Create session with userId and OTP
+      await account!.createSession(userId, otp);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to verify OTP",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Google OAuth
+  static async createGoogleSession(): Promise<{
+    success: boolean;
+    error?: AuthError;
+  }> {
+    try {
+      this.checkAppwriteAvailable();
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const url = await account!.createOAuth2Session(
+        "google" as any,
+        redirectUrl,
+        redirectUrl,
+      );
+
+      if (typeof url === "string") {
+        window.location.href = url;
+      }
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to initiate Google OAuth",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Apple OAuth
+  // NOTE: Apple Sign-In doesn't work with localhost in development
+  // Apple requires a proper domain for redirect URIs. Test this in production.
+  static async createAppleSession(): Promise<{
+    success: boolean;
+    error?: AuthError;
+  }> {
+    try {
+      this.checkAppwriteAvailable();
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const url = await account!.createOAuth2Session(
+        "apple" as any,
+        redirectUrl,
+        redirectUrl,
+      );
+
+      if (typeof url === "string") {
+        window.location.href = url;
+      }
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to initiate Apple OAuth",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Get current user
+  static async getCurrentUser(): Promise<{
+    user?: AuthUser;
+    error?: AuthError;
+  }> {
+    try {
+      this.checkAppwriteAvailable();
+      const user = await account!.get();
+      return {
+        user: {
+          $id: user.$id,
+          email: user.email,
+          name: user.name,
+          emailVerification: user.emailVerification,
+        },
+      };
+    } catch (error: any) {
+      return {
+        error: {
+          message: error.message || "Failed to get current user",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Sign out
+  static async signOut(): Promise<{ success: boolean; error?: AuthError }> {
+    try {
+      this.checkAppwriteAvailable();
+      await account!.deleteSession("current");
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message || "Failed to sign out",
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  // Check if user is authenticated
+  static async isAuthenticated(): Promise<boolean> {
+    try {
+      this.checkAppwriteAvailable();
+      await account!.get();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}

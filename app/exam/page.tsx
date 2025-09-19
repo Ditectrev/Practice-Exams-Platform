@@ -9,6 +9,7 @@ import QuizExamForm from "@azure-fundamentals/components/QuizExamFormUF";
 import { Question } from "@azure-fundamentals/components/types";
 import ExamResult from "@azure-fundamentals/components/ExamResult";
 import LoadingIndicator from "@azure-fundamentals/components/LoadingIndicator";
+import { useTrialAccess } from "@azure-fundamentals/hooks/useTrialAccess";
 
 const questionsQuery = gql`
   query RandomQuestions($range: Int!, $link: String) {
@@ -29,6 +30,7 @@ const questionsQuery = gql`
 const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
   searchParams,
 }) => {
+  const { isAccessBlocked, isInTrial } = useTrialAccess();
   const { url } = searchParams;
   const { minutes, seconds } = {
     minutes: 15,
@@ -87,6 +89,28 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
     setCurrentQuestion(data?.randomQuestions[0]);
   }, [data]);
 
+  // Show loading while checking trial access
+  if (isAccessBlocked === undefined) {
+    return <LoadingIndicator />;
+  }
+
+  // Block access if trial expired
+  if (isAccessBlocked) {
+    return (
+      <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg text-center">
+        <div className="text-red-400 text-lg mb-4">
+          ⏰ Trial expired. Please sign in to continue taking exams.
+        </div>
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
   if (loading) return <LoadingIndicator />;
   if (error) return <p>Oh no... {error.message}</p>;
 
@@ -94,6 +118,28 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
 
   return (
     <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg">
+      {isInTrial && (
+        <div className="mb-6 p-4 bg-amber-600/20 border border-amber-600/40 rounded-lg">
+          <div className="flex items-center gap-2 text-amber-300">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="font-medium">
+              Trial Mode - Sign in to unlock unlimited access
+            </span>
+          </div>
+        </div>
+      )}
       <div>
         <div className="px-2 sm:px-10 w-full flex flex-row justify-between items-center">
           <p className="text-white font-bold text-sm sm:text-2xl">

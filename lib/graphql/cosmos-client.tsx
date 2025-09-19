@@ -24,12 +24,8 @@ export const getQuestionsContainer = async () => {
   } catch (error: any) {
     // If container creation fails, try to get the existing container
     if (error.code === 409) {
-      console.log(
-        `Container questions already exists, using existing container`,
-      );
       return database.container("questions");
     } else {
-      console.error("Error creating container:", error);
       throw error;
     }
   }

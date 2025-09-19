@@ -49,6 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
   intent,
   size,
   variant,
+  className,
   ...props
 }) => (
   <button
@@ -56,7 +57,9 @@ export const Button: React.FC<ButtonProps> = ({
       intent,
       size,
       variant,
-    })} text-white rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0`}
+    })} text-white rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0 ${
+      className || ""
+    }`}
     {...props}
   />
 );
