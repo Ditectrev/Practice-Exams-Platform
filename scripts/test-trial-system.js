@@ -53,6 +53,7 @@ async function testTrialSystem() {
         "unique()",
         {
           session_id: testSessionId,
+          ip_address: "127.0.0.1",
           user_agent: "Test User Agent",
           start_time: startTime,
           end_time: endTime,

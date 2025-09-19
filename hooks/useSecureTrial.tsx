@@ -127,14 +127,20 @@ export const useSecureTrial = () => {
     try {
       // Check multiple storage mechanisms for trial usage evidence
       const localTrialId = localStorage.getItem("currentTrialId");
-      const sessionId = localStorage.getItem("trial_session_id");
+      // NOTE: Don't check trial_session_id here - it gets created for new users too!
       const fallbackId = localStorage.getItem("ip_fallback_id");
+      const trialEverUsed = localStorage.getItem("trial_ever_used");
 
       // Also check sessionStorage (survives page refresh but not tab close)
       const sessionTrialUsed = sessionStorage.getItem("trial_ever_used");
 
       // If any evidence of previous trial exists, consider it used
-      return !!(localTrialId || sessionId || fallbackId || sessionTrialUsed);
+      return !!(
+        localTrialId ||
+        fallbackId ||
+        trialEverUsed ||
+        sessionTrialUsed
+      );
     } catch (error) {
       // If we can't check, assume trial was used (security-first)
       return true;
@@ -336,18 +342,7 @@ export const useSecureTrial = () => {
       }
 
       try {
-        // First check if this device has ever used a trial (additional security)
-        if (hasUsedTrialBefore()) {
-          // Device has evidence of previous trial usage - block access immediately
-          setTrialExpired(true);
-          setTrialBlocked(true);
-          setTimeRemaining(0);
-          setTrialStartTime(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if user already has an active trial
+        // First check if user already has an active trial (allow resuming)
         const existingTrial = await checkExistingTrial();
 
         if (existingTrial) {

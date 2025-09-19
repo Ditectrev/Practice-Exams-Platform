@@ -136,6 +136,44 @@ The authentication flow works seamlessly across all platforms.
 3. **Trial timer not working**: Clear localStorage and refresh page
 4. **Authentication state not persisting**: Check browser console for errors
 
+### Apple SSO Production Issues
+
+If Apple SSO shows "invalid_request" error in production, check these common causes:
+
+#### 1. **Apple Developer Configuration**
+
+- **Services ID**: Verify your Services ID (`com.ditectrev.education`) is correctly configured in Apple Developer Console
+- **Redirect URLs**: Ensure your production domain is added to the "Return URLs" list
+- **Domain Verification**: Verify your domain ownership in Apple Developer Console
+- **Key Configuration**: Check that your Apple Sign In key is properly configured
+
+#### 2. **Appwrite Configuration**
+
+- **Client ID**: Must match your Apple Services ID exactly (`com.ditectrev.education`)
+- **Bundle ID**: Should match your app's bundle identifier
+- **Team ID**: Verify this matches your Apple Developer Team ID
+- **Key ID**: Must match the Key ID from your Apple Sign In key
+- **Private Key**: Ensure the private key is correctly formatted (PEM format)
+
+#### 3. **Production Environment**
+
+- **HTTPS Required**: Apple SSO only works over HTTPS in production
+- **Domain Matching**: The domain in the request must match the registered domain
+- **Callback URL**: Must be `https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/apple/[PROJECT_ID]`
+
+#### 4. **Debugging Steps**
+
+1. Check Appwrite console logs for detailed error messages
+2. Verify all Apple Developer settings match Appwrite configuration
+3. Test the OAuth flow manually using Apple's authorization URL
+4. Ensure your production domain is verified with Apple
+
+#### 5. **Common Error Codes**
+
+- **invalid_client**: Client ID mismatch or invalid configuration
+- **invalid_request**: Malformed request or missing parameters
+- **unauthorized_client**: App not authorized for Apple Sign In
+
 ### Debug Mode
 
 Enable debug logging by adding to your `.env.local`:

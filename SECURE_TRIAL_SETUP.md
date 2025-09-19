@@ -40,6 +40,7 @@ The new system tracks trials **server-side** using:
 
      ```text
      session_id (string, 255 chars, required)
+     ip_address (string, 255 chars, required)
      user_agent (string, 1000 chars, required)
      start_time (integer, required)
      end_time (integer, required)
@@ -202,6 +203,7 @@ The code has been updated to use `useSecureTrial` instead of `useTrialTimer`. Th
 CREATE TABLE trials (
   id VARCHAR(255) PRIMARY KEY,
   session_id VARCHAR(255) NOT NULL,
+  ip_address VARCHAR(255) NOT NULL,
   user_agent VARCHAR(1000) NOT NULL,
   start_time BIGINT NOT NULL,
   end_time BIGINT NOT NULL,
