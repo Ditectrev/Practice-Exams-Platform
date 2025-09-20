@@ -82,7 +82,7 @@ In your Appwrite project settings, you need to configure callback URLs for OAuth
 2. In the Apple OAuth configuration, you'll see a **Redirect URL** field
 3. Set this to: `https://yourdomain.com/auth/callback`
 
-**Note**: The success/failure URLs mentioned in the original documentation are not standard Appwrite settings. Appwrite handles OAuth redirects automatically to the redirect URL you specify above. The success/failure parameters are handled by your application logic in the callback route.
+**Note**: Since Google OAuth is working with this setup, Apple OAuth should use the same callback URL pattern. However, Apple has additional requirements for domain verification and certificate configuration that Google doesn't have.
 
 ## Step 5: Test Authentication
 
@@ -136,7 +136,17 @@ The authentication flow works seamlessly across all platforms.
 3. **Trial timer not working**: Clear localStorage and refresh page
 4. **Authentication state not persisting**: Check browser console for errors
 
-### Apple SSO Production Issues
+### Apple OAuth Specific Issues
+
+Since Google OAuth is working but Apple OAuth isn't, here are Apple-specific troubleshooting steps:
+
+#### Development vs Production
+
+- **Apple OAuth will NOT work on localhost** - it requires HTTPS and a verified domain
+- The code now includes a localhost check that will show a helpful error message
+- Always test Apple OAuth in production or staging environment with proper domain
+
+#### Common Apple OAuth Issues
 
 If Apple SSO shows "invalid_request" error in production, check these common causes:
 

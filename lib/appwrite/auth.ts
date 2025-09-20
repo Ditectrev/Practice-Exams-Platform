@@ -102,7 +102,30 @@ export class AuthService {
   }> {
     try {
       this.checkAppwriteAvailable();
+
+      // Check if we're in development (localhost)
+      if (
+        typeof window !== "undefined" &&
+        window.location.hostname === "localhost"
+      ) {
+        return {
+          success: false,
+          error: {
+            message:
+              "Apple OAuth requires HTTPS and a proper domain. Please test in production.",
+            code: 400,
+          },
+        };
+      }
+
       const redirectUrl = `${window.location.origin}/auth/callback`;
+
+      // Add debug logging if enabled
+      if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
+        console.log("Apple OAuth - Redirect URL:", redirectUrl);
+        console.log("Apple OAuth - Current origin:", window.location.origin);
+      }
+
       const url = await account!.createOAuth2Session(
         "apple" as any,
         redirectUrl,
@@ -114,6 +137,16 @@ export class AuthService {
       }
       return { success: true };
     } catch (error: any) {
+      // Enhanced error logging for Apple OAuth
+      if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
+        console.error("Apple OAuth Error:", error);
+        console.error("Error details:", {
+          message: error.message,
+          code: error.code,
+          type: error.type,
+        });
+      }
+
       return {
         success: false,
         error: {
