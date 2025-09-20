@@ -123,6 +123,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleAppleSignIn = async () => {
+    // Debug: Store that modal function was called
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(
+          "apple_modal_handler_called",
+          new Date().toISOString(),
+        );
+        (window as any).appleModalHandlerCalled = true;
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
     setIsLoading(true);
     try {
       // Save last used method
