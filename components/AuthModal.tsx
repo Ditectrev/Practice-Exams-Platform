@@ -123,19 +123,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleAppleSignIn = async () => {
-    // Debug: Store that modal function was called
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(
-          "apple_modal_handler_called",
-          new Date().toISOString(),
-        );
-        (window as any).appleModalHandlerCalled = true;
-      } catch (e) {
-        // Ignore storage errors
-      }
-    }
-
     setIsLoading(true);
     try {
       // Save last used method
@@ -385,22 +372,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             type="button"
             intent="secondary"
             size="medium"
-            onClick={(e) => {
-              // Debug: Log that button was clicked
-              if (typeof window !== "undefined") {
-                try {
-                  sessionStorage.setItem(
-                    "apple_button_clicked",
-                    new Date().toISOString(),
-                  );
-                  (window as any).appleButtonClicked = true;
-                } catch (err) {
-                  // Ignore storage errors
-                }
-              }
-              console.log("Apple button clicked!"); // This should work even in production
-              handleAppleSignIn();
-            }}
+            onClick={handleAppleSignIn}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 relative"
           >

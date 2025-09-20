@@ -98,19 +98,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithApple = async () => {
-    // Debug: Store that this function was called
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(
-          "apple_auth_context_called",
-          new Date().toISOString(),
-        );
-        (window as any).appleAuthContextCalled = true;
-      } catch (e) {
-        // Ignore storage errors
-      }
-    }
-
     try {
       const result = await AuthService.createAppleSession();
       return {

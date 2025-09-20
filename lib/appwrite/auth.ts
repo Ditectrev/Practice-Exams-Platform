@@ -78,20 +78,6 @@ export class AuthService {
         redirectUrl,
       );
 
-      // Debug: Store what we actually got back from Appwrite for Google
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem("google_oauth_response_type", typeof url);
-          sessionStorage.setItem(
-            "google_oauth_response_value",
-            JSON.stringify(url),
-          );
-          (window as any).googleOAuthResponse = url;
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-
       if (typeof url === "string") {
         window.location.href = url;
       }
@@ -134,117 +120,17 @@ export class AuthService {
 
       const redirectUrl = `${window.location.origin}/auth/callback`;
 
-      // Add debug info to sessionStorage for production debugging
-      if (typeof window !== "undefined") {
-        const debugInfo = {
-          timestamp: new Date().toISOString(),
-          action: "apple_oauth_start",
-          redirectUrl,
-          origin: window.location.origin,
-          hostname: window.location.hostname,
-        };
-
-        try {
-          sessionStorage.setItem(
-            "apple_oauth_debug",
-            JSON.stringify(debugInfo),
-          );
-          // Also add to window object for console inspection
-          (window as any).appleOAuthDebug = debugInfo;
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-
-      // Debug: Store that we're about to call createOAuth2Session
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(
-            "apple_oauth_before_call",
-            new Date().toISOString(),
-          );
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-
       const url = await account!.createOAuth2Session(
         "apple" as any,
         redirectUrl,
         redirectUrl,
       );
 
-      // Debug: Store what we actually got back from Appwrite
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(
-            "apple_oauth_after_call",
-            new Date().toISOString(),
-          );
-          sessionStorage.setItem("apple_oauth_response_type", typeof url);
-          sessionStorage.setItem(
-            "apple_oauth_response_value",
-            JSON.stringify(url),
-          );
-          (window as any).appleOAuthResponse = url;
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-
-      // If we get here without an error and url is undefined,
-      // it might mean Appwrite handles the redirect internally
-      if (url === undefined) {
-        // Store that we got undefined but no error
-        if (typeof window !== "undefined") {
-          try {
-            sessionStorage.setItem(
-              "apple_oauth_undefined_no_error",
-              new Date().toISOString(),
-            );
-          } catch (e) {
-            // Ignore storage errors
-          }
-        }
-      }
-
       if (typeof url === "string") {
-        // Store success info
-        if (typeof window !== "undefined") {
-          try {
-            sessionStorage.setItem("apple_oauth_redirect_url", url);
-          } catch (e) {
-            // Ignore storage errors
-          }
-        }
         window.location.href = url;
       }
       return { success: true };
     } catch (error: any) {
-      // Store error info for debugging in production
-      if (typeof window !== "undefined") {
-        const errorInfo = {
-          timestamp: new Date().toISOString(),
-          action: "apple_oauth_error",
-          message: error.message,
-          code: error.code,
-          type: error.type,
-          name: error.name,
-          stack: error.stack,
-        };
-
-        try {
-          sessionStorage.setItem(
-            "apple_oauth_error",
-            JSON.stringify(errorInfo),
-          );
-          // Also add to window object
-          (window as any).appleOAuthError = errorInfo;
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-
       return {
         success: false,
         error: {
