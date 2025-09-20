@@ -24,7 +24,7 @@ interface TrialRecord {
 }
 
 export const useSecureTrial = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [trialStartTime, setTrialStartTime] = useState<number | null>(null);
   const [trialExpired, setTrialExpired] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(TRIAL_DURATION_MS);
@@ -329,6 +329,11 @@ export const useSecureTrial = () => {
 
   useEffect(() => {
     const initializeTrial = async () => {
+      // Wait for auth to finish loading before initializing trial
+      if (authLoading) {
+        return;
+      }
+
       setIsLoading(true);
 
       // If user is authenticated, no trial needed
@@ -424,7 +429,7 @@ export const useSecureTrial = () => {
     };
 
     initializeTrial();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   // Update timer every second
   useEffect(() => {
@@ -475,6 +480,6 @@ export const useSecureTrial = () => {
     isInTrial,
     isAccessBlocked,
     trialBlocked,
-    isLoading,
+    isLoading: isLoading || authLoading,
   };
 };
