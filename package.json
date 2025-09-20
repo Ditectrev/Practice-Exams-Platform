@@ -1,6 +1,6 @@
 {
   "name": "practice-exams-platform",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "private": true,
   "engines": {
     "node": "20.x"
