@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import { useSecureTrial } from "../hooks/useSecureTrial";
+import { useAuth } from "../contexts/AuthContext";
 import { AuthModal } from "./AuthModal";
 
 export const TrialWarning: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const {
     trialExpired,
     timeRemaining,
@@ -40,7 +42,13 @@ export const TrialWarning: React.FC = () => {
     );
   }
 
-  if (!isInTrial && !trialExpired && !trialBlocked) return null;
+  // Don't show anything while loading, if user is authenticated, or if no trial state
+  if (
+    isLoading ||
+    isAuthenticated ||
+    (!isInTrial && !trialExpired && !trialBlocked)
+  )
+    return null;
 
   return (
     <>
