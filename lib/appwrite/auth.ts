@@ -148,6 +148,20 @@ export class AuthService {
         redirectUrl,
       );
 
+      // Debug: Store what we actually got back from Appwrite
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("apple_oauth_response_type", typeof url);
+          sessionStorage.setItem(
+            "apple_oauth_response_value",
+            JSON.stringify(url),
+          );
+          (window as any).appleOAuthResponse = url;
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
+
       if (typeof url === "string") {
         // Store success info
         if (typeof window !== "undefined") {
