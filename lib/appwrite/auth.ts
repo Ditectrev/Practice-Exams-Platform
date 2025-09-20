@@ -156,6 +156,18 @@ export class AuthService {
         }
       }
 
+      // Debug: Store that we're about to call createOAuth2Session
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(
+            "apple_oauth_before_call",
+            new Date().toISOString(),
+          );
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
+
       const url = await account!.createOAuth2Session(
         "apple" as any,
         redirectUrl,
@@ -165,6 +177,10 @@ export class AuthService {
       // Debug: Store what we actually got back from Appwrite
       if (typeof window !== "undefined") {
         try {
+          sessionStorage.setItem(
+            "apple_oauth_after_call",
+            new Date().toISOString(),
+          );
           sessionStorage.setItem("apple_oauth_response_type", typeof url);
           sessionStorage.setItem(
             "apple_oauth_response_value",
@@ -173,6 +189,22 @@ export class AuthService {
           (window as any).appleOAuthResponse = url;
         } catch (e) {
           // Ignore storage errors
+        }
+      }
+
+      // If we get here without an error and url is undefined,
+      // it might mean Appwrite handles the redirect internally
+      if (url === undefined) {
+        // Store that we got undefined but no error
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(
+              "apple_oauth_undefined_no_error",
+              new Date().toISOString(),
+            );
+          } catch (e) {
+            // Ignore storage errors
+          }
         }
       }
 
