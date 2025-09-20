@@ -124,12 +124,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleAppleSignIn = async () => {
     setIsLoading(true);
+    setMessage(""); // Clear any previous messages
     try {
       // Save last used method
       const method = { type: "apple", value: "Apple" };
       setLastUsedMethod(method);
       localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
-      await signInWithApple();
+      const result = await signInWithApple();
+
+      if (!result.success && result.error) {
+        setMessage(result.error);
+      }
+      // Always reset loading state
+      setIsLoading(false);
     } catch (error) {
       setMessage("Failed to sign in with Apple");
       setIsLoading(false);

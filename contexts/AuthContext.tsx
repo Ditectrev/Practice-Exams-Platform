@@ -98,13 +98,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithApple = async () => {
+    console.log("🍎 AuthContext: signInWithApple called");
     try {
       const result = await AuthService.createAppleSession();
+      console.log("🍎 AuthContext: createAppleSession result:", result);
       return {
         success: result.success,
         error: result.error?.message,
       };
     } catch (error: any) {
+      console.log("🍎 AuthContext: Error in signInWithApple:", error);
       return { success: false, error: error.message };
     }
   };

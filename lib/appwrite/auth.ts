@@ -103,19 +103,29 @@ export class AuthService {
     try {
       this.checkAppwriteAvailable();
 
-      // Check if we're in development (localhost)
-      if (
-        typeof window !== "undefined" &&
-        window.location.hostname === "localhost"
-      ) {
-        return {
-          success: false,
-          error: {
-            message:
-              "Apple OAuth requires HTTPS and a proper domain. Please test in production.",
-            code: 400,
-          },
-        };
+      // Check if we're in development (localhost, 127.0.0.1, or non-HTTPS)
+      if (typeof window !== "undefined") {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isDevelopment =
+          hostname === "localhost" ||
+          hostname === "127.0.0.1" ||
+          hostname.startsWith("192.168.") ||
+          hostname.startsWith("10.") ||
+          hostname.startsWith("172.") ||
+          protocol === "http:" ||
+          process.env.NODE_ENV === "development";
+
+        if (isDevelopment) {
+          return {
+            success: false,
+            error: {
+              message:
+                "Apple OAuth requires HTTPS and a proper domain. Please test in production.",
+              code: 400,
+            },
+          };
+        }
       }
 
       const redirectUrl = `${window.location.origin}/auth/callback`;
