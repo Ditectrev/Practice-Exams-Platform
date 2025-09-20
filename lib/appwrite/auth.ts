@@ -120,10 +120,26 @@ export class AuthService {
 
       const redirectUrl = `${window.location.origin}/auth/callback`;
 
-      // Add debug logging if enabled
-      if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
-        console.log("Apple OAuth - Redirect URL:", redirectUrl);
-        console.log("Apple OAuth - Current origin:", window.location.origin);
+      // Add debug info to sessionStorage for production debugging
+      if (typeof window !== "undefined") {
+        const debugInfo = {
+          timestamp: new Date().toISOString(),
+          action: "apple_oauth_start",
+          redirectUrl,
+          origin: window.location.origin,
+          hostname: window.location.hostname,
+        };
+
+        try {
+          sessionStorage.setItem(
+            "apple_oauth_debug",
+            JSON.stringify(debugInfo),
+          );
+          // Also add to window object for console inspection
+          (window as any).appleOAuthDebug = debugInfo;
+        } catch (e) {
+          // Ignore storage errors
+        }
       }
 
       const url = await account!.createOAuth2Session(
@@ -133,18 +149,40 @@ export class AuthService {
       );
 
       if (typeof url === "string") {
+        // Store success info
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("apple_oauth_redirect_url", url);
+          } catch (e) {
+            // Ignore storage errors
+          }
+        }
         window.location.href = url;
       }
       return { success: true };
     } catch (error: any) {
-      // Enhanced error logging for Apple OAuth
-      if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
-        console.error("Apple OAuth Error:", error);
-        console.error("Error details:", {
+      // Store error info for debugging in production
+      if (typeof window !== "undefined") {
+        const errorInfo = {
+          timestamp: new Date().toISOString(),
+          action: "apple_oauth_error",
           message: error.message,
           code: error.code,
           type: error.type,
-        });
+          name: error.name,
+          stack: error.stack,
+        };
+
+        try {
+          sessionStorage.setItem(
+            "apple_oauth_error",
+            JSON.stringify(errorInfo),
+          );
+          // Also add to window object
+          (window as any).appleOAuthError = errorInfo;
+        } catch (e) {
+          // Ignore storage errors
+        }
       }
 
       return {
