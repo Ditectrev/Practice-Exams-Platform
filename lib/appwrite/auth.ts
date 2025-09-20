@@ -78,6 +78,20 @@ export class AuthService {
         redirectUrl,
       );
 
+      // Debug: Store what we actually got back from Appwrite for Google
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("google_oauth_response_type", typeof url);
+          sessionStorage.setItem(
+            "google_oauth_response_value",
+            JSON.stringify(url),
+          );
+          (window as any).googleOAuthResponse = url;
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
+
       if (typeof url === "string") {
         window.location.href = url;
       }
