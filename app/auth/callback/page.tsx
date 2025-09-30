@@ -38,11 +38,34 @@ function AuthCallbackContent() {
           return;
         }
 
-        // If no callback parameters, redirect to home
+        // For OAuth redirects (especially Apple), we might not get URL parameters
+        // Try to check if the user is actually authenticated after OAuth redirect
+        setMessage("Verifying authentication...");
+        const isUserAuthenticated = await AuthService.isAuthenticated();
+
+        if (isUserAuthenticated) {
+          setMessage("Authentication verified! Updating profile...");
+
+          // User is authenticated, refresh the auth context
+          await refreshUser();
+
+          // Trigger auth success event for listening components
+          window.dispatchEvent(new CustomEvent("auth_success"));
+          localStorage.setItem("auth_success", "true");
+
+          setStatus("success");
+          setMessage("Authentication successful! Redirecting...");
+          setTimeout(() => router.push("/"), 2000);
+          return;
+        }
+
+        // If no callback parameters and user is not authenticated, redirect to home
         router.push("/");
       } catch (error) {
         setStatus("error");
-        setMessage("An error occurred during authentication");
+        setMessage(
+          "An error occurred during authentication. Please try again.",
+        );
         setTimeout(() => router.push("/"), 3000);
       }
     };
@@ -105,7 +128,7 @@ function AuthCallbackContent() {
 
         <button
           onClick={() => router.push("/")}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="btn-primary text-white px-6 py-2 rounded-lg"
         >
           Go to Home
         </button>

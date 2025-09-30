@@ -1,6 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* External link styling */
+.external-link-icon {
+  display: inline-block;
+  margin-left: 0.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: #3f51b5;
+  transition: color 200ms ease-in-out;
+}
+
+/* Enhanced external link hover effects */
+a[target="_blank"]:hover .external-link-icon {
+  color: #5c6bc0;
+}
+
+/* Primary button styling */
+.btn-primary {
+  background-color: #3f51b5;
+  border-color: #3f51b5;
+  transition: background-color 200ms ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #5c6bc0;
+  border-color: #5c6bc0;
+}
 
 .loading-container {
     position: fixed;

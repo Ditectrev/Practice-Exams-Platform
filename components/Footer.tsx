@@ -1,16 +1,18 @@
+"use client";
+
 import {
   SiDiscord,
-  SiEbay,
-  SiEtsy,
   SiGithub,
-  SiGoogleplay,
-  SiFacebook,
   SiInstagram,
   SiLinkedin,
-  SiReddit,
+  SiMedium,
+  SiPatreon,
   SiUdemy,
   SiX,
+  SiYoutube,
 } from "react-icons/si";
+import GitHubButton from "react-github-btn";
+import packageJson from "../package.json";
 import "styles/footer.css";
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -22,24 +24,8 @@ const Footer = () => {
       icon: <SiDiscord className="discord" size={iconSize} />,
     },
     {
-      url: "https://ebay.com/usr/ditectrev",
-      icon: <SiEbay className="ebay" size={iconSize} />,
-    },
-    {
-      url: "https://ditectrev.etsy.com",
-      icon: <SiEtsy className="etsy" size={iconSize} />,
-    },
-    {
-      url: "https://facebook.com/ditectrev",
-      icon: <SiFacebook className="facebook" size={iconSize} />,
-    },
-    {
       url: "https://github.com/ditectrev",
       icon: <SiGithub className="github" size={iconSize} />,
-    },
-    {
-      url: "https://play.google.com/store/books/author?id=Daniel+Danielecki",
-      icon: <SiGoogleplay className="googleplay" size={iconSize} />,
     },
     {
       url: "https://instagram.com/ditectrev",
@@ -50,8 +36,12 @@ const Footer = () => {
       icon: <SiLinkedin className="linkedin" size={iconSize} />,
     },
     {
-      url: "https://reddit.com/user/Ditectrev",
-      icon: <SiReddit className="reddit" size={iconSize} />,
+      url: "https://medium.com/@ditectrev",
+      icon: <SiMedium className="medium" size={iconSize} />,
+    },
+    {
+      url: "https://patreon.com/Ditectrev",
+      icon: <SiPatreon className="patreon" size={iconSize} />,
     },
     {
       url: "https://udemy.com/user/social-ditectrev",
@@ -60,6 +50,10 @@ const Footer = () => {
     {
       url: "https://x.com/ditectrev",
       icon: <SiX className="x" size={iconSize} />,
+    },
+    {
+      url: "https://youtube.com/@Ditectrev",
+      icon: <SiYoutube className="youtube" size={iconSize} />,
     },
   ];
 
@@ -79,6 +73,22 @@ const Footer = () => {
           </a>
         ))}
       </div>
+
+      {/* GitHub Star and Version */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
+        <GitHubButton
+          href="https://github.com/Ditectrev/Practice-Exams-Platform"
+          data-color-scheme="no-preference: dark; light: light; dark: dark;"
+          data-icon="octicon-star"
+          data-size="large"
+          data-show-count="true"
+          aria-label="Star Practice Exams Platform on GitHub"
+        >
+          Star
+        </GitHubButton>
+        <span className="text-slate-400 text-xs">v{packageJson.version}</span>
+      </div>
+
       <p className="text-white text-sm flex justify-center">
         &copy; {currentYear} Ditectrev
       </p>

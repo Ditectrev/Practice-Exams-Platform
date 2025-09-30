@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { type Metadata, type Viewport } from "next";
-import TopNav from "@azure-fundamentals/components/TopNav";
+import Header from "@azure-fundamentals/components/Header";
 import Footer from "@azure-fundamentals/components/Footer";
 import ApolloProvider from "@azure-fundamentals/components/ApolloProvider";
 import Cookie from "@azure-fundamentals/components/Cookie";
@@ -109,8 +109,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="bg-slate-900">
         <ApolloProvider>
           <AuthProvider>
-            <TopNav />
-            <main className="flex flex-col justify-between md:h-[calc(100vh-2.5rem-64px)] h-full">
+            <Header />
+            <main className="flex flex-col justify-between min-h-[calc(100vh-4rem)]">
               {children}
               <Footer />
               <Cookie />

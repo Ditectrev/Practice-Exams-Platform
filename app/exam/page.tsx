@@ -103,7 +103,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
         </div>
         <button
           onClick={() => (window.location.href = "/")}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="btn-primary text-white px-6 py-2 rounded-lg"
         >
           Go to Home
         </button>

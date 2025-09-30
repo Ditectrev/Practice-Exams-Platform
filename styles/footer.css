@@ -16,25 +16,10 @@
   color: #7289da;
 }
 
-.social-icons-container a:hover .ebay {
-  color: #e53238;
-}
-
-.social-icons-container a:hover .etsy {
-  color: #f16521;
-}
-
-.social-icons-container a:hover .facebook {
-  color: #1877f2;
-}
-
 .social-icons-container a:hover .github {
-  color: #aaa;
+  color: #4078c0;
 }
 
-.social-icons-container a:hover .googleplay {
-  color: #34a853;
-}
 
 .social-icons-container a:hover .instagram {
   color: #e1306c;
@@ -44,8 +29,12 @@
   color: #0077b5;
 }
 
-.social-icons-container a:hover .reddit {
-  color: #ff4500;
+.social-icons-container a:hover .medium {
+  color: #00ab6c;
+}
+
+.social-icons-container a:hover .patreon {
+  color: #f96854;
 }
 
 .social-icons-container a:hover .udemy {
@@ -53,7 +42,11 @@
 }
 
 .social-icons-container a:hover .x {
-  color: #aaa;
+  color: #1da1f2;
+}
+
+.social-icons-container a:hover .youtube {
+  color: #ff0000;
 }
 
 @media (max-width: 768px) {

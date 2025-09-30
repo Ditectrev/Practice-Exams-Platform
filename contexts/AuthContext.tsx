@@ -121,6 +121,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     refreshUser();
+
+    // Listen for authentication success from redirects (especially for Apple OAuth)
+    const handleAuthSuccess = () => {
+      refreshUser();
+    };
+
+    // Listen for storage events to detect authentication from other tabs/windows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "auth_success") {
+        refreshUser();
+        localStorage.removeItem("auth_success"); // Clean up
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("auth_success", handleAuthSuccess);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth_success", handleAuthSuccess);
+    };
   }, []);
 
   const value: AuthContextType = {
