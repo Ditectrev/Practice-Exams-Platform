@@ -4,13 +4,7 @@ import React from "react";
 const button = cva("button", {
   variants: {
     intent: {
-      primary: [
-        "bg-blue-600/50",
-        "border-blue-600",
-        "hover:bg-blue-600/60",
-        "focus:ring-blue-800",
-        "border-blue-600",
-      ],
+      primary: ["btn-primary", "focus:ring-blue-800"],
       secondary: [
         "bg-emerald-600/50",
         "border-emerald-600",

@@ -20,6 +20,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     verifyOTPAndSignIn,
     signInWithGoogle,
     signInWithApple,
+    isAuthenticated,
   } = useAuth();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -47,6 +48,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
     }
   }, [isOpen]);
+
+  // Auto-close modal when user becomes authenticated (especially for Apple OAuth redirects)
+  useEffect(() => {
+    if (isAuthenticated && isOpen) {
+      // Reset modal state
+      setStep("email");
+      setEmail("");
+      setOtp("");
+      setUserId(null);
+      setIsLoading(false);
+      setIsVerifying(false);
+      setIsRedirecting(false);
+      setMessage("");
+
+      // Close the modal
+      onClose();
+    }
+  }, [isAuthenticated, isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -124,14 +143,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleAppleSignIn = async () => {
     setIsLoading(true);
+    setMessage("Redirecting to Apple..."); // User feedback
     try {
       // Save last used method
       const method = { type: "apple", value: "Apple" };
       setLastUsedMethod(method);
       localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
-      await signInWithApple();
+
+      const result = await signInWithApple();
+
+      if (!result.success && result.error) {
+        setMessage(result.error);
+        setIsLoading(false);
+      }
+      // Note: For Apple OAuth, loading state will be reset when the modal auto-closes
+      // or when the page redirects. Don't reset here for successful redirects.
     } catch (error) {
-      setMessage("Failed to sign in with Apple");
+      setMessage("Failed to sign in with Apple. Please try again.");
       setIsLoading(false);
     }
   };
@@ -211,7 +239,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               )}
               {isLoading ? "Sending..." : "Continue with Email"}
               {!isLoading && lastUsedMethod?.type === "email" && (
-                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                <span
+                  className="absolute -top-1 -right-1 text-white text-xs px-2 py-1 rounded-full"
+                  style={{ backgroundColor: "#3f51b5" }}
+                >
                   Last Used
                 </span>
               )}
@@ -318,7 +349,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setIsVerifying(false);
                 setIsRedirecting(false);
               }}
-              className="w-full text-center text-sm text-blue-400 hover:text-blue-300"
+              className="w-full text-center text-sm hover:opacity-80 transition-opacity"
+              style={{ color: "#3f51b5" }}
             >
               ← Back
             </button>
@@ -362,7 +394,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </svg>
             Continue with Google
             {!isLoading && lastUsedMethod?.type === "google" && (
-              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+              <span
+                className="absolute -top-1 -right-1 text-white text-xs px-2 py-1 rounded-full"
+                style={{ backgroundColor: "#3f51b5" }}
+              >
                 Last Used
               </span>
             )}
@@ -384,7 +419,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </svg>
             Continue with Apple
             {!isLoading && lastUsedMethod?.type === "apple" && (
-              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+              <span
+                className="absolute -top-1 -right-1 text-white text-xs px-2 py-1 rounded-full"
+                style={{ backgroundColor: "#3f51b5" }}
+              >
                 Last Used
               </span>
             )}

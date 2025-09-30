@@ -19,7 +19,7 @@ export const TrialWarning: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed top-4 left-8 md:left-8 md:top-4 left-1/2 top-4 -translate-x-1/2 md:left-8 md:-translate-x-0 bg-blue-600 text-white px-8 py-3 rounded-lg shadow-lg z-40">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 btn-primary text-white px-8 py-3 rounded-lg shadow-lg z-40">
         <div className="flex items-center gap-4">
           <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle
@@ -53,7 +53,7 @@ export const TrialWarning: React.FC = () => {
   return (
     <>
       {isInTrial && (
-        <div className="fixed top-4 left-8 md:left-8 md:top-4 left-1/2 top-4 -translate-x-1/2 md:left-8 md:-translate-x-0 bg-amber-600 text-white px-8 py-3 rounded-lg shadow-lg z-40">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 bg-amber-600 text-white px-8 py-3 rounded-lg shadow-lg z-40">
           <div className="flex items-center gap-4">
             <svg
               className="w-6 h-6"
@@ -109,7 +109,7 @@ export const TrialWarning: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="w-full btn-primary text-white py-2 px-4 rounded-lg font-medium"
               >
                 Sign In Now
               </button>
