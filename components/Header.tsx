@@ -53,7 +53,7 @@ const Header = () => {
   ];
 
   const ExternalLinkIcon = () => (
-    <FiExternalLink className="inline-block ml-1 w-3 h-3 text-blue-400" />
+    <FiExternalLink className="inline-block ml-1 w-3 h-3 external-link-icon" />
   );
 
   return (

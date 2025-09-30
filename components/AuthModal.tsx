@@ -349,7 +349,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setIsVerifying(false);
                 setIsRedirecting(false);
               }}
-              className="w-full text-center text-sm text-blue-400 hover:text-blue-300"
+              className="w-full text-center text-sm hover:opacity-80 transition-opacity"
+              style={{ color: "#3f51b5" }}
             >
               ← Back
             </button>
