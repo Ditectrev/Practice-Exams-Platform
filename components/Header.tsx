@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import HomeButton from "./HomeButton";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
@@ -60,30 +59,12 @@ const Header = () => {
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 border-b border-slate-700">
       <div className="mx-auto max-w-7xl">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left section - Home button or logo */}
+          {/* Left section - Logo */}
           <div className="flex items-center">
-            {pathname !== "/" ? (
-              <HomeButton
-                handleReturnToMainPage={() => {
-                  router.push("/");
-                }}
-              />
-            ) : (
-              <div className="flex items-center">
-                <Image
-                  src="/logo.svg"
-                  alt="Ditectrev Logo"
-                  className="h-8 w-auto"
-                  height={32}
-                  width={120}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Center section - Logo on non-home pages */}
-          {pathname !== "/" && (
-            <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 md:relative md:left-auto md:transform-none">
+            <button
+              onClick={() => router.push("/")}
+              className="flex items-center cursor-pointer"
+            >
               <Image
                 src="/logo.svg"
                 alt="Ditectrev Logo"
@@ -91,8 +72,8 @@ const Header = () => {
                 height={32}
                 width={120}
               />
-            </div>
-          )}
+            </button>
+          </div>
 
           {/* Right section - Navigation and Auth */}
           <div className="flex items-center space-x-4">
