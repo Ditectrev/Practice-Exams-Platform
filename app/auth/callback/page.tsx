@@ -14,9 +14,14 @@ function AuthCallbackContent() {
     "loading",
   );
   const [message, setMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent multiple simultaneous executions
+      if (isProcessing) return;
+      setIsProcessing(true);
+
       try {
         // Check if this is an OAuth callback
         const success = searchParams.get("success");
@@ -67,11 +72,14 @@ function AuthCallbackContent() {
           "An error occurred during authentication. Please try again.",
         );
         setTimeout(() => router.push("/"), 3000);
+      } finally {
+        setIsProcessing(false);
       }
     };
 
     handleCallback();
-  }, [router, searchParams, refreshUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   if (status === "loading") {
     return (
