@@ -143,23 +143,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleAppleSignIn = async () => {
     setIsLoading(true);
-    setMessage("Redirecting to Apple..."); // User feedback
     try {
       // Save last used method
       const method = { type: "apple", value: "Apple" };
       setLastUsedMethod(method);
       localStorage.setItem("lastUsedAuthMethod", JSON.stringify(method));
-
-      const result = await signInWithApple();
-
-      if (!result.success && result.error) {
-        setMessage(result.error);
-        setIsLoading(false);
-      }
-      // Note: For Apple OAuth, loading state will be reset when the modal auto-closes
-      // or when the page redirects. Don't reset here for successful redirects.
+      await signInWithApple();
     } catch (error) {
-      setMessage("Failed to sign in with Apple. Please try again.");
+      setMessage("Failed to sign in with Apple");
       setIsLoading(false);
     }
   };

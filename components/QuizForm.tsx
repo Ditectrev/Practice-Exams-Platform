@@ -325,33 +325,46 @@ const QuizForm: FC<Props> = ({
             {isThinking ? "Thinking..." : "Explain"}
           </Button>
         )}
-        <Button
-          type="button"
-          intent="primary"
-          size="medium"
-          disabled={currentQuestionIndex < lastIndex}
-          onClick={() => {
-            if (!showCorrectAnswer) {
-              setSavedAnswers((prev) => ({
-                ...prev,
-                [currentQuestionIndex]: watchInput,
-              }));
-            }
-            setShowCorrectAnswer(false);
-            setExplanation(null);
-            if (currentQuestionIndex === totalQuestions) {
-              handleNextQuestion(1);
-              setLastIndex(1);
-            } else {
-              handleNextQuestion(currentQuestionIndex + 1);
-              setLastIndex(currentQuestionIndex + 1);
-            }
-            setCanGoBack(false);
-            reset();
-          }}
-        >
-          Next Question
-        </Button>
+        {currentQuestionIndex < totalQuestions ? (
+          <Button
+            type="button"
+            intent="primary"
+            size="medium"
+            disabled={currentQuestionIndex < lastIndex}
+            onClick={() => {
+              if (!showCorrectAnswer) {
+                setSavedAnswers((prev) => ({
+                  ...prev,
+                  [currentQuestionIndex]: watchInput,
+                }));
+              }
+              setShowCorrectAnswer(false);
+              setExplanation(null);
+              if (currentQuestionIndex === totalQuestions) {
+                handleNextQuestion(1);
+                setLastIndex(1);
+              } else {
+                handleNextQuestion(currentQuestionIndex + 1);
+                setLastIndex(currentQuestionIndex + 1);
+              }
+              setCanGoBack(false);
+              reset();
+            }}
+          >
+            Next Question
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            intent="primary"
+            size="medium"
+            onClick={() => {
+              window.location.href = "/";
+            }}
+          >
+            Go Home
+          </Button>
+        )}
       </div>
     </form>
   );
