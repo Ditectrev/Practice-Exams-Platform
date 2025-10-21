@@ -405,7 +405,7 @@ const QuizExamForm: FC<Props> = ({
               }
             }}
           >
-            <span>Back</span>
+            <span>Back to Summary</span>
           </Button>
         </div>
       )}

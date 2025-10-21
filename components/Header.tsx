@@ -4,12 +4,15 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { FiExternalLink } from "react-icons/fi";
+import ThemeSwitch from "./ThemeSwitch";
 
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, signOut } = useAuth() || {};
+  const { theme } = useTheme();
   const [windowWidth, setWindowWidth] = useState<number>(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -56,7 +59,7 @@ const Header = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 border-b border-slate-700">
+    <header className="sticky top-0 z-40 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-100/60 dark:supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-200 dark:border-gray-800">
       <div className="mx-auto max-w-7xl">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left section - Logo */}
@@ -66,7 +69,7 @@ const Header = () => {
               className="flex items-center cursor-pointer"
             >
               <Image
-                src="/logo.svg"
+                src={theme === "light" ? "/logoBlack.svg" : "/logoWhite.svg"}
                 alt="Ditectrev Logo"
                 className="h-8 w-auto"
                 height={32}
@@ -85,7 +88,7 @@ const Header = () => {
                   href={link.href}
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noopener noreferrer" : undefined}
-                  className="text-slate-300 hover:text-white transition-colors duration-200 text-sm font-medium flex items-center"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium flex items-center"
                   aria-label={`Visit ${link.title}${
                     link.external ? " (opens in new tab)" : ""
                   }`}
@@ -101,7 +104,7 @@ const Header = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors duration-200"
+                  className="flex items-center space-x-2 bg-gray-100 dark:bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800/60 px-3 py-2 rounded-lg transition-colors duration-200"
                 >
                   <div
                     className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -113,11 +116,11 @@ const Header = () => {
                         : user.email.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="hidden sm:block text-slate-300 text-sm">
+                  <span className="hidden sm:block text-gray-500 dark:text-gray-400 text-sm">
                     {user.name || user.email.split("@")[0]}
                   </span>
                   <svg
-                    className="w-4 h-4 text-slate-400"
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -132,17 +135,17 @@ const Header = () => {
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-lg border border-slate-700 z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
                     <div className="py-2">
-                      <div className="px-4 py-2 text-sm text-slate-400 border-b border-slate-700 text-center">
+                      <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 text-center">
                         <div>Signed in as</div>
-                        <div className="font-medium text-white mt-1 break-all">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 mt-1 break-all">
                           {user.email}
                         </div>
                       </div>
                       <button
                         onClick={handleSignOut}
-                        className="w-full text-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors duration-200"
+                        className="w-full text-center px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
                       >
                         Sign Out
                       </button>
@@ -159,10 +162,13 @@ const Header = () => {
               </button>
             )}
 
+            {/* Theme Switch - Rightmost position */}
+            <ThemeSwitch />
+
             {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-slate-400 hover:text-white"
+              className="md:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               aria-label="Toggle mobile menu"
             >
               <svg
@@ -193,7 +199,7 @@ const Header = () => {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-700 bg-slate-900/98 backdrop-blur">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-gray-100/98 dark:bg-gray-900/98 backdrop-blur">
             <nav className="px-6 py-6 space-y-4 text-center">
               {navigationLinks.map((link) => (
                 <a
@@ -201,7 +207,7 @@ const Header = () => {
                   href={link.href}
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noopener noreferrer" : undefined}
-                  className="block text-slate-300 hover:text-white transition-colors duration-200 text-lg font-medium py-3"
+                  className="block text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3"
                   aria-label={`Visit ${link.title}${
                     link.external ? " (opens in new tab)" : ""
                   }`}
@@ -214,8 +220,15 @@ const Header = () => {
                 </a>
               ))}
 
+              {/* Mobile Theme Switch */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex justify-center">
+                  <ThemeSwitch />
+                </div>
+              </div>
+
               {isAuthenticated && user && (
-                <div className="pt-4 border-t border-slate-700">
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                   <div className="flex items-center space-x-3 mb-4">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -228,10 +241,12 @@ const Header = () => {
                       </span>
                     </div>
                     <div>
-                      <div className="text-white text-sm font-medium">
+                      <div className="text-gray-900 dark:text-gray-100 text-sm font-medium">
                         {user.name || user.email.split("@")[0]}
                       </div>
-                      <div className="text-slate-400 text-xs">{user.email}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">
+                        {user.email}
+                      </div>
                     </div>
                   </div>
                   <button

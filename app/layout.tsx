@@ -5,6 +5,7 @@ import Footer from "@azure-fundamentals/components/Footer";
 import ApolloProvider from "@azure-fundamentals/components/ApolloProvider";
 import Cookie from "@azure-fundamentals/components/Cookie";
 import { AuthProvider } from "@azure-fundamentals/contexts/AuthContext";
+import { ThemeProvider } from "@azure-fundamentals/contexts/ThemeContext";
 import { TrialWarning } from "@azure-fundamentals/components/TrialWarning";
 import "styles/globals.css";
 
@@ -105,19 +106,21 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body className="bg-slate-900">
-        <ApolloProvider>
-          <AuthProvider>
-            <Header />
-            <main className="flex flex-col justify-between min-h-[calc(100vh-4rem)]">
-              {children}
-              <Footer />
-              <Cookie />
-              <TrialWarning />
-            </main>
-          </AuthProvider>
-        </ApolloProvider>
+    <html lang="en" className="dark">
+      <body className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+        <ThemeProvider>
+          <ApolloProvider>
+            <AuthProvider>
+              <Header />
+              <main className="flex flex-col justify-between min-h-[calc(100vh-4rem)]">
+                {children}
+                <Footer />
+                <Cookie />
+                <TrialWarning />
+              </main>
+            </AuthProvider>
+          </ApolloProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

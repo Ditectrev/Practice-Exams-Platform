@@ -125,7 +125,55 @@ const QuizForm: FC<Props> = ({
   if (isLoading) return <LoadingIndicator />;
 
   if (!questionSet) {
-    handleNextQuestion(1);
+    // Check if we're trying to load a question beyond the available range
+    if (currentQuestionIndex > totalQuestions) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+          <div className="text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                🎉 Practice Complete!
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
+                You've completed all {totalQuestions} questions in this practice
+                session.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="w-full sm:w-auto bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                🏠 Return to Home
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 ml-0 sm:ml-4"
+              >
+                🔄 Start Over
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <p className="text-red-500 text-lg font-semibold">
@@ -133,6 +181,9 @@ const QuizForm: FC<Props> = ({
         </p>
         <p className="text-white text-md mt-2">
           Please try refreshing the page or check your internet connection.
+        </p>
+        <p className="text-gray-400 text-sm mt-2">
+          Debug: Question {currentQuestionIndex} of {totalQuestions}
         </p>
       </div>
     );
@@ -176,7 +227,7 @@ const QuizForm: FC<Props> = ({
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="w-6 h-6 text-slate-300 group-disabled:text-transparent"
+              className="w-6 h-6 text-gray-500 dark:text-slate-300 group-disabled:text-transparent"
             >
               <path
                 strokeLinecap="round"
@@ -186,7 +237,7 @@ const QuizForm: FC<Props> = ({
             </svg>
           </button>
           <div className="flex justify-center relative w-[15%] z-[1]">
-            <span className="absolute text-white opacity-10 font-bold text-6xl bottom-0 -z-[1] select-none">
+            <span className="absolute text-gray-400 dark:text-white opacity-20 dark:opacity-10 font-bold text-6xl bottom-0 -z-[1] select-none">
               Q&A
             </span>
             <NumberInputComponent
@@ -194,7 +245,7 @@ const QuizForm: FC<Props> = ({
               currentQuestionIndex={currentQuestionIndex}
               handleNextQuestion={handleNextQuestion}
             />
-            <p className="text-white text-md font-semibold text-center w-[40px] rounded-r-md border bg-slate-800 border-slate-700">
+            <p className="text-gray-900 dark:text-white text-md font-semibold text-center w-[40px] rounded-r-md border bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
               {totalQuestions}
             </p>
           </div>
@@ -218,7 +269,7 @@ const QuizForm: FC<Props> = ({
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="w-6 h-6 text-slate-300 group-disabled:text-transparent"
+              className="w-6 h-6 text-gray-500 dark:text-slate-300 group-disabled:text-transparent"
             >
               <path
                 strokeLinecap="round"
@@ -228,13 +279,15 @@ const QuizForm: FC<Props> = ({
             </svg>
           </button>
         </div>
-        <p className="text-white md:px-12 pt-10 pb-5 select-none">{question}</p>
+        <p className="text-gray-900 dark:text-white md:px-12 pt-10 pb-5 select-none">
+          {question}
+        </p>
         {images && (
           <ul className="flex flex-row justify-center gap-2 mt-5 mb-8 select-none md:px-12 px-0">
             {images.map((image) => (
               <li
                 key={image.alt}
-                className="w-[40px] h-[40px] rounded-md border border-white overflow-hidden flex flex-row justify-center"
+                className="w-[60px] h-[60px] rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden flex flex-row justify-center hover:border-primary-500 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
                 onClick={() => setSelectedImage(image)}
               >
                 <Image
@@ -340,10 +393,8 @@ const QuizForm: FC<Props> = ({
               }
               setShowCorrectAnswer(false);
               setExplanation(null);
-              if (currentQuestionIndex === totalQuestions) {
-                handleNextQuestion(1);
-                setLastIndex(1);
-              } else {
+              // Only navigate if we're not on the last question
+              if (currentQuestionIndex < totalQuestions) {
                 handleNextQuestion(currentQuestionIndex + 1);
                 setLastIndex(currentQuestionIndex + 1);
               }

@@ -97,8 +97,8 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
   // Block access if trial expired
   if (isAccessBlocked) {
     return (
-      <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg text-center">
-        <div className="text-red-400 text-lg mb-4">
+      <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+        <div className="text-red-500 dark:text-red-400 text-lg mb-4">
           ⏰ Trial expired. Please sign in to continue taking exams.
         </div>
         <button
@@ -117,7 +117,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
   const numberOfQuestions = data.randomQuestions.length || 0;
 
   return (
-    <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg">
+    <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg mt-8">
       {isInTrial && (
         <div className="mb-6 p-4 bg-amber-600/20 border border-amber-600/40 rounded-lg">
           <div className="flex items-center gap-2 text-amber-300">
@@ -142,13 +142,13 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
       )}
       <div>
         <div className="px-2 sm:px-10 w-full flex flex-row justify-between items-center">
-          <p className="text-white font-bold text-sm sm:text-2xl">
+          <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-2xl">
             ✅ {countAnswered}/{numberOfQuestions}
           </p>
-          <h1 className="text-white font-bold text-lg sm:text-3xl">
+          <h1 className="text-gray-900 dark:text-white font-bold text-lg sm:text-3xl">
             PRACTICE EXAM
           </h1>
-          <p className="text-white font-bold text-sm sm:text-2xl">
+          <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-2xl">
             {remainingTime}
           </p>
         </div>
@@ -202,7 +202,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
                 c0.53,0,0.97,0.43,0.97,0.97V29.35z"
                   />
                 </svg>
-                <p className="text-white text-center pt-6 px-6">
+                <p className="text-gray-900 dark:text-white text-center pt-6 px-6">
                   Practice Exam help you practice skills, assess your knowledge,
                   and identify the areas where you need additional preparation
                   to accelerate your chances of succeeding on certification
@@ -211,7 +211,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
                   are likely to experience on Azure Fundamentals real exam.
                 </p>
               </div>
-              <p className="text-white font-bold text-xl text-center pt-20 px-6 mb-40">
+              <p className="text-gray-900 dark:text-white font-bold text-xl text-center pt-20 px-6 mb-40">
                 This Practice Exam contains {numberOfQuestions} random questions
                 (seen in upper left corner) and has a completion time limit of{" "}
                 {remainingTime.split(":")[0]} minutes (seen in upper right

@@ -20,8 +20,10 @@ const Home: NextPage = () => {
 
   return (
     <div className="mx-auto mb-6 w-full lg:w-[70vw] 2xl:w-[45%] text-center">
-      <h2 className="text-white text-5xl font-bold uppercase">Welcome!</h2>
-      <p className="text-white text-lg mt-4 mb-6 px-5 leading-6">
+      <h2 className="text-gray-900 dark:text-gray-100 text-5xl font-bold uppercase">
+        Welcome!
+      </h2>
+      <p className="text-gray-900 dark:text-gray-100 text-lg mt-4 mb-6 px-5 leading-6">
         Select an exam from the list below.
       </p>
       <input
@@ -29,7 +31,7 @@ const Home: NextPage = () => {
         value={searchTerm}
         onChange={handleSearchChange}
         placeholder="Search exams"
-        className="mb-6 px-4 py-2 border border-gray-300 rounded-md w-3/4 lg:w-1/2"
+        className="mb-6 px-4 py-2 border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md w-3/4 lg:w-1/2"
       />
       <div
         className={`grid ${
@@ -48,12 +50,12 @@ const Home: NextPage = () => {
               }}
               heading={exam.name}
               paragraph={exam.subtitle}
-              wrapperClassNames="hover:bg-[#C7D2E2]"
-              headingClassNames="group-hover:from-[#fff] group-hover:to-[#fff]"
+              wrapperClassNames=""
+              headingClassNames=""
             />
           ))
         ) : (
-          <p className="text-white text-lg mt-4">
+          <p className="text-gray-900 dark:text-gray-100 text-lg mt-4">
             No exams were found for your query.
           </p>
         )}
