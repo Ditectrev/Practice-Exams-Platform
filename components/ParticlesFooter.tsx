@@ -13,6 +13,104 @@ export default function ParticlesFooter() {
   const particlesRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
+  const initializeParticles = () => {
+    const particlesElement = particlesRef.current;
+    if (particlesElement && window.particlesJS) {
+      window.particlesJS("particles-footer", {
+        particles: {
+          number: {
+            value: 70,
+            density: {
+              enable: true,
+              value_area: 1400,
+            },
+          },
+          color: {
+            value: "#3f51b5",
+          },
+          shape: {
+            type: "polygon",
+            stroke: {
+              width: 1,
+              color: "#3f51b5",
+            },
+            polygon: {
+              nb_sides: 6,
+            },
+          },
+          opacity: {
+            value: 1,
+            random: true,
+            anim: {
+              enable: true,
+              speed: 0.8,
+              opacity_min: 0.25,
+              sync: true,
+            },
+          },
+          size: {
+            value: 2,
+            random: true,
+            anim: {
+              enable: true,
+              speed: 10,
+              size_min: 1.25,
+              sync: true,
+            },
+          },
+          line_linked: {
+            enable: true,
+            distance: 150,
+            color: "#3f51b5",
+            opacity: 1,
+            width: 1,
+          },
+          move: {
+            enable: true,
+            speed: 8,
+            direction: "none",
+            random: true,
+            straight: false,
+            out_mode: "out",
+            bounce: true,
+            attract: {
+              enable: true,
+              rotateX: 2000,
+              rotateY: 2000,
+            },
+          },
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: {
+              enable: true,
+              mode: "grab",
+            },
+            onclick: {
+              enable: true,
+              mode: "repulse",
+            },
+            resize: true,
+          },
+          modes: {
+            grab: {
+              distance: 200,
+              line_linked: {
+                opacity: 3,
+              },
+            },
+            repulse: {
+              distance: 250,
+              duration: 2,
+            },
+          },
+        },
+        retina_detect: true,
+      });
+    }
+  };
+
   useEffect(() => {
     const loadParticles = async () => {
       // Load particles.js script
@@ -29,109 +127,13 @@ export default function ParticlesFooter() {
       }
     };
 
-    const initializeParticles = () => {
-      if (particlesRef.current && window.particlesJS) {
-        window.particlesJS("particles-footer", {
-          particles: {
-            number: {
-              value: 70,
-              density: {
-                enable: true,
-                value_area: 1400,
-              },
-            },
-            color: {
-              value: "#3f51b5",
-            },
-            shape: {
-              type: "polygon",
-              stroke: {
-                width: 1,
-                color: "#3f51b5",
-              },
-              polygon: {
-                nb_sides: 6,
-              },
-            },
-            opacity: {
-              value: 1,
-              random: true,
-              anim: {
-                enable: true,
-                speed: 0.8,
-                opacity_min: 0.25,
-                sync: true,
-              },
-            },
-            size: {
-              value: 2,
-              random: true,
-              anim: {
-                enable: true,
-                speed: 10,
-                size_min: 1.25,
-                sync: true,
-              },
-            },
-            line_linked: {
-              enable: true,
-              distance: 150,
-              color: "#3f51b5",
-              opacity: 1,
-              width: 1,
-            },
-            move: {
-              enable: true,
-              speed: 8,
-              direction: "none",
-              random: true,
-              straight: false,
-              out_mode: "out",
-              bounce: true,
-              attract: {
-                enable: true,
-                rotateX: 2000,
-                rotateY: 2000,
-              },
-            },
-          },
-          interactivity: {
-            detect_on: "canvas",
-            events: {
-              onhover: {
-                enable: true,
-                mode: "grab",
-              },
-              onclick: {
-                enable: true,
-                mode: "repulse",
-              },
-              resize: true,
-            },
-            modes: {
-              grab: {
-                distance: 200,
-                line_linked: {
-                  opacity: 3,
-                },
-              },
-              repulse: {
-                distance: 250,
-                duration: 2,
-              },
-            },
-          },
-          retina_detect: true,
-        });
-      }
-    };
-
     loadParticles();
 
     // Cleanup
     return () => {
-      if (particlesRef.current) {
-        particlesRef.current.innerHTML = "";
+      const particlesElement = particlesRef.current;
+      if (particlesElement) {
+        particlesElement.innerHTML = "";
       }
     };
   }, [theme]);

@@ -150,8 +150,8 @@ const QuizForm: FC<Props> = ({
                 🎉 Practice Complete!
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
-                You've completed all {totalQuestions} questions in this practice
-                session.
+                You&apos;ve completed all {totalQuestions} questions in this
+                practice session.
               </p>
             </div>
 
@@ -307,10 +307,13 @@ const QuizForm: FC<Props> = ({
             onClick={handleClickOutside}
             className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50"
           >
-            <img
+            <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
               className="max-w-[90%] max-h-[90%]"
+              width={800}
+              height={600}
+              unoptimized
             />
             <button
               onClick={() => setSelectedImage(null)}
