@@ -40,14 +40,14 @@ const SelectionInput = forwardRef<HTMLInputElement, Props>(
         />
         <label
           htmlFor={id}
-          className={`m-[1px] flex cursor-pointer items-center rounded-lg border hover:bg-slate-600 p-4 text-xs sm:text-sm font-medium shadow-sm ${
+          className={`m-[1px] flex cursor-pointer items-center rounded-lg border transition-all duration-200 hover:scale-105 p-4 text-xs sm:text-sm font-medium shadow-sm ${
             showCorrectAnswer && isAnswer
               ? defaultChecked
                 ? "border-emerald-500 bg-emerald-500/25 hover:border-emerald-400 hover:bg-emerald-600/50"
                 : "peer-checked:border-emerald-500 peer-checked:bg-emerald-500/50 border-emerald-500 bg-emerald-500/25 hover:border-emerald-400 hover:bg-emerald-600/50"
               : defaultChecked
-              ? "border-gray-400 bg-gray-500/25 hover:border-gray-300 hover:bg-gray-600"
-              : "peer-checked:border-gray-400 peer-checked:hover:border-slate-300 peer-checked:bg-gray-600 border-slate-500 bg-gray-600/25 hover:border-gray-400/75 hover:bg-gray-600/75"
+              ? "border-gray-400 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20"
+              : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20 hover:border-primary-500 dark:hover:border-primary-500 peer-checked:border-gray-500 dark:peer-checked:border-gray-500 peer-checked:bg-gray-100 dark:peer-checked:bg-gray-700"
           }`}
         >
           <svg
@@ -56,7 +56,7 @@ const SelectionInput = forwardRef<HTMLInputElement, Props>(
             } absolute h-5 w-5 p-0.5 ${
               showCorrectAnswer && isAnswer
                 ? "text-emerald-500 border-emerald-600"
-                : "text-gray-200 border-slate-500"
+                : "text-gray-700 dark:text-gray-300 border-gray-400 dark:border-gray-600"
             }`}
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 16 16"
@@ -70,7 +70,7 @@ const SelectionInput = forwardRef<HTMLInputElement, Props>(
             />
           </svg>
 
-          <span className="text-gray-200 pl-7 break-words inline-block w-full">
+          <span className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full">
             {label}
           </span>
         </label>

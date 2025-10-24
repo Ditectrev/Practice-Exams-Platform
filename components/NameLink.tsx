@@ -1,6 +1,7 @@
 import Link, { LinkProps } from "next/link";
 import clsx from "clsx";
 import { AnchorHTMLAttributes } from "react";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface NameLinkProps
   extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">,
@@ -18,24 +19,26 @@ const NameLink = ({
   headingClassNames,
   ...linkProps
 }: NameLinkProps) => {
+  const { theme } = useTheme();
+
   return (
     <Link
       {...linkProps}
-      className={clsx(
-        wrapperClassNames,
-        `group bg-slate-700 hover:bg-gradient-to-r rounded-xl p-[2px] w-full h-[100px] cursor-pointer`,
-      )}
+      className={clsx("card-hover-effect", wrapperClassNames)}
     >
-      <div
+      <h3
         className={clsx(
+          "text-gray-900 dark:text-white text-lg font-bold mb-2",
           headingClassNames,
-          "flex flex-col justify-center items-center h-full bg-slate-800 rounded-xl px-7",
         )}
       >
-        <h2 className="text-white group-hover:bg-gradient-to-r group-hover:text-transparent bg-clip-text uppercase text-xl font-bold">
-          {heading}
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">{paragraph}</p>
+        {heading}
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{paragraph}</p>
+
+      {/* Corner arrow */}
+      <div className="go-corner">
+        <div className="go-arrow">→</div>
       </div>
     </Link>
   );

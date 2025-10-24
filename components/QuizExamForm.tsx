@@ -221,10 +221,13 @@ const QuizExamForm: FC<Props> = ({
         )}
         {selectedImage && (
           <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50">
-            <img
+            <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
               className="max-w-[90%] max-h-[90%]"
+              width={800}
+              height={600}
+              unoptimized
             />
             <button
               onClick={() => setSelectedImage(null)}
@@ -397,7 +400,7 @@ const QuizExamForm: FC<Props> = ({
           </Button>
           <Button
             type="button"
-            intent="secondary"
+            intent="primary"
             size="medium"
             onClick={() => {
               if (hideExam) {
@@ -405,7 +408,7 @@ const QuizExamForm: FC<Props> = ({
               }
             }}
           >
-            <span>Back</span>
+            <span>Back to Summary</span>
           </Button>
         </div>
       )}

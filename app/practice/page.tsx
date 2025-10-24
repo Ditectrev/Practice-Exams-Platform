@@ -72,7 +72,14 @@ const Practice: NextPage = () => {
   }, [seq]);
 
   const handleNextQuestion = (questionNo: number) => {
-    if (questionNo > 0 && questionNo - 1 < questionsData?.questions?.count) {
+    // Fix off-by-one error: subtract 1 from the count since it's 1-indexed but count is 0-indexed
+    const totalQuestions = Math.max(
+      0,
+      (questionsData?.questions?.count || 0) - 1,
+    );
+
+    // Allow navigation to questions 1 through totalQuestions
+    if (questionNo > 0 && questionNo <= totalQuestions) {
       setCurrentQuestionIndex(questionNo);
       setThisSeqIntoURL(questionNo);
     }
@@ -86,8 +93,8 @@ const Practice: NextPage = () => {
   // Block access if trial expired
   if (isAccessBlocked) {
     return (
-      <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg text-center">
-        <div className="text-red-400 text-lg mb-4">
+      <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+        <div className="text-red-500 dark:text-red-400 text-lg mb-4">
           ⏰ Trial expired. Please sign in to continue practicing.
         </div>
         <button
@@ -104,7 +111,7 @@ const Practice: NextPage = () => {
   if (questionsError) return <p>Oh no... {questionsError.message}</p>;
 
   return (
-    <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg">
+    <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg mt-8">
       {isInTrial && (
         <div className="mb-6 p-4 bg-amber-600/20 border border-amber-600/40 rounded-lg">
           <div className="flex items-center gap-2 text-amber-300">
@@ -131,7 +138,7 @@ const Practice: NextPage = () => {
         isLoading={loading || questionsLoading}
         questionSet={data?.questionById}
         handleNextQuestion={handleNextQuestion}
-        totalQuestions={questionsData?.questions?.count}
+        totalQuestions={Math.max(0, (questionsData?.questions?.count || 0) - 1)}
         currentQuestionIndex={currentQuestionIndex}
         link={editedUrl}
       />

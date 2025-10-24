@@ -26,11 +26,11 @@ const ExamResult: React.FC<Props> = ({
       )}
 
       <div className="flex justify-center relative z-[1]">
-        <span className="text-white opacity-10 font-bold text-7xl sm:text-6xl md:text-8xl lg:text-9xl -z-[1] select-none">
+        <span className="text-gray-400 dark:text-white opacity-20 dark:opacity-10 font-bold text-7xl sm:text-6xl md:text-8xl lg:text-9xl -z-[1] select-none">
           POINTS
         </span>
 
-        <div className="absolute text-white text-4xl sm:text-6xl font-semibold text-center grid place-items-center top-0 bottom-0">
+        <div className="absolute text-gray-900 dark:text-white text-4xl sm:text-6xl font-semibold text-center grid place-items-center top-0 bottom-0">
           <p>
             <span className={status ? "text-green-500" : "text-red-500"}>
               {points}
@@ -39,7 +39,7 @@ const ExamResult: React.FC<Props> = ({
           </p>
         </div>
       </div>
-      <p className="text-white text-sm sm:text-lg mx-auto sm:w-[490px] text-center mt-5 mb-10 sm:mb-20">
+      <p className="text-gray-900 dark:text-white text-sm sm:text-lg mx-auto sm:w-[490px] text-center mt-5 mb-10 sm:mb-20">
         {status ? (
           <>
             <p>Congratulations!</p>

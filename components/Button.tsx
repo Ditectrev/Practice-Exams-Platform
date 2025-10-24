@@ -4,13 +4,16 @@ import React from "react";
 const button = cva("button", {
   variants: {
     intent: {
-      primary: ["btn-primary", "focus:ring-blue-800"],
+      primary: ["btn-primary", "focus:ring-primary-800"],
       secondary: [
-        "bg-emerald-600/50",
-        "border-emerald-600",
-        "hover:bg-emerald-600/60",
-        "focus:ring-green-800",
-        "border-emerald-600",
+        "bg-transparent",
+        "border-primary-500",
+        "hover:bg-primary-500/10",
+        "hover:border-primary-600",
+        "hover:scale-105",
+        "hover:shadow-primary-500/20",
+        "focus:ring-primary-800",
+        "text-primary-500 dark:text-white",
         "sm:mr-2",
       ],
     },
@@ -51,7 +54,7 @@ export const Button: React.FC<ButtonProps> = ({
       intent,
       size,
       variant,
-    })} text-white rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0 ${
+    })} rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0 disabled:cursor-not-allowed disabled:opacity-50 ${
       className || ""
     }`}
     {...props}
