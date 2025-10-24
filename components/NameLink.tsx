@@ -24,31 +24,21 @@ const NameLink = ({
   return (
     <Link
       {...linkProps}
-      className={clsx(
-        "group rounded-xl w-full h-[100px] cursor-pointer transition-all duration-200",
-        "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
-        "hover:shadow-xl hover:shadow-primary-500/20 hover:scale-105 hover:border-primary-500 dark:hover:shadow-xl dark:hover:shadow-primary-500/20 dark:hover:border-primary-500",
-        wrapperClassNames,
-      )}
+      className={clsx("card-hover-effect", wrapperClassNames)}
     >
-      <div
+      <h3
         className={clsx(
+          "text-gray-900 dark:text-white text-lg font-bold mb-2",
           headingClassNames,
-          "flex flex-col justify-center items-center h-full rounded-xl px-7",
         )}
       >
-        <h2
-          className={clsx(
-            "uppercase text-xl font-bold transition-colors duration-200",
-            "text-gray-900 dark:text-white",
-            "group-hover:text-primary",
-          )}
-        >
-          {heading}
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {paragraph}
-        </p>
+        {heading}
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{paragraph}</p>
+
+      {/* Corner arrow */}
+      <div className="go-corner">
+        <div className="go-arrow">→</div>
       </div>
     </Link>
   );

@@ -34,9 +34,6 @@ export default function NotFound() {
       {/* Action buttons */}
       <div className="link-container">
         <Link href="/" className="more-link">
-          🚀 Return Home
-        </Link>
-        <Link href="/modes" className="more-link">
           📚 Browse Exams
         </Link>
       </div>

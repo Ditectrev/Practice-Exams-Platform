@@ -357,7 +357,7 @@ const QuizExamForm: FC<Props> = ({
           </Button>
           <Button
             type="button"
-            intent="secondary"
+            intent="primary"
             size="medium"
             onClick={() => {
               if (hideExam) {

@@ -49,12 +49,20 @@ a[target="_blank"]:hover .external-link-icon {
 .btn-primary {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
-  transition: background-color 200ms ease-in-out;
+  color: white;
+  transition: all 200ms ease-in-out;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.4);
+}
+
+/* Dark mode primary button improvements */
+.dark .btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.6) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
 .loading-container {
@@ -456,5 +464,167 @@ a.more-link {
 
 a.more-link:hover {
   background-color: #3949ab;
+}
+
+/* CodePen-style card hover effects - Combined Option 1, 2, and 3 */
+.card-hover-effect {
+  display: block;
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 4px;
+  padding: 32px 24px;
+  margin: 12px;
+  text-decoration: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: all 2.4s ease-out;
+  border: 1px solid #e5e7eb;
+  top: 0px;
+  box-shadow: 0 4px 6px -1px rgba(63, 81, 181, 0.1), 0 2px 4px -1px rgba(63, 81, 181, 0.05);
+  text-align: center;
+}
+
+
+.card-hover-effect:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -16px;
+  right: -16px;
+  background: var(--color-primary);
+  height: 32px;
+  width: 32px;
+  border-radius: 32px;
+  transform: scale(1);
+  transform-origin: 50% 50%;
+  transition: transform 1.2s ease-out;
+}
+
+.card-hover-effect:hover:before {
+  transform: scale(50);
+}
+
+.card-hover-effect:hover {
+  transition: all 0.2s ease-out;
+  box-shadow: 0px 11px 15px -7px rgba(63, 81, 181, 0.2), 0px 24px 38px 3px rgba(63, 81, 181, 0.14), 0px 9px 46px 8px rgba(63, 81, 181, 0.12);
+  top: -8px;
+  border: 1px solid #3f51b5;
+  background-color: white;
+}
+
+.card-hover-effect:hover p {
+  transition: all 2.4s ease-out;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.card-hover-effect:hover h3,
+.card-hover-effect:hover h2 {
+  transition: all 2.4s ease-out;
+  color: #ffffff;
+}
+
+.go-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  top: 0;
+  right: 0;
+  background-color: var(--color-primary);
+  border-radius: 0 4px 0 32px;
+}
+
+.go-arrow {
+  margin-top: -4px;
+  margin-right: -4px;
+  color: white;
+  font-family: courier, sans;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Dark mode adjustments */
+.dark .card-hover-effect {
+  background-color: #1f2937; /* gray-800 */
+  border: 1px solid #374151; /* gray-700 */
+  box-shadow: 0 4px 6px -1px rgba(63, 81, 181, 0.2), 0 2px 4px -1px rgba(63, 81, 181, 0.1);
+}
+
+.dark .card-hover-effect:hover {
+  border: 1px solid #3f51b5; /* primary color */
+  background-color: #374151; /* gray-700 */
+  box-shadow: 0px 11px 15px -7px rgba(63, 81, 181, 0.4), 0px 24px 38px 3px rgba(63, 81, 181, 0.3), 0px 9px 46px 8px rgba(63, 81, 181, 0.25);
+}
+
+.dark .card-hover-effect:hover p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dark .card-hover-effect:hover h3 {
+  color: #ffffff;
+}
+
+/* Option 3 - Dimmer effect for other cards */
+.card-hover-effect.dimmed {
+  opacity: 0.3;
+  transition: opacity 0.3s ease-out;
+}
+
+.card-hover-effect.dimmed:hover {
+  opacity: 1;
+}
+
+/* Cards container - no overlay needed */
+.cards-container {
+  position: relative;
+}
+
+/* Add spacing for headings and paragraphs in cards */
+.card-hover-effect h2,
+.card-hover-effect h3 {
+  position: absolute;
+  top: 52px;
+  left: 24px;
+  right: 24px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+}
+
+.card-hover-effect p {
+  position: absolute;
+  top: 100px;
+  left: 24px;
+  right: 24px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+/* Default dimensions for main page tiles */
+.card-hover-effect {
+  width: 100%;
+  height: 200px;
+}
+
+/* Specific styling for modes page tiles */
+.modes-page .card-hover-effect {
+  height: 300px !important;
+}
+
+.modes-page .card-hover-effect p {
+  margin-top: 1rem !important;
+}
+
+/* Fix search input focus states */
+input[type="text"]:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2) !important;
 }
 

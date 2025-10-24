@@ -221,7 +221,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
             <div className="flex flex-col sm:flex-row justify-center">
               <Button
                 type="button"
-                intent="secondary"
+                intent="primary"
                 size="medium"
                 onClick={() => startTimer()}
               >
