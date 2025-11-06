@@ -27,11 +27,12 @@ const questionsQuery = gql`
   }
 `;
 
-const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
-  searchParams,
-}) => {
+const Exam: NextPage = () => {
   const { isAccessBlocked, isInTrial } = useTrialAccess();
-  const { url } = searchParams;
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
+    null,
+  );
+  const url = searchParams?.get("url") || "";
   const { minutes, seconds } = {
     minutes: 15,
     seconds: 0,
@@ -45,15 +46,22 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
   const [countAnswered, setCountAnswered] = useState<number>(0);
   const { data, loading, error } = useQuery(questionsQuery, {
     variables: { range: 30, link: url },
+    skip: !url, // Skip query if URL is not available
   });
   const [resultPoints, setResultPoints] = useState<number>(0);
   const [passed, setPassed] = useState<boolean>(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);
-  const editedUrl = url.substring(0, url.lastIndexOf("/") + 1);
+  const editedUrl =
+    url && url.includes("/") ? url.substring(0, url.lastIndexOf("/") + 1) : "";
   const elapsedSeconds =
     totalTimeInSeconds -
     (parseInt(remainingTime.split(":")[0]) * 60 +
       parseInt(remainingTime.split(":")[1]));
+
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search);
+    setSearchParams(param);
+  }, []);
 
   const handleCountAnswered = () => {
     setCountAnswered(countAnswered + 1);
@@ -89,30 +97,92 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
     setCurrentQuestion(data?.randomQuestions[0]);
   }, [data]);
 
-  // Show loading while checking trial access
-  if (isAccessBlocked === undefined) {
+  // Show loading while checking trial access or waiting for URL
+  if (isAccessBlocked === undefined || !searchParams) {
     return <LoadingIndicator />;
+  }
+
+  // Check if URL is missing
+  if (!url) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Exam URL is missing. Please select an exam from the home page.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Block access if trial expired
   if (isAccessBlocked) {
     return (
-      <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
-        <div className="text-red-500 dark:text-red-400 text-lg mb-4">
-          ⏰ Trial expired. Please sign in to continue taking exams.
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⏰ Trial expired. Please sign in to continue taking exams.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
         </div>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="btn-primary text-white px-6 py-2 rounded-lg"
-        >
-          Go to Home
-        </button>
       </div>
     );
   }
 
   if (loading) return <LoadingIndicator />;
-  if (error) return <p>Oh no... {error.message}</p>;
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Error loading exam questions
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            {error.message}
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data?.randomQuestions || data.randomQuestions.length === 0) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-yellow-200 dark:border-yellow-700 rounded-lg text-center">
+          <div className="text-yellow-600 dark:text-yellow-400 text-lg mb-4">
+            ⚠️ No questions found for this exam
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            The exam questions could not be loaded. Please try again later or
+            select a different exam.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const numberOfQuestions = data.randomQuestions.length || 0;
 

@@ -41,10 +41,12 @@ const Practice: NextPage = () => {
   const seq = seqParam ? parseInt(seqParam) : 1;
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(seq);
-  const editedUrl = url.substring(0, url.lastIndexOf("/") + 1);
+  const editedUrl =
+    url && url.includes("/") ? url.substring(0, url.lastIndexOf("/") + 1) : "";
 
   const { loading, error, data } = useQuery(questionQuery, {
     variables: { id: currentQuestionIndex - 1, link: url },
+    skip: !url, // Skip query if URL is not available
   });
 
   useEffect(() => {
@@ -58,6 +60,7 @@ const Practice: NextPage = () => {
     error: questionsError,
   } = useQuery(questionsQuery, {
     variables: { link: url },
+    skip: !url, // Skip query if URL is not available
   });
 
   const setThisSeqIntoURL = useCallback((seq: number) => {
@@ -85,30 +88,90 @@ const Practice: NextPage = () => {
     }
   };
 
-  // Show loading while checking trial access
-  if (isAccessBlocked === undefined) {
+  // Show loading while checking trial access or waiting for URL
+  if (isAccessBlocked === undefined || !searchParams) {
     return <LoadingIndicator />;
+  }
+
+  // Check if URL is missing
+  if (!url) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Practice URL is missing. Please select an exam from the home
+            page.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Block access if trial expired
   if (isAccessBlocked) {
     return (
-      <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
-        <div className="text-red-500 dark:text-red-400 text-lg mb-4">
-          ⏰ Trial expired. Please sign in to continue practicing.
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⏰ Trial expired. Please sign in to continue practicing.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
         </div>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="btn-primary text-white px-6 py-2 rounded-lg"
-        >
-          Go to Home
-        </button>
       </div>
     );
   }
 
-  if (error) return <p>Oh no... {error.message}</p>;
-  if (questionsError) return <p>Oh no... {questionsError.message}</p>;
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Error loading question
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            {error.message}
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (questionsError) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Error loading questions
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            {questionsError.message}
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-10 px-5 mb-6 sm:p-10 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg mt-8">

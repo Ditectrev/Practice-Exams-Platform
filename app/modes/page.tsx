@@ -1,14 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { NextPage } from "next";
 import ExamLink from "@azure-fundamentals/components/ExamLink";
 
-const Modes: NextPage<{ searchParams: { url: string; name: string } }> = ({
-  searchParams,
-}) => {
-  const { url, name } = searchParams;
+const Modes: NextPage = () => {
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
+    null,
+  );
+  const url = searchParams?.get("url") || "";
+  const name = searchParams?.get("name") || "";
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search);
+    setSearchParams(param);
+  }, []);
+
+  // Show loading while waiting for URL
+  if (!searchParams) {
+    return (
+      <div className="mx-auto mb-6 w-full lg:w-[70vw] 2xl:w-[45%] text-center px-6 pr-8 sm:px-8 sm:pr-12 lg:px-12 lg:pr-16 modes-page">
+        <div className="text-gray-900 dark:text-gray-100 text-4xl text-leading font-bold uppercase mt-16">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  // Check if URL or name is missing
+  if (!url || !name) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="mx-auto w-full lg:w-[70vw] 2xl:w-[45%] text-center px-6 pr-8 sm:px-8 sm:pr-12 lg:px-12 lg:pr-16 modes-page">
+          <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg py-10 px-5 sm:p-10">
+            <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+              ⚠️ Exam information is missing. Please select an exam from the
+              home page.
+            </div>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="btn-primary text-white px-6 py-2 rounded-lg"
+            >
+              Go to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto mb-6 w-full lg:w-[70vw] 2xl:w-[45%] text-center px-6 pr-8 sm:px-8 sm:pr-12 lg:px-12 lg:pr-16 modes-page">
