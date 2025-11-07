@@ -101,7 +101,7 @@ const Header = () => {
 
             {/* Authentication */}
             {isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 bg-gray-100 dark:bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800/60 px-3 py-2 rounded-lg transition-colors duration-200"
@@ -222,7 +222,7 @@ const Header = () => {
 
               {isAuthenticated && user && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                  <div className="flex items-center space-x-3 mb-4">
+                  <div className="flex flex-col items-center space-y-2 mb-4">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: "#3f51b5" }}
@@ -233,7 +233,7 @@ const Header = () => {
                           : user.email.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div>
+                    <div className="text-center">
                       <div className="text-gray-900 dark:text-gray-100 text-sm font-medium">
                         {user.name || user.email.split("@")[0]}
                       </div>
@@ -247,7 +247,7 @@ const Header = () => {
                       handleSignOut();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    className="block mx-auto text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
                   >
                     Sign Out
                   </button>
