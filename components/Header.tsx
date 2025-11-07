@@ -220,13 +220,6 @@ const Header = () => {
                 </a>
               ))}
 
-              {/* Mobile Theme Switch */}
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                <div className="flex justify-center">
-                  <ThemeSwitch />
-                </div>
-              </div>
-
               {isAuthenticated && user && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                   <div className="flex items-center space-x-3 mb-4">

@@ -25,7 +25,7 @@ const Cookie: FC = () => {
   return (
     <>
       <button
-        className={`w-fit self-center md:fixed p-2 rounded-2xl md:bottom-1 md:left-1 ${
+        className={`flex items-center justify-center fixed bottom-4 left-4 p-2 rounded-2xl shadow-lg ${
           theme === "dark" ? "bg-white" : "bg-black"
         }`}
         type="button"
