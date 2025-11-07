@@ -247,7 +247,7 @@ const Header = () => {
                       handleSignOut();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    className="w-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
                   >
                     Sign Out
                   </button>
