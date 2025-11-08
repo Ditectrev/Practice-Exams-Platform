@@ -30,7 +30,7 @@ const NumberInputComponent: React.FC<Props> = ({
 
   return (
     <input
-      className="w-[40px] text-white rounded-l-md border outline-0 border-slate-700 bg-slate-900 text-center text-md [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
+      className="w-[40px] text-gray-900 dark:text-white rounded-l-md border outline-0 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-center text-md [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
       type="number"
       min={0}
       max={totalQuestions}

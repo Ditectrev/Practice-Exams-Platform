@@ -4,28 +4,38 @@ import "vanilla-cookieconsent/dist/cookieconsent.css";
 import * as CookieConsent from "vanilla-cookieconsent";
 import getConfig from "@azure-fundamentals/utils/CookieConfig";
 import addCookieConsentListeners from "@azure-fundamentals/utils/CookieListeners";
+import { useTheme } from "../contexts/ThemeContext";
 import Script from "next/script";
 
 const Cookie: FC = () => {
   const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_TRACKING_ID;
+  const { theme } = useTheme();
 
   useEffect(() => {
     addCookieConsentListeners();
     CookieConsent.run(getConfig());
   }, []);
 
+  const handleShowPreferences = () => {
+    if (CookieConsent && typeof CookieConsent.showPreferences === "function") {
+      CookieConsent.showPreferences();
+    }
+  };
+
   return (
     <>
       <button
-        className="w-fit self-center md:fixed bg-white p-2 rounded-2xl md:bottom-1 md:left-1"
+        className={`flex items-center justify-center fixed bottom-4 left-4 p-2 rounded-2xl shadow-lg ${
+          theme === "dark" ? "bg-white" : "bg-black"
+        }`}
         type="button"
-        onClick={CookieConsent.showPreferences}
+        onClick={handleShowPreferences}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
           height="16"
-          fill="currentColor"
+          fill={theme === "dark" ? "black" : "white"}
           viewBox="0 0 16 16"
         >
           <path d="M6 7.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m4.5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-.5 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0" />

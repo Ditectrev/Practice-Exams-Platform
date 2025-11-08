@@ -176,7 +176,7 @@ const QuizExamForm: FC<Props> = ({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="relative min-h-40">
         <div className="relative min-h-40 mt-8">
-          <p className="text-white px-12 py-6 select-none">
+          <p className="text-gray-900 dark:text-white px-12 py-6 select-none">
             {currentQuestionIndex + 1}. {question}
           </p>
         </div>
@@ -185,7 +185,7 @@ const QuizExamForm: FC<Props> = ({
             {images.map((image) => (
               <li
                 key={image.alt}
-                className="w-[40px] h-[40px] rounded-md border border-white overflow-hidden flex flex-row justify-center"
+                className="w-[60px] h-[60px] rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden flex flex-row justify-center hover:border-primary-500 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
                 onClick={() => setSelectedImage(image)}
               >
                 <Image
@@ -202,10 +202,13 @@ const QuizExamForm: FC<Props> = ({
         )}
         {selectedImage && (
           <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50">
-            <img
+            <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
               className="max-w-[90%] max-h-[90%]"
+              width={800}
+              height={600}
+              unoptimized
             />
             <button
               onClick={() => setSelectedImage(null)}
@@ -248,7 +251,7 @@ const QuizExamForm: FC<Props> = ({
             />
             <label
               htmlFor={`options.${currentQuestionIndex}.${index}`}
-              className={`m-[1px] flex cursor-pointer items-center rounded-lg border hover:bg-slate-600 p-4 text-xs sm:text-sm font-medium shadow-sm ${
+              className={`m-[1px] flex cursor-pointer items-center rounded-lg border transition-all duration-200 hover:scale-105 p-4 text-xs sm:text-sm font-medium shadow-sm ${
                 showCorrectAnswer && option.isAnswer
                   ? option.checked
                     ? "border-emerald-500 bg-emerald-500/25 hover:border-emerald-400 hover:bg-emerald-600/50"
@@ -258,10 +261,10 @@ const QuizExamForm: FC<Props> = ({
                           : ""
                       }`
                   : option.checked
-                  ? "border-gray-400 bg-gray-500/25 hover:border-gray-300 hover:bg-gray-600"
-                  : `border-slate-500 bg-gray-600/25 hover:border-gray-400/75 hover:bg-gray-600/75 ${
+                  ? "border-gray-400 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20"
+                  : `border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20 hover:border-primary-500 dark:hover:border-primary-500 ${
                       option.checked
-                        ? "border-gray-400 hover:border-slate-300 bg-gray-600"
+                        ? "border-gray-400 dark:border-gray-500 hover:border-primary-500 bg-gray-100 dark:bg-gray-700"
                         : ""
                     }`
               }`}
@@ -272,7 +275,7 @@ const QuizExamForm: FC<Props> = ({
                 } absolute h-5 w-5 p-0.5 ${
                   showCorrectAnswer && option.isAnswer
                     ? "text-emerald-500 border-emerald-600"
-                    : "text-gray-200 border-slate-500"
+                    : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600"
                 }`}
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 16 16"
@@ -285,7 +288,7 @@ const QuizExamForm: FC<Props> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-gray-200 pl-7 break-words inline-block w-full">
+              <span className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full">
                 {option?.text}
               </span>
             </label>
@@ -296,7 +299,7 @@ const QuizExamForm: FC<Props> = ({
         <div className="flex justify-center flex-col sm:flex-row gap-4">
           <Button
             type="button"
-            intent="primary"
+            intent="secondary"
             size="medium"
             onClick={async () => {
               nextQuestion(true);
@@ -306,7 +309,7 @@ const QuizExamForm: FC<Props> = ({
           </Button>
           <Button
             type="button"
-            intent="secondary"
+            intent="primary"
             size="medium"
             disabled={!isQuestionAnswered()}
             onClick={async () => {
@@ -322,7 +325,7 @@ const QuizExamForm: FC<Props> = ({
         <div className="flex justify-center flex-col sm:flex-row gap-4">
           <Button
             type="button"
-            intent="primary"
+            intent="secondary"
             size="medium"
             disabled={currentQuestionIndex === 0}
             onClick={async () => {
@@ -337,7 +340,7 @@ const QuizExamForm: FC<Props> = ({
           </Button>
           <Button
             type="button"
-            intent="primary"
+            intent="secondary"
             size="medium"
             disabled={currentQuestionIndex === totalQuestions - 1}
             onClick={async () => {
@@ -354,7 +357,7 @@ const QuizExamForm: FC<Props> = ({
           </Button>
           <Button
             type="button"
-            intent="secondary"
+            intent="primary"
             size="medium"
             onClick={() => {
               if (hideExam) {
@@ -362,7 +365,7 @@ const QuizExamForm: FC<Props> = ({
               }
             }}
           >
-            <span>Back</span>
+            <span>Back to Summary</span>
           </Button>
         </div>
       )}

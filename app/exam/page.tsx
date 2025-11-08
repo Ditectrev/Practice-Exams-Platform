@@ -27,11 +27,12 @@ const questionsQuery = gql`
   }
 `;
 
-const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
-  searchParams,
-}) => {
+const Exam: NextPage = () => {
   const { isAccessBlocked, isInTrial } = useTrialAccess();
-  const { url } = searchParams;
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
+    null,
+  );
+  const url = searchParams?.get("url") || "";
   const { minutes, seconds } = {
     minutes: 15,
     seconds: 0,
@@ -45,15 +46,22 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
   const [countAnswered, setCountAnswered] = useState<number>(0);
   const { data, loading, error } = useQuery(questionsQuery, {
     variables: { range: 30, link: url },
+    skip: !url, // Skip query if URL is not available
   });
   const [resultPoints, setResultPoints] = useState<number>(0);
   const [passed, setPassed] = useState<boolean>(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);
-  const editedUrl = url.substring(0, url.lastIndexOf("/") + 1);
+  const editedUrl =
+    url && url.includes("/") ? url.substring(0, url.lastIndexOf("/") + 1) : "";
   const elapsedSeconds =
     totalTimeInSeconds -
     (parseInt(remainingTime.split(":")[0]) * 60 +
       parseInt(remainingTime.split(":")[1]));
+
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search);
+    setSearchParams(param);
+  }, []);
 
   const handleCountAnswered = () => {
     setCountAnswered(countAnswered + 1);
@@ -89,35 +97,97 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
     setCurrentQuestion(data?.randomQuestions[0]);
   }, [data]);
 
-  // Show loading while checking trial access
-  if (isAccessBlocked === undefined) {
+  // Show loading while checking trial access or waiting for URL
+  if (isAccessBlocked === undefined || !searchParams) {
     return <LoadingIndicator />;
+  }
+
+  // Check if URL is missing
+  if (!url) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Exam URL is missing. Please select an exam from the home page.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Block access if trial expired
   if (isAccessBlocked) {
     return (
-      <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg text-center">
-        <div className="text-red-400 text-lg mb-4">
-          ⏰ Trial expired. Please sign in to continue taking exams.
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⏰ Trial expired. Please sign in to continue taking exams.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
         </div>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="btn-primary text-white px-6 py-2 rounded-lg"
-        >
-          Go to Home
-        </button>
       </div>
     );
   }
 
   if (loading) return <LoadingIndicator />;
-  if (error) return <p>Oh no... {error.message}</p>;
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-700 rounded-lg text-center">
+          <div className="text-red-500 dark:text-red-400 text-lg mb-4">
+            ⚠️ Error loading exam questions
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            {error.message}
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data?.randomQuestions || data.randomQuestions.length === 0) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+        <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-yellow-200 dark:border-yellow-700 rounded-lg text-center">
+          <div className="text-yellow-600 dark:text-yellow-400 text-lg mb-4">
+            ⚠️ No questions found for this exam
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            The exam questions could not be loaded. Please try again later or
+            select a different exam.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="btn-primary text-white px-6 py-2 rounded-lg"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const numberOfQuestions = data.randomQuestions.length || 0;
 
   return (
-    <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-slate-800 border-2 border-slate-700 rounded-lg">
+    <div className="py-10 px-5 mb-6 mx-auto w-[90vw] lg:w-[60vw] 2xl:w-[45%] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg mt-8">
       {isInTrial && (
         <div className="mb-6 p-4 bg-amber-600/20 border border-amber-600/40 rounded-lg">
           <div className="flex items-center gap-2 text-amber-300">
@@ -142,13 +212,13 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
       )}
       <div>
         <div className="px-2 sm:px-10 w-full flex flex-row justify-between items-center">
-          <p className="text-white font-bold text-sm sm:text-2xl">
+          <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-2xl">
             ✅ {countAnswered}/{numberOfQuestions}
           </p>
-          <h1 className="text-white font-bold text-lg sm:text-3xl">
+          <h1 className="text-gray-900 dark:text-white font-bold text-lg sm:text-3xl">
             PRACTICE EXAM
           </h1>
-          <p className="text-white font-bold text-sm sm:text-2xl">
+          <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-2xl">
             {remainingTime}
           </p>
         </div>
@@ -202,7 +272,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
                 c0.53,0,0.97,0.43,0.97,0.97V29.35z"
                   />
                 </svg>
-                <p className="text-white text-center pt-6 px-6">
+                <p className="text-gray-900 dark:text-white text-center pt-6 px-6">
                   Practice Exam help you practice skills, assess your knowledge,
                   and identify the areas where you need additional preparation
                   to accelerate your chances of succeeding on certification
@@ -211,7 +281,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
                   are likely to experience on Azure Fundamentals real exam.
                 </p>
               </div>
-              <p className="text-white font-bold text-xl text-center pt-20 px-6 mb-40">
+              <p className="text-gray-900 dark:text-white font-bold text-xl text-center pt-20 px-6 mb-40">
                 This Practice Exam contains {numberOfQuestions} random questions
                 (seen in upper left corner) and has a completion time limit of{" "}
                 {remainingTime.split(":")[0]} minutes (seen in upper right
@@ -221,7 +291,7 @@ const Exam: NextPage<{ searchParams: { url: string; name: string } }> = ({
             <div className="flex flex-col sm:flex-row justify-center">
               <Button
                 type="button"
-                intent="secondary"
+                intent="primary"
                 size="medium"
                 onClick={() => startTimer()}
               >

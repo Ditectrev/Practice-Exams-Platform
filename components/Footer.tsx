@@ -13,10 +13,13 @@ import {
 } from "react-icons/si";
 import GitHubButton from "react-github-btn";
 import packageJson from "../package.json";
+import ParticlesFooter from "./ParticlesFooter";
+import { useTheme } from "../contexts/ThemeContext";
 import "styles/footer.css";
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const iconSize = 28;
+  const { theme } = useTheme();
 
   const socialMediaLinks = [
     {
@@ -57,9 +60,15 @@ const Footer = () => {
     },
   ];
 
+  const gradientClass =
+    theme === "dark"
+      ? "bg-gradient-to-r from-gray-900 to-primary-500/70"
+      : "bg-gradient-to-r from-white to-primary-800/100";
+
   return (
-    <footer>
-      <div className="mx-3 my-3 social-icons-container text-white">
+    <footer className={`relative ${gradientClass} overflow-hidden`}>
+      <ParticlesFooter />
+      <div className="relative z-10 mx-3 my-3 social-icons-container text-white">
         {socialMediaLinks.map((link, index) => (
           <a
             key={index}
@@ -74,8 +83,8 @@ const Footer = () => {
         ))}
       </div>
 
-      {/* GitHub Star and Version */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
+      {/* GitHub Star */}
+      <div className="relative z-10 flex items-center justify-center mb-3">
         <GitHubButton
           href="https://github.com/Ditectrev/Practice-Exams-Platform"
           data-color-scheme="no-preference: dark; light: light; dark: dark;"
@@ -86,10 +95,15 @@ const Footer = () => {
         >
           Star
         </GitHubButton>
-        <span className="text-slate-400 text-xs">v{packageJson.version}</span>
       </div>
 
-      <p className="text-white text-sm flex justify-center">
+      {/* Version */}
+      <p className="relative z-10 text-white text-xs flex justify-center mb-3">
+        v{packageJson.version}
+      </p>
+
+      {/* Copyright */}
+      <p className="relative z-10 text-white text-sm flex justify-center">
         &copy; {currentYear} Ditectrev
       </p>
     </footer>
