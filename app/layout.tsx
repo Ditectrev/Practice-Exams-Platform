@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { type Metadata, type Viewport } from "next";
+import { Philosopher, Lora } from "next/font/google";
 import Header from "@azure-fundamentals/components/Header";
 import Footer from "@azure-fundamentals/components/Footer";
 import ApolloProvider from "@azure-fundamentals/components/ApolloProvider";
@@ -8,6 +9,20 @@ import { AuthProvider } from "@azure-fundamentals/contexts/AuthContext";
 import { ThemeProvider } from "@azure-fundamentals/contexts/ThemeContext";
 import { TrialWarning } from "@azure-fundamentals/components/TrialWarning";
 import "styles/globals.css";
+
+const philosopher = Philosopher({
+  weight: ["400"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-philosopher",
+});
+
+const lora = Lora({
+  weight: ["400"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-lora",
+});
 
 export const viewport: Viewport = {
   themeColor: "#3f51b5",
@@ -107,7 +122,9 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      <body
+        className={`${lora.className} ${philosopher.variable} bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200`}
+      >
         <ThemeProvider>
           <ApolloProvider>
             <AuthProvider>

@@ -628,3 +628,12 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2) !important;
 }
 
+/* Apply Philosopher font to headings and buttons */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-philosopher), serif;
+}
+
+button, .btn-primary {
+  font-family: var(--font-philosopher), serif;
+}
+
