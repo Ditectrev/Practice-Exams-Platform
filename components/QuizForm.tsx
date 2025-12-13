@@ -35,8 +35,10 @@ const QuizForm: FC<Props> = ({
   } | null>(null);
 
   const [isThinking, setIsThinking] = useState<boolean>(false);
-  const [ollamaAvailable, setOllamaAvailable] = useState<boolean>(false);
+  const [explanationAvailable, setExplanationAvailable] =
+    useState<boolean>(false);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [explanationError, setExplanationError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -59,18 +61,23 @@ const QuizForm: FC<Props> = ({
   };
 
   useEffect(() => {
-    const checkOllamaStatus = async () => {
+    const checkExplanationAvailability = async () => {
       try {
-        const response = await fetch("http://localhost:11434");
+        // Check if user has any explanation capability
+        const response = await fetch("/api/profile");
         if (response.ok) {
-          setOllamaAvailable(true);
+          const profile = await response.json();
+          const hasExplanationAccess = ["local", "byok", "ditectrev"].includes(
+            profile.subscription,
+          );
+          setExplanationAvailable(hasExplanationAccess);
         }
       } catch (error) {
-        console.error("Error checking server status:", error);
+        console.error("Error checking explanation availability:", error);
       }
     };
 
-    checkOllamaStatus();
+    checkExplanationAvailability();
   }, []);
 
   const isOptionChecked = (optionText: string): boolean | undefined => {
@@ -88,35 +95,43 @@ const QuizForm: FC<Props> = ({
 
   const explainCorrectAnswer = async () => {
     try {
-      const prompt = `${question} Explain why these answers are correct: ${options
-        .filter((o) => o.isAnswer == true)
-        .map((o) => o.text)}`;
+      setExplanationError(null);
 
-      const response = await fetch("http://localhost:11434/api/generate", {
+      const correctAnswers = options
+        .filter((o) => o.isAnswer === true)
+        .map((o) => o.text);
+
+      const response = await fetch("/api/explanations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "mistral",
-          prompt: prompt,
-          stream: false,
+          question,
+          correctAnswers,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
       const responseData = await response.json();
 
-      if (responseData && "response" in responseData) {
-        setExplanation(responseData.response);
+      if (!response.ok) {
+        throw new Error(
+          responseData.error || `HTTP error! Status: ${response.status}`,
+        );
+      }
+
+      if (responseData && responseData.explanation) {
+        setExplanation(responseData.explanation);
       } else {
-        console.error("Response does not contain explanation:", responseData);
+        throw new Error("No explanation received");
       }
     } catch (error) {
       console.error("Error fetching explanation:", error);
+      setExplanationError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate explanation",
+      );
     } finally {
       setIsThinking(false);
     }
@@ -340,18 +355,50 @@ const QuizForm: FC<Props> = ({
           </li>
         ))}
       </ul>
-      {explanation && (
+      {(explanation || explanationError) && (
         <div className="md:px-12 mb-16">
-          <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 shadow-lg">
+          <div
+            className={`border rounded-lg p-6 shadow-lg ${
+              explanationError
+                ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                : "bg-slate-800 border-slate-600"
+            }`}
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-full flex items-center justify-center">
-                <SiHelpdesk className="w-5 h-5 text-white" />
+                <SiHelpdesk
+                  className={`w-5 h-5 ${
+                    explanationError ? "text-red-500" : "text-white"
+                  }`}
+                />
               </div>
-              <h3 className="text-lg font-semibold text-white">Explanation</h3>
+              <h3
+                className={`text-lg font-semibold ${
+                  explanationError
+                    ? "text-red-700 dark:text-red-300"
+                    : "text-white"
+                }`}
+              >
+                {explanationError ? "Explanation Error" : "Explanation"}
+              </h3>
             </div>
-            <div className="text-slate-200 leading-relaxed whitespace-pre-line">
-              {explanation}
+            <div
+              className={`leading-relaxed whitespace-pre-line ${
+                explanationError
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-slate-200"
+              }`}
+            >
+              {explanationError || explanation}
             </div>
+            {explanationError && (
+              <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  Try checking your profile settings or upgrading your plan for
+                  explanation access.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -364,7 +411,7 @@ const QuizForm: FC<Props> = ({
         >
           Reveal Answer
         </Button>
-        {ollamaAvailable && (
+        {explanationAvailable && (
           <Button
             type="button"
             intent="secondary"

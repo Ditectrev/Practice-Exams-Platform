@@ -38,6 +38,11 @@ const Header = () => {
 
   const navigationLinks = [
     {
+      href: "/pricing",
+      title: "Pricing",
+      external: false,
+    },
+    {
       href: "https://blog.ditectrev.com",
       title: "Blog",
       external: true,
@@ -82,21 +87,29 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              {navigationLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target={link.external ? "_blank" : undefined}
-                  rel={link.external ? "noopener noreferrer" : undefined}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium flex items-center"
-                  aria-label={`Visit ${link.title}${
-                    link.external ? " (opens in new tab)" : ""
-                  }`}
-                >
-                  {link.title}
-                  {link.external && <ExternalLinkIcon />}
-                </a>
-              ))}
+              {navigationLinks.map((link) =>
+                link.external ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium flex items-center"
+                    aria-label={`Visit ${link.title} (opens in new tab)`}
+                  >
+                    {link.title}
+                    <ExternalLinkIcon />
+                  </a>
+                ) : (
+                  <button
+                    key={link.href}
+                    onClick={() => router.push(link.href)}
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium"
+                  >
+                    {link.title}
+                  </button>
+                ),
+              )}
             </nav>
 
             {/* Authentication */}
@@ -143,6 +156,15 @@ const Header = () => {
                           {user.email}
                         </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          router.push("/profile");
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full text-center px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        Profile Settings
+                      </button>
                       <button
                         onClick={handleSignOut}
                         className="w-full text-center px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -201,24 +223,35 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-gray-100/98 dark:bg-gray-900/98 backdrop-blur">
             <nav className="px-6 py-6 space-y-4 text-center">
-              {navigationLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target={link.external ? "_blank" : undefined}
-                  rel={link.external ? "noopener noreferrer" : undefined}
-                  className="block text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3"
-                  aria-label={`Visit ${link.title}${
-                    link.external ? " (opens in new tab)" : ""
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span className="flex items-center justify-center">
+              {navigationLinks.map((link) =>
+                link.external ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3"
+                    aria-label={`Visit ${link.title} (opens in new tab)`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <span className="flex items-center justify-center">
+                      {link.title}
+                      <ExternalLinkIcon />
+                    </span>
+                  </a>
+                ) : (
+                  <button
+                    key={link.href}
+                    onClick={() => {
+                      router.push(link.href);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3"
+                  >
                     {link.title}
-                    {link.external && <ExternalLinkIcon />}
-                  </span>
-                </a>
-              ))}
+                  </button>
+                ),
+              )}
 
               {isAuthenticated && user && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
@@ -242,15 +275,26 @@ const Header = () => {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block mx-auto text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                  >
-                    Sign Out
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        router.push("/profile");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block mx-auto text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    >
+                      Profile Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block mx-auto text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               )}
             </nav>
