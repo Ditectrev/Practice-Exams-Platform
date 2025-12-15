@@ -2,9 +2,9 @@
 
 ## Overview
 
-The API integrations feature will enhance the existing AI provider system by implementing robust, production-ready integrations with multiple AI services. The design builds upon the current provider abstraction layer while adding comprehensive error handling, failover mechanisms, rate limiting, and monitoring capabilities.
+The API integrations feature will enhance the existing AI provider system by replacing proxy API routes with direct calls to external AI services. The design maintains the current simple architecture while adding basic validation, error handling, and availability checking.
 
-The system will maintain the existing `AIProvider` interface while extending it with additional capabilities for configuration management, health monitoring, and advanced error recovery. This ensures backward compatibility while providing the reliability needed for production use.
+The system will keep the existing `AIProvider` interface unchanged for backward compatibility while adding optional methods for validation and availability checking. This ensures existing code continues to work while providing better error handling.
 
 ## Architecture
 
@@ -12,38 +12,29 @@ The system will maintain the existing `AIProvider` interface while extending it 
 
 ```mermaid
 graph TB
-    Client[Client Application] --> AIService[AI Service Manager]
-    AIService --> ConfigManager[Configuration Manager]
-    AIService --> ProviderRegistry[Provider Registry]
-    AIService --> HealthMonitor[Health Monitor]
-    AIService --> RateLimiter[Rate Limiter]
+    Client[Client Application] --> Factory[getAIProvider Factory]
+    Factory --> OpenAIProvider[OpenAI Provider]
+    Factory --> GeminiProvider[Gemini Provider]
+    Factory --> MistralProvider[Mistral Provider]
+    Factory --> DeepSeekProvider[DeepSeek Provider]
+    Factory --> DitectrevProvider[Ditectrev Provider]
+    Factory --> OllamaProvider[Ollama Provider]
     
-    ProviderRegistry --> OpenAIClient[OpenAI Client]
-    ProviderRegistry --> GeminiClient[Gemini Client]
-    ProviderRegistry --> MistralClient[Mistral Client]
-    ProviderRegistry --> DeepSeekClient[DeepSeek Client]
-    ProviderRegistry --> DitectrevClient[Ditectrev Client]
-    ProviderRegistry --> OllamaClient[Ollama Client]
-    
-    OpenAIClient --> OpenAIAPI[OpenAI API]
-    GeminiClient --> GeminiAPI[Gemini API]
-    MistralClient --> MistralAPI[Mistral API]
-    DeepSeekClient --> DeepSeekAPI[DeepSeek API]
-    DitectrevClient --> DitectrevAPI[Ditectrev API]
-    OllamaClient --> OllamaAPI[Ollama Local]
-    
-    HealthMonitor --> MetricsStore[Metrics Store]
-    ConfigManager --> EnvConfig[Environment Config]
+    OpenAIProvider --> OpenAIAPI[OpenAI API]
+    GeminiProvider --> GeminiAPI[Gemini API]
+    MistralProvider --> MistralAPI[Mistral API]
+    DeepSeekProvider --> DeepSeekAPI[DeepSeek API]
+    DitectrevProvider --> DitectrevAPI[Ditectrev API]
+    OllamaProvider --> OllamaLocal[Ollama localhost:11434]
 ```
 
 ### Core Components
 
-1. **AI Service Manager**: Central orchestrator that manages provider selection, failover, and request routing
-2. **Configuration Manager**: Handles provider configurations, API keys, and runtime settings
-3. **Provider Registry**: Maintains available providers and their health status
-4. **Health Monitor**: Continuously monitors provider availability and performance
-5. **Rate Limiter**: Manages request throttling and quota enforcement
-6. **Enhanced Provider Clients**: Improved implementations with retry logic and error handling
+1. **AIProvider Interface**: Simple interface with generateExplanation method
+2. **Provider Classes**: Individual classes for each AI service with direct API calls
+3. **Factory Function**: getAIProvider function to instantiate providers by name
+4. **Availability Checker**: Simple function to check if providers are reachable
+5. **Error Handling**: Basic AIProviderError class for consistent error reporting
 
 ## Components and Interfaces
 
@@ -52,334 +43,230 @@ graph TB
 ```typescript
 interface AIProvider {
   name: string;
-  isAvailable(): Promise<boolean>;
-  getHealthStatus(): ProviderHealthStatus;
-  generateExplanation(request: ExplanationRequest): Promise<ExplanationResponse>;
-  validateConfiguration(): boolean;
+  generateExplanation(
+    question: string,
+    correctAnswers: string[],
+    apiKey?: string,
+  ): Promise<string>;
+  isAvailable?(): Promise<boolean>;
+  validateConfig?(apiKey?: string): boolean;
 }
 
-interface ExplanationRequest {
-  question: string;
-  correctAnswers: string[];
-  apiKey?: string;
-  options?: RequestOptions;
-}
-
-interface ExplanationResponse {
-  explanation: string;
-  provider: string;
-  metadata: ResponseMetadata;
-}
-
-interface ProviderHealthStatus {
-  isHealthy: boolean;
-  lastChecked: Date;
-  responseTime: number;
-  errorRate: number;
-  rateLimitStatus: RateLimitInfo;
-}
-```
-
-### Configuration Management
-
-```typescript
-interface ProviderConfig {
-  name: string;
-  enabled: boolean;
-  priority: number;
-  apiKey?: string;
-  baseUrl?: string;
-  timeout: number;
-  retryAttempts: number;
-  rateLimits: RateLimitConfig;
-}
-
-interface RateLimitConfig {
-  requestsPerMinute: number;
-  requestsPerHour: number;
-  requestsPerDay: number;
-  burstLimit: number;
-}
-```
-
-### AI Service Manager
-
-The central service manager will implement intelligent provider selection and failover:
-
-```typescript
-class AIServiceManager {
-  private providers: Map<string, AIProvider>;
-  private healthMonitor: HealthMonitor;
-  private rateLimiter: RateLimiter;
-  private configManager: ConfigurationManager;
-
-  async generateExplanation(request: ExplanationRequest): Promise<ExplanationResponse> {
-    const availableProviders = await this.getAvailableProviders();
-    
-    for (const provider of availableProviders) {
-      try {
-        if (await this.rateLimiter.canMakeRequest(provider.name)) {
-          const response = await provider.generateExplanation(request);
-          await this.recordSuccess(provider.name);
-          return response;
-        }
-      } catch (error) {
-        await this.recordFailure(provider.name, error);
-        continue; // Try next provider
-      }
-    }
-    
-    throw new Error('All providers unavailable');
+class AIProviderError extends Error {
+  constructor(
+    public provider: string,
+    public type: 'network' | 'auth' | 'rate_limit' | 'validation' | 'timeout',
+    message: string,
+    public originalError?: any
+  ) {
+    super(message);
+    this.name = 'AIProviderError';
   }
 }
 ```
 
-## Data Models
+### Provider Implementation Pattern
 
-### Request/Response Models
+Each provider follows this simple pattern:
 
 ```typescript
-interface StandardizedRequest {
-  question: string;
-  correctAnswers: string[];
-  context?: string;
-  maxTokens?: number;
-  temperature?: number;
-  timeout?: number;
-}
+export class ExampleProvider implements AIProvider {
+  name = "example";
 
-interface StandardizedResponse {
-  explanation: string;
-  provider: string;
-  processingTime: number;
-  tokensUsed?: number;
-  confidence?: number;
-  metadata: {
-    requestId: string;
-    timestamp: Date;
-    model?: string;
-    version?: string;
-  };
+  async generateExplanation(
+    question: string,
+    correctAnswers: string[],
+    apiKey: string,
+  ): Promise<string> {
+    this.validateRequest(question, correctAnswers, apiKey);
+
+    try {
+      const response = await fetch("https://api.example.com/chat", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          prompt: `${question} Explain why these answers are correct: ${correctAnswers.join(", ")}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorType = response.status === 401 ? 'auth' : 
+                         response.status === 429 ? 'rate_limit' : 'network';
+        throw new AIProviderError(this.name, errorType, `API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.explanation || data.choices?.[0]?.message?.content;
+    } catch (error) {
+      if (error instanceof AIProviderError) throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new AIProviderError(this.name, 'network', `Request failed: ${errorMessage}`, error);
+    }
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // API-based providers are assumed available
+  }
+
+  validateConfig(apiKey?: string): boolean {
+    return !!(apiKey && apiKey.length > 10);
+  }
+
+  private validateRequest(question: string, correctAnswers: string[], apiKey: string): void {
+    if (!question?.trim()) {
+      throw new AIProviderError(this.name, 'validation', 'Question cannot be empty');
+    }
+    if (!correctAnswers?.length) {
+      throw new AIProviderError(this.name, 'validation', 'At least one correct answer is required');
+    }
+    if (!this.validateConfig(apiKey)) {
+      throw new AIProviderError(this.name, 'auth', 'Invalid API key');
+    }
+  }
 }
 ```
 
-### Provider-Specific Adapters
+### Factory Function
 
-Each provider will have an adapter that translates between the standardized format and provider-specific APIs:
+The existing factory function remains unchanged:
 
 ```typescript
-abstract class BaseProviderAdapter implements AIProvider {
-  protected config: ProviderConfig;
-  protected httpClient: HttpClient;
-  
-  abstract transformRequest(request: StandardizedRequest): any;
-  abstract transformResponse(response: any): StandardizedResponse;
-  abstract validateApiKey(apiKey: string): boolean;
+export function getAIProvider(providerName: string): AIProvider {
+  switch (providerName) {
+    case "ollama":
+      return new OllamaProvider();
+    case "openai":
+      return new OpenAIProvider();
+    case "gemini":
+      return new GeminiProvider();
+    case "mistral":
+      return new MistralProvider();
+    case "deepseek":
+      return new DeepSeekProvider();
+    case "ditectrev":
+      return new DitectrevProvider();
+    default:
+      throw new Error(`Unknown AI provider: ${providerName}`);
+  }
+}
+```
+
+### Availability Checking
+
+Simple availability checking function:
+
+```typescript
+export async function checkProviderAvailability(
+  providerName: string,
+  apiKey?: string,
+): Promise<boolean> {
+  try {
+    const provider = getAIProvider(providerName);
+    
+    // Check config validation if provider supports it
+    if (provider.validateConfig && !provider.validateConfig(apiKey)) {
+      return false;
+    }
+    
+    // Check availability if provider supports it
+    if (provider.isAvailable) {
+      return await provider.isAvailable();
+    }
+    
+    return true;
+  } catch {
+    return false;
+  }
 }
 ```
 
 ## Error Handling
 
-### Error Classification
+### Simple Error Classification
 
 ```typescript
-enum ErrorType {
-  AUTHENTICATION = 'authentication',
-  RATE_LIMIT = 'rate_limit',
-  NETWORK = 'network',
-  VALIDATION = 'validation',
-  PROVIDER_ERROR = 'provider_error',
-  TIMEOUT = 'timeout'
-}
-
-interface APIError {
-  type: ErrorType;
-  message: string;
-  provider: string;
-  retryable: boolean;
-  retryAfter?: number;
-  originalError?: any;
-}
-```
-
-### Retry Strategy
-
-```typescript
-class RetryStrategy {
-  async executeWithRetry<T>(
-    operation: () => Promise<T>,
-    config: RetryConfig
-  ): Promise<T> {
-    let lastError: Error;
-    
-    for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error;
-        
-        if (!this.isRetryable(error) || attempt === config.maxAttempts) {
-          throw error;
-        }
-        
-        const delay = this.calculateBackoff(attempt, config);
-        await this.sleep(delay);
-      }
-    }
-    
-    throw lastError;
+class AIProviderError extends Error {
+  constructor(
+    public provider: string,
+    public type: 'network' | 'auth' | 'rate_limit' | 'validation' | 'timeout',
+    message: string,
+    public originalError?: any
+  ) {
+    super(message);
+    this.name = 'AIProviderError';
   }
 }
 ```
 
-### Circuit Breaker Pattern
+### Optional Retry Utility
+
+Simple retry function for cases where it's needed:
 
 ```typescript
-class CircuitBreaker {
-  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
-  private failureCount = 0;
-  private lastFailureTime?: Date;
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxAttempts: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  let lastError: Error;
   
-  async execute<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.state === 'OPEN') {
-      if (this.shouldAttemptReset()) {
-        this.state = 'HALF_OPEN';
-      } else {
-        throw new Error('Circuit breaker is OPEN');
-      }
-    }
-    
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const result = await operation();
-      this.onSuccess();
-      return result;
+      return await operation();
     } catch (error) {
-      this.onFailure();
-      throw error;
-    }
-  }
-}
-```
-
-## Testing Strategy
-
-### Integration Testing Framework
-
-```typescript
-interface ProviderTestSuite {
-  testConnectivity(): Promise<TestResult>;
-  testAuthentication(): Promise<TestResult>;
-  testRequestResponse(): Promise<TestResult>;
-  testErrorHandling(): Promise<TestResult>;
-  testRateLimiting(): Promise<TestResult>;
-}
-
-class AIProviderTester {
-  async runFullTestSuite(provider: AIProvider): Promise<TestReport> {
-    const results = await Promise.all([
-      this.testBasicFunctionality(provider),
-      this.testErrorScenarios(provider),
-      this.testPerformance(provider)
-    ]);
-    
-    return this.generateReport(results);
-  }
-}
-```
-
-### Mock Provider for Testing
-
-```typescript
-class MockAIProvider implements AIProvider {
-  private shouldFail = false;
-  private responseDelay = 0;
-  
-  async generateExplanation(request: ExplanationRequest): Promise<ExplanationResponse> {
-    if (this.shouldFail) {
-      throw new Error('Mock provider failure');
-    }
-    
-    await this.sleep(this.responseDelay);
-    
-    return {
-      explanation: `Mock explanation for: ${request.question}`,
-      provider: 'mock',
-      metadata: {
-        requestId: 'mock-' + Date.now(),
-        timestamp: new Date(),
-        processingTime: this.responseDelay
+      lastError = error as Error;
+      
+      // Don't retry on validation or auth errors
+      if (error instanceof AIProviderError && 
+          (error.type === 'validation' || error.type === 'auth')) {
+        throw error;
       }
-    };
-  }
-}
-```
-
-### Performance Monitoring
-
-```typescript
-interface PerformanceMetrics {
-  averageResponseTime: number;
-  successRate: number;
-  errorRate: number;
-  throughput: number;
-  p95ResponseTime: number;
-  p99ResponseTime: number;
-}
-
-class MetricsCollector {
-  async recordRequest(provider: string, duration: number, success: boolean): Promise<void> {
-    // Record metrics for monitoring and alerting
+      
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, delay * attempt));
+    }
   }
   
-  async getProviderMetrics(provider: string, timeRange: TimeRange): Promise<PerformanceMetrics> {
-    // Retrieve aggregated metrics
-  }
+  throw lastError!;
 }
 ```
 
-## Security Considerations
+## Implementation Approach
 
-### API Key Management
+### Direct API Integration
 
-- API keys stored securely in environment variables
-- Key rotation support with graceful fallback
-- Validation of key formats before use
-- Audit logging of key usage
+Each provider will make direct calls to the respective AI service APIs:
 
-### Request Validation
+- **OpenAI**: Direct calls to `https://api.openai.com/v1/chat/completions`
+- **Gemini**: Direct calls to Google's Gemini API
+- **Mistral**: Direct calls to Mistral's API endpoints  
+- **DeepSeek**: Direct calls to DeepSeek's API endpoints
+- **Ollama**: Continue calling `http://localhost:11434/api/generate`
+- **Ditectrev**: Keep existing internal API calls
 
-- Input sanitization for all user-provided content
-- Request size limits to prevent abuse
-- Rate limiting per user/IP to prevent DoS
-- Response content filtering for safety
+### Backward Compatibility
 
-### Data Privacy
+The enhanced system maintains full backward compatibility:
 
-- No storage of user questions or AI responses
-- Minimal logging of request metadata
-- Compliance with data protection regulations
-- Secure transmission of all API communications
+- Existing `AIProvider` interface unchanged
+- Factory function `getAIProvider()` continues to work
+- Availability checker `checkProviderAvailability()` enhanced but compatible
+- All existing code continues to work without modifications
 
-## Deployment and Configuration
+### Simple Validation
 
-### Environment Configuration
+Basic validation for common issues:
 
-```typescript
-interface DeploymentConfig {
-  providers: {
-    [key: string]: ProviderConfig;
-  };
-  rateLimits: GlobalRateLimits;
-  monitoring: MonitoringConfig;
-  security: SecurityConfig;
-}
-```
+- Empty questions or answers
+- Invalid API key formats (basic checks)
+- Network connectivity for Ollama
+- Response validation (ensure explanation is returned)
 
-### Health Checks
-
-- Endpoint for overall system health
-- Individual provider health status
-- Dependency health monitoring
-- Automated alerting on failures
-
-This design provides a robust, scalable foundation for API integrations while maintaining the simplicity of the existing interface. The modular architecture allows for easy addition of new providers and features while ensuring reliability and performance.
+This design keeps the system simple and maintainable while adding the essential enhancements needed for direct API integration.

@@ -2,83 +2,62 @@
 
 ## Introduction
 
-This feature focuses on creating robust API integrations with the AI services that were recently added to the platform. The goal is to establish reliable, scalable, and maintainable connections to multiple AI providers (OpenAI, Gemini, Mistral, DeepSeek, and Ditectrev) for delivering AI-powered explanations to users. The integrations should handle authentication, rate limiting, error handling, and provide a consistent interface regardless of the underlying provider.
+This feature focuses on enhancing the existing AI provider system to make direct API calls to external AI services (OpenAI, Gemini, Mistral, DeepSeek) while maintaining the current simple architecture. The goal is to replace the current proxy API routes with direct provider calls, add basic error handling and validation, while keeping the system lightweight and maintainable.
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As a platform administrator, I want standardized API client configurations for all AI providers, so that I can easily manage and maintain connections to different services.
+**User Story:** As a developer, I want to make direct API calls to AI providers instead of going through proxy routes, so that I can reduce complexity and improve performance.
 
 #### Acceptance Criteria
 
-1. WHEN the system initializes THEN it SHALL load configuration for all supported AI providers (OpenAI, Gemini, Mistral, DeepSeek, Ditectrev)
-2. WHEN an API key is provided for a provider THEN the system SHALL validate the key format before making requests
-3. WHEN a provider configuration is missing required fields THEN the system SHALL log an error and disable that provider
-4. IF a provider becomes unavailable THEN the system SHALL automatically failover to the next available provider
+1. WHEN calling OpenAI THEN the system SHALL make direct calls to OpenAI's API using the provided API key
+2. WHEN calling Gemini THEN the system SHALL make direct calls to Google's Gemini API using the provided API key  
+3. WHEN calling Mistral THEN the system SHALL make direct calls to Mistral's API using the provided API key
+4. WHEN calling DeepSeek THEN the system SHALL make direct calls to DeepSeek's API using the provided API key
 
 ### Requirement 2
 
-**User Story:** As a developer, I want a unified API client interface, so that I can interact with different AI providers using consistent methods.
+**User Story:** As a developer, I want basic input validation and error handling, so that the system fails gracefully with clear error messages.
 
 #### Acceptance Criteria
 
-1. WHEN making a request to any AI provider THEN the system SHALL use a standardized request/response format
-2. WHEN a provider returns data THEN the system SHALL normalize the response to a common schema
-3. WHEN switching between providers THEN the application logic SHALL remain unchanged
-4. IF a provider has unique capabilities THEN the system SHALL expose them through optional parameters
+1. WHEN a question is empty THEN the system SHALL return a validation error
+2. WHEN no correct answers are provided THEN the system SHALL return a validation error
+3. WHEN an API key is invalid format THEN the system SHALL return an authentication error
+4. WHEN an API call fails THEN the system SHALL return a descriptive error message
 
 ### Requirement 3
 
-**User Story:** As a user, I want reliable AI explanation generation, so that I always receive helpful content even if one service is down.
+**User Story:** As a developer, I want to maintain the existing simple provider interface, so that existing code continues to work without changes.
 
 #### Acceptance Criteria
 
-1. WHEN requesting an AI explanation THEN the system SHALL attempt to use the primary configured provider
-2. WHEN the primary provider fails THEN the system SHALL automatically retry with the next available provider
-3. WHEN all providers fail THEN the system SHALL return a graceful error message to the user
-4. WHEN a provider is slow to respond THEN the system SHALL timeout after a reasonable duration and try the next provider
+1. WHEN using the existing AIProvider interface THEN all current functionality SHALL continue to work
+2. WHEN calling generateExplanation THEN the method signature SHALL remain the same
+3. WHEN getting a provider by name THEN the factory function SHALL continue to work
+4. WHEN checking provider availability THEN the existing function SHALL continue to work
 
 ### Requirement 4
 
-**User Story:** As a platform administrator, I want comprehensive error handling and logging, so that I can monitor API health and troubleshoot issues effectively.
+**User Story:** As a developer, I want proper API key validation, so that I can catch configuration issues early.
 
 #### Acceptance Criteria
 
-1. WHEN an API request fails THEN the system SHALL log the error with provider name, request details, and error message
-2. WHEN rate limits are exceeded THEN the system SHALL implement exponential backoff and retry logic
-3. WHEN authentication fails THEN the system SHALL log the failure and disable the provider temporarily
-4. IF network connectivity issues occur THEN the system SHALL distinguish between temporary and permanent failures
+1. WHEN an OpenAI API key is provided THEN the system SHALL validate it starts with 'sk-' and has reasonable length
+2. WHEN a Gemini API key is provided THEN the system SHALL validate it has reasonable length
+3. WHEN a Mistral API key is provided THEN the system SHALL validate it has reasonable length  
+4. WHEN a DeepSeek API key is provided THEN the system SHALL validate it has reasonable length
 
 ### Requirement 5
 
-**User Story:** As a developer, I want proper request/response validation, so that the system handles malformed data gracefully and maintains data integrity.
+**User Story:** As a developer, I want to check if providers are available, so that I can handle offline scenarios gracefully.
 
 #### Acceptance Criteria
 
-1. WHEN sending requests to AI providers THEN the system SHALL validate all required parameters are present
-2. WHEN receiving responses from providers THEN the system SHALL validate the response structure matches expected schema
-3. WHEN validation fails THEN the system SHALL log the validation error and return a standardized error response
-4. IF response data is incomplete THEN the system SHALL handle partial responses appropriately
+1. WHEN checking Ollama availability THEN the system SHALL ping localhost:11434
+2. WHEN checking API-based providers THEN the system SHALL validate API keys are present
+3. WHEN a provider is unavailable THEN the system SHALL return false from availability check
+4. WHEN Ditectrev is checked THEN the system SHALL always return available (internal service)
 
-### Requirement 6
-
-**User Story:** As a platform administrator, I want configurable rate limiting and quota management, so that I can control API usage costs and prevent service abuse.
-
-#### Acceptance Criteria
-
-1. WHEN making API requests THEN the system SHALL respect configured rate limits for each provider
-2. WHEN approaching rate limits THEN the system SHALL implement queuing or throttling mechanisms
-3. WHEN quota limits are reached THEN the system SHALL switch to alternative providers or return appropriate messages
-4. IF usage patterns change THEN the system SHALL allow dynamic adjustment of rate limiting parameters
-
-### Requirement 7
-
-**User Story:** As a developer, I want comprehensive testing capabilities, so that I can verify API integrations work correctly across all providers.
-
-#### Acceptance Criteria
-
-1. WHEN running integration tests THEN the system SHALL test connectivity to all configured providers
-2. WHEN testing provider responses THEN the system SHALL verify response format and content quality
-3. WHEN testing error scenarios THEN the system SHALL simulate various failure conditions
-4. IF a provider changes their API THEN the tests SHALL detect breaking changes quickly
