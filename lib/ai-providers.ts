@@ -295,30 +295,55 @@ export class MistralProvider implements AIProvider {
   ): Promise<string> {
     this.validateRequest(question, correctAnswers, apiKey);
 
+    const prompt = `Question: ${question}\n\nCorrect answers: ${correctAnswers.join(
+      ", ",
+    )}\n\nPlease provide a clear and concise explanation of why these answers are correct. Focus on the key concepts and reasoning.`;
+
     try {
-      const response = await fetch("/api/ai/mistral", {
+      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          question,
-          correctAnswers,
-          apiKey,
+          model: "mistral-medium",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
         }),
       });
 
       if (!response.ok) {
-        const errorType = response.status === 401 ? 'auth' : 
-                         response.status === 429 ? 'rate_limit' : 'network';
-        throw new AIProviderError(this.name, errorType, `Mistral API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error?.message || `HTTP ${response.status}`;
+        
+        // Mistral-specific error handling
+        if (response.status === 401) {
+          throw new AIProviderError(this.name, 'auth', `Authentication failed: ${errorMessage}`);
+        } else if (response.status === 429) {
+          throw new AIProviderError(this.name, 'rate_limit', `Rate limit exceeded: ${errorMessage}`);
+        } else if (response.status === 400) {
+          throw new AIProviderError(this.name, 'validation', `Invalid request: ${errorMessage}`);
+        } else if (response.status >= 500) {
+          throw new AIProviderError(this.name, 'network', `Mistral server error: ${errorMessage}`);
+        } else {
+          throw new AIProviderError(this.name, 'network', `Mistral API error: ${errorMessage}`);
+        }
       }
 
       const data = await response.json();
       
-      if (!data.explanation) {
-        throw new AIProviderError(this.name, 'validation', 'Invalid response from Mistral');
+      if (!data.choices?.[0]?.message?.content) {
+        throw new AIProviderError(this.name, 'validation', 'Invalid response structure from Mistral');
       }
 
-      return data.explanation;
+      return data.choices[0].message.content;
     } catch (error) {
       if (error instanceof AIProviderError) throw error;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -331,7 +356,8 @@ export class MistralProvider implements AIProvider {
   }
 
   validateConfig(apiKey?: string): boolean {
-    return !!(apiKey && apiKey.length > 10); // Basic validation for Mistral keys
+    // Mistral API keys typically start with a specific pattern and have reasonable length
+    return !!(apiKey && apiKey.length > 20);
   }
 
   private validateRequest(question: string, correctAnswers: string[], apiKey: string): void {
@@ -342,7 +368,7 @@ export class MistralProvider implements AIProvider {
       throw new AIProviderError(this.name, 'validation', 'At least one correct answer is required');
     }
     if (!this.validateConfig(apiKey)) {
-      throw new AIProviderError(this.name, 'auth', 'Invalid Mistral API key');
+      throw new AIProviderError(this.name, 'auth', 'Invalid Mistral API key format');
     }
   }
 }
