@@ -195,30 +195,67 @@ export class GeminiProvider implements AIProvider {
   ): Promise<string> {
     this.validateRequest(question, correctAnswers, apiKey);
 
+    const prompt = `Question: ${question}\n\nCorrect answers: ${correctAnswers.join(
+      ", ",
+    )}\n\nPlease provide a clear and concise explanation of why these answers are correct. Focus on the key concepts and reasoning.`;
+
     try {
-      const response = await fetch("/api/ai/gemini", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question,
-          correctAnswers,
-          apiKey,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              maxOutputTokens: 500,
+              temperature: 0.7,
+            },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        const errorType = response.status === 401 ? 'auth' : 
-                         response.status === 429 ? 'rate_limit' : 'network';
-        throw new AIProviderError(this.name, errorType, `Gemini API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+        
+        // Gemini-specific error handling
+        if (response.status === 400) {
+          // Check for specific Gemini error types
+          if (errorMessage.includes('API_KEY_INVALID') || errorMessage.includes('invalid API key')) {
+            throw new AIProviderError(this.name, 'auth', `Invalid Gemini API key: ${errorMessage}`);
+          } else {
+            throw new AIProviderError(this.name, 'validation', `Invalid request: ${errorMessage}`);
+          }
+        } else if (response.status === 403) {
+          throw new AIProviderError(this.name, 'auth', `Access denied: ${errorMessage}`);
+        } else if (response.status === 429) {
+          throw new AIProviderError(this.name, 'rate_limit', `Rate limit exceeded: ${errorMessage}`);
+        } else if (response.status >= 500) {
+          throw new AIProviderError(this.name, 'network', `Gemini server error: ${errorMessage}`);
+        } else {
+          throw new AIProviderError(this.name, 'network', `Gemini API error: ${errorMessage}`);
+        }
       }
 
       const data = await response.json();
       
-      if (!data.explanation) {
-        throw new AIProviderError(this.name, 'validation', 'Invalid response from Gemini');
+      // Parse Gemini response structure
+      if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new AIProviderError(this.name, 'validation', 'Invalid response structure from Gemini');
       }
 
-      return data.explanation;
+      return data.candidates[0].content.parts[0].text;
     } catch (error) {
       if (error instanceof AIProviderError) throw error;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -231,7 +268,8 @@ export class GeminiProvider implements AIProvider {
   }
 
   validateConfig(apiKey?: string): boolean {
-    return !!(apiKey && apiKey.length > 10); // Basic validation for Gemini keys
+    // Gemini API keys are typically 39 characters long and start with "AIza"
+    return !!(apiKey && apiKey.length > 30 && apiKey.startsWith('AIza'));
   }
 
   private validateRequest(question: string, correctAnswers: string[], apiKey: string): void {
@@ -242,7 +280,7 @@ export class GeminiProvider implements AIProvider {
       throw new AIProviderError(this.name, 'validation', 'At least one correct answer is required');
     }
     if (!this.validateConfig(apiKey)) {
-      throw new AIProviderError(this.name, 'auth', 'Invalid Gemini API key');
+      throw new AIProviderError(this.name, 'auth', 'Invalid Gemini API key format');
     }
   }
 }
