@@ -108,30 +108,55 @@ export class OpenAIProvider implements AIProvider {
   ): Promise<string> {
     this.validateRequest(question, correctAnswers, apiKey);
 
+    const prompt = `Question: ${question}\n\nCorrect answers: ${correctAnswers.join(
+      ", ",
+    )}\n\nPlease provide a clear and concise explanation of why these answers are correct. Focus on the key concepts and reasoning.`;
+
     try {
-      const response = await fetch("/api/ai/openai", {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          question,
-          correctAnswers,
-          apiKey,
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
         }),
       });
 
       if (!response.ok) {
-        const errorType = response.status === 401 ? 'auth' : 
-                         response.status === 429 ? 'rate_limit' : 'network';
-        throw new AIProviderError(this.name, errorType, `OpenAI API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+        
+        // OpenAI-specific error handling
+        if (response.status === 401) {
+          throw new AIProviderError(this.name, 'auth', `Authentication failed: ${errorMessage}`);
+        } else if (response.status === 429) {
+          throw new AIProviderError(this.name, 'rate_limit', `Rate limit exceeded: ${errorMessage}`);
+        } else if (response.status === 400) {
+          throw new AIProviderError(this.name, 'validation', `Invalid request: ${errorMessage}`);
+        } else if (response.status >= 500) {
+          throw new AIProviderError(this.name, 'network', `OpenAI server error: ${errorMessage}`);
+        } else {
+          throw new AIProviderError(this.name, 'network', `OpenAI API error: ${errorMessage}`);
+        }
       }
 
       const data = await response.json();
       
-      if (!data.explanation) {
-        throw new AIProviderError(this.name, 'validation', 'Invalid response from OpenAI');
+      if (!data.choices?.[0]?.message?.content) {
+        throw new AIProviderError(this.name, 'validation', 'Invalid response structure from OpenAI');
       }
 
-      return data.explanation;
+      return data.choices[0].message.content;
     } catch (error) {
       if (error instanceof AIProviderError) throw error;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
