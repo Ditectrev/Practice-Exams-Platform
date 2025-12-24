@@ -58,11 +58,11 @@ jobs:
           output_location: "" # Built app content directory - optional
           app_build_command: "npm run build"
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
+          production_branch: "main" # Only main branch goes to production (custom domain)
           ###### End of Repository/Build Configurations ######
 
   # Staging deployment (feature branches) - uses Staging environment for secrets
-  # Note: In Azure portal, ensure Staging environment is NOT set as default domain
-  # so deployments go to auto-generated domain (kind-plant-0e80e5803.5.azurestaticapps.net)
+  # Uses deployment_environment to create preview environments (auto-generated domain)
   build_and_deploy_staging:
     if: (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')) && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -72,7 +72,7 @@ jobs:
       # Google Analytics
       NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
 
-      # Appwrite Configuration (from Staging environment secrets)
+      # Appwrite Configuration (from Staging environment)
       NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
       NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
       NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
@@ -80,7 +80,7 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
 
-      # Azure Cosmos DB Configuration (from Staging environment secrets)
+      # Azure Cosmos DB Configuration (from Staging environment)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
       AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
       AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
@@ -108,6 +108,8 @@ jobs:
           output_location: "" # Built app content directory - optional
           app_build_command: "npm run build"
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
+          production_branch: "main" # Only main branch goes to production (custom domain)
+          deployment_environment: ${{ github.ref_name }} # Feature branches create preview environments (auto-generated domain)
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
