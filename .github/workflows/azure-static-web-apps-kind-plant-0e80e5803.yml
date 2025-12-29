@@ -64,6 +64,7 @@ jobs:
           output_location: "" # Built app content directory - optional
           app_build_command: "npm run build"
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
+          production_branch: "main" # Only main branch goes to production (custom domain)
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
