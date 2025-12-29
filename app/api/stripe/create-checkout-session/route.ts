@@ -21,10 +21,8 @@ export async function POST(request: NextRequest) {
       apiVersion: "2025-11-17.clover",
     });
 
-    // Get the base URL for redirects
-    const baseUrl =
-      process.env.NEXT_PUBLIC_URL ||
-      `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    // Get the base URL for redirects (always use dynamic URL for Azure Static Web Apps)
+    const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({

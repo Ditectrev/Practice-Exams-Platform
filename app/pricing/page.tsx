@@ -18,7 +18,7 @@ const pricingTiers: PricingTier[] = [
     id: "ads-free",
     name: "Ads Free",
     price: "€1.99",
-    priceId: "price_1SjdGzPFxExLDJMvu0hLgfN1",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE!,
     description: "Remove ads and enjoy distraction-free learning",
     features: [
       "Ad-free experience",
@@ -31,7 +31,7 @@ const pricingTiers: PricingTier[] = [
     id: "local",
     name: "Local Explanations",
     price: "€2.99",
-    priceId: "price_1SjdIGPFxExLDJMvMV17w4f2",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL!,
     description: "Get AI explanations using your local Ollama setup",
     features: [
       "Everything in Ads Free",
@@ -45,7 +45,7 @@ const pricingTiers: PricingTier[] = [
     id: "byok",
     name: "BYOK Explanations",
     price: "€4.99",
-    priceId: "price_1SjdJgPFxExLDJMvZH5iIU1D",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK!,
     description: "Bring Your Own Key - Use premium AI with your API keys",
     popular: true,
     features: [
@@ -62,7 +62,7 @@ const pricingTiers: PricingTier[] = [
     id: "ditectrev",
     name: "Ditectrev Explanations",
     price: "€9.99",
-    priceId: "price_1SjdL3PFxExLDJMvv9C21jFu",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV!,
     description: "Premium AI explanations powered by our infrastructure",
     features: [
       "Everything in BYOK",
