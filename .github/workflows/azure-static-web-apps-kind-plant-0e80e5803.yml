@@ -31,6 +31,13 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
 
+      # Stripe Configuration (from environment secrets - Production or Staging)
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+      NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+      NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+      NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
+
       # Azure Cosmos DB Configuration (from environment secrets - Production or Staging)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
       AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
@@ -79,6 +86,13 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
+
+      # Stripe Configuration (from repository secrets - should match Staging environment)
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+      NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+      NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+      NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
 
       # Azure Cosmos DB Configuration (from repository secrets - should match Staging environment)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
