@@ -29,12 +29,13 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
 
-      # Stripe Configuration (comes from environment secrets)
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
-      NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
-      NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
-      NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
+      # Stripe Configuration
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }} # Secret (sensitive)
+      # Stripe Price IDs (environment variables, distinguished per environment)
+      NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+      NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+      NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+      NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
 
       # Azure Cosmos DB Configuration (comes from environment secrets)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
