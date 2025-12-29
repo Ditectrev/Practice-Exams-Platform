@@ -70,3 +70,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_KIND_PLANT_0E80E5803 }}
           action: "close"
+
