@@ -12,16 +12,17 @@ on:
       - 'feature/*'
 
 jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+  # Production deployment (main branch only)
+  build_and_deploy_production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    name: Build and Deploy to Production
+    environment: Production
     env:
       # Google Analytics
       NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
 
-      # Appwrite Configuration (comes from environment secrets)
+      # Appwrite Configuration (comes from Production environment secrets)
       NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
       NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
       NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
@@ -29,14 +30,14 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
 
-      # Stripe Configuration (comes from environment secrets)
+      # Stripe Configuration (comes from Production environment secrets)
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
       NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
       NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
       NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
 
-      # Azure Cosmos DB Configuration (comes from environment secrets)
+      # Azure Cosmos DB Configuration (comes from Production environment secrets)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
       AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
       AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
@@ -50,21 +51,70 @@ jobs:
           node-version: "20.x"
         env:
           NODE_VERSION: "20.x"
-      - name: Build And Deploy
+      - name: Build And Deploy to Production
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_KIND_PLANT_0E80E5803 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "" # Built app content directory - optional
+          app_location: "/"
+          api_location: ""
+          output_location: ""
           app_build_command: "npm run build"
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
-          ###### End of Repository/Build Configurations ######
+
+  # Staging deployment (feature branches and PRs)
+  build_and_deploy_staging:
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy to Staging
+    environment: Staging
+    env:
+      # Google Analytics
+      NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
+
+      # Appwrite Configuration (comes from Staging environment secrets)
+      NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+      NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+      NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
+      NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
+      NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
+      NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
+
+      # Stripe Configuration (comes from Staging environment secrets)
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+      NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+      NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+      NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
+
+      # Azure Cosmos DB Configuration (comes from Staging environment secrets)
+      AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
+      AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
+      AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20.x"
+        env:
+          NODE_VERSION: "20.x"
+      - name: Build And Deploy to Staging
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_KIND_PLANT_0E80E5803 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          api_location: ""
+          output_location: ""
+          app_build_command: "npm run build"
+          api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
