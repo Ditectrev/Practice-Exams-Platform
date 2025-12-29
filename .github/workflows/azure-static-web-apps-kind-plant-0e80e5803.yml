@@ -12,18 +12,18 @@ on:
       - 'feature/*'
 
 jobs:
-  # Job for push events - uses environments for secrets
+  # Job for push events - temporarily use repository secrets
   build_and_deploy_push:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     name: Build and Deploy (Push)
-    # Use Production environment for main branch, Staging for feature branches
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    # Temporarily comment out environment to use repository secrets
+    # environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
     env:
       # Google Analytics
       NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
 
-      # Appwrite Configuration (from environment secrets - Production or Staging)
+      # Appwrite Configuration (from repository secrets)
       NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
       NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
       NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
@@ -31,14 +31,14 @@ jobs:
       NEXT_PUBLIC_APPWRITE_DATABASE_NAME: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_NAME }}
       NEXT_PUBLIC_APPWRITE_COLLECTION_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID }}
 
-      # Stripe Configuration (from environment secrets - Production or Staging)
+      # Stripe Configuration (from repository secrets)
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
       NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
       NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
       NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
 
-      # Azure Cosmos DB Configuration (from environment secrets - Production or Staging)
+      # Azure Cosmos DB Configuration (from repository secrets)
       AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
       AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
       AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
