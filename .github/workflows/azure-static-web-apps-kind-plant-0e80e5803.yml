@@ -51,9 +51,20 @@ jobs:
           node-version: "20.x"
         env:
           NODE_VERSION: "20.x"
+      - name: Verify Environment Variables
+        run: |
+          echo "Checking STRIPE_SECRET_KEY..."
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "ERROR: STRIPE_SECRET_KEY is not set!"
+            exit 1
+          else
+            echo "STRIPE_SECRET_KEY is set (length: ${#STRIPE_SECRET_KEY})"
+          fi
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_KIND_PLANT_0E80E5803 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
