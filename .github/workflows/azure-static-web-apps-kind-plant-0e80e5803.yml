@@ -31,6 +31,7 @@ jobs:
 
       # Stripe Configuration
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }} # Secret (sensitive)
+      NEXT_PUBLIC_STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }} # TEMPORARY: Testing if NEXT_PUBLIC_ prefix is needed (SECURITY RISK - will expose to client!)
       # Stripe Price IDs (environment variables, distinguished per environment)
       NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
       NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}

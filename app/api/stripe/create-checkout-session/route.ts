@@ -3,13 +3,19 @@ import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    // Diagnostic logging (only log that key exists, not the value)
-    const hasStripeKey = !!process.env.STRIPE_SECRET_KEY;
-    console.log("Stripe configuration check:", {
-      hasStripeKey,
-      keyPrefix: hasStripeKey
-        ? process.env.STRIPE_SECRET_KEY!.substring(0, 7) + "..."
-        : "missing",
+    // Diagnostic logging - check all environment variables
+    console.log("Environment variables check:", {
+      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      hasCosmosEndpoint: !!process.env.AZURE_COSMOSDB_ENDPOINT,
+      hasCosmosKey: !!process.env.AZURE_COSMOSDB_KEY,
+      hasCosmosDatabase: !!process.env.AZURE_COSMOSDB_DATABASE,
+      nodeEnv: process.env.NODE_ENV,
+      allEnvKeys: Object.keys(process.env).filter(
+        (key) =>
+          key.includes("STRIPE") ||
+          key.includes("COSMOS") ||
+          key.includes("AZURE"),
+      ),
     });
 
     const { priceId } = await request.json();
@@ -23,8 +29,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for Stripe secret key
-    if (!process.env.STRIPE_SECRET_KEY) {
+    // Check for Stripe secret key (try both with and without NEXT_PUBLIC_ prefix)
+    const stripeSecretKey =
+      process.env.STRIPE_SECRET_KEY ||
+      process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
       console.error("STRIPE_SECRET_KEY is not configured");
       return NextResponse.json(
         { error: "Stripe secret key not configured. Please contact support." },
@@ -34,9 +43,9 @@ export async function POST(request: NextRequest) {
 
     // Validate Stripe secret key format
     if (
-      !process.env.STRIPE_SECRET_KEY.startsWith("sk_") &&
-      !process.env.STRIPE_SECRET_KEY.startsWith("sk_test_") &&
-      !process.env.STRIPE_SECRET_KEY.startsWith("sk_live_")
+      !stripeSecretKey.startsWith("sk_") &&
+      !stripeSecretKey.startsWith("sk_test_") &&
+      !stripeSecretKey.startsWith("sk_live_")
     ) {
       console.error("Invalid Stripe secret key format");
       return NextResponse.json(
@@ -46,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Stripe
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2025-11-17.clover",
     });
 
