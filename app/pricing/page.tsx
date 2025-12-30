@@ -18,7 +18,7 @@ const pricingTiers: PricingTier[] = [
     id: "ads-free",
     name: "Ads Free",
     price: "€1.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || "",
     description: "Remove ads and enjoy distraction-free learning",
     features: [
       "Ad-free experience",
@@ -31,7 +31,7 @@ const pricingTiers: PricingTier[] = [
     id: "local",
     name: "Local Explanations",
     price: "€2.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "",
     description: "Get AI explanations using your local Ollama setup",
     features: [
       "Everything in Ads Free",
@@ -45,7 +45,7 @@ const pricingTiers: PricingTier[] = [
     id: "byok",
     name: "BYOK Explanations",
     price: "€4.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK || "",
     description: "Bring Your Own Key - Use premium AI with your API keys",
     popular: true,
     features: [
@@ -62,7 +62,7 @@ const pricingTiers: PricingTier[] = [
     id: "ditectrev",
     name: "Ditectrev Explanations",
     price: "€9.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV || "",
     description: "Premium AI explanations powered by our infrastructure",
     features: [
       "Everything in BYOK",
@@ -74,12 +74,21 @@ const pricingTiers: PricingTier[] = [
       "Custom model fine-tuning",
     ],
   },
-];
+].filter((tier) => tier.priceId && tier.priceId.trim() !== "");
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (priceId: string, tierId: string) => {
+    // Validate priceId before making the request
+    if (!priceId || priceId.trim() === "" || priceId === "undefined") {
+      console.error("Invalid priceId for tier:", tierId, priceId);
+      alert(
+        "Configuration error: Price ID is missing. Please contact support.",
+      );
+      return;
+    }
+
     setLoading(tierId);
 
     try {
@@ -89,14 +98,29 @@ export default function PricingPage() {
         body: JSON.stringify({ priceId }),
       });
 
-      const { url } = await response.json();
+      const data = await response.json();
 
-      if (url) {
-        window.location.href = url;
+      if (!response.ok) {
+        console.error("API error:", data);
+        alert(
+          data.error ||
+            `Failed to start checkout: ${response.status} ${response.statusText}`,
+        );
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
       }
     } catch (error) {
       console.error("Error creating checkout session:", error);
-      alert("Failed to start checkout process");
+      alert(
+        error instanceof Error
+          ? `Failed to start checkout: ${error.message}`
+          : "Failed to start checkout process. Please try again.",
+      );
     } finally {
       setLoading(null);
     }
@@ -179,11 +203,17 @@ export default function PricingPage() {
                   intent={tier.popular ? "primary" : "secondary"}
                   size="medium"
                   onClick={() => handleSubscribe(tier.priceId, tier.id)}
-                  disabled={loading === tier.id}
+                  disabled={
+                    loading === tier.id ||
+                    !tier.priceId ||
+                    tier.priceId.trim() === ""
+                  }
                   className="w-full"
                 >
                   {loading === tier.id
                     ? "Processing..."
+                    : !tier.priceId || tier.priceId.trim() === ""
+                    ? "Unavailable"
                     : `Subscribe to ${tier.name}`}
                 </Button>
               </div>
