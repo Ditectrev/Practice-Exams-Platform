@@ -3,21 +3,6 @@ import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    // Diagnostic logging - check all environment variables
-    console.log("Environment variables check:", {
-      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
-      hasCosmosEndpoint: !!process.env.AZURE_COSMOSDB_ENDPOINT,
-      hasCosmosKey: !!process.env.AZURE_COSMOSDB_KEY,
-      hasCosmosDatabase: !!process.env.AZURE_COSMOSDB_DATABASE,
-      nodeEnv: process.env.NODE_ENV,
-      allEnvKeys: Object.keys(process.env).filter(
-        (key) =>
-          key.includes("STRIPE") ||
-          key.includes("COSMOS") ||
-          key.includes("AZURE"),
-      ),
-    });
-
     const { priceId } = await request.json();
 
     // Validate priceId
@@ -29,10 +14,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for Stripe secret key (try both with and without NEXT_PUBLIC_ prefix)
-    const stripeSecretKey =
-      process.env.STRIPE_SECRET_KEY ||
-      process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+    // Check for Stripe secret key
+    // Note: Using NEXT_PUBLIC_ prefix is required for Azure Static Web Apps runtime access
+    // This is safe because it's only used in server-side API routes, never in client components
+    const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
       console.error("STRIPE_SECRET_KEY is not configured");
       return NextResponse.json(
