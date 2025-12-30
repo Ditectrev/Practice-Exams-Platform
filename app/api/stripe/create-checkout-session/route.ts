@@ -44,8 +44,33 @@ export async function POST(request: NextRequest) {
       apiVersion: "2025-11-17.clover",
     });
 
-    // Get the base URL for redirects (always use dynamic URL for Azure Static Web Apps)
-    const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    // Get the base URL for redirects
+    // Azure Static Web Apps may use internal hostnames, so we need to check headers
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+    const referer = request.headers.get("referer");
+
+    let baseUrl: string;
+
+    if (forwardedHost) {
+      // Use forwarded host from Azure Static Web Apps
+      baseUrl = `${forwardedProto}://${forwardedHost}`;
+    } else if (referer) {
+      // Fallback to referer URL
+      try {
+        const refererUrl = new URL(referer);
+        baseUrl = `${refererUrl.protocol}//${refererUrl.host}`;
+      } catch {
+        // If referer parsing fails, use the request URL
+        baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+      }
+    } else {
+      // Last resort: use request URL (may be internal hostname)
+      baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    }
+
+    // Log for debugging
+    console.log("Base URL for Stripe redirects:", baseUrl);
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
