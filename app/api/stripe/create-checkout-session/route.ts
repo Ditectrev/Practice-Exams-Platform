@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${baseUrl}/pricing?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: "required",
+      customer_email: request.headers.get("x-user-email") || undefined, // Get from auth header if available
       metadata: {
         priceId: priceId.trim(),
       },

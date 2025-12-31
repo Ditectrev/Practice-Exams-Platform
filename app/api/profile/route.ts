@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Client, Databases } from "node-appwrite";
 
-// Mock user data - replace with your actual database
-const mockUser = {
-  id: "user_123",
-  email: "user@example.com",
-  subscription: "free",
+// Initialize Appwrite client
+function getAppwriteClient() {
+  const client = new Client()
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "")
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "")
+    .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY || "");
+
+  return new Databases(client);
+}
+
+// Default user data structure
+const defaultUser = {
+  subscription: "free" as const,
   apiKeys: {
     openai: "",
     gemini: "",
@@ -12,17 +21,67 @@ const mockUser = {
     deepseek: "",
   },
   preferences: {
-    explanationProvider: "ollama",
+    explanationProvider: "ollama" as const,
   },
 };
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Get user from authentication context
-    // const user = await getCurrentUser(request);
+    // TODO: Get user email from authentication context
+    // For now, we'll try to get it from query params or use a default
+    // In production, you should get this from your auth system
+    const email =
+      request.nextUrl.searchParams.get("email") || "user@example.com";
 
-    // For now, return mock data
-    return NextResponse.json(mockUser);
+    const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+    const USERS_COLLECTION_ID = "users";
+
+    if (!DATABASE_ID) {
+      console.warn("Appwrite not configured, returning default user");
+      return NextResponse.json({
+        id: "default",
+        email,
+        ...defaultUser,
+      });
+    }
+
+    try {
+      const databases = getAppwriteClient();
+      const { Query } = await import("node-appwrite");
+
+      // Try to find user by email
+      const users = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        [Query.equal("email", email)],
+      );
+
+      if (users.documents.length > 0) {
+        const user = users.documents[0];
+        return NextResponse.json({
+          id: user.$id,
+          email: user.email || email,
+          subscription: user.subscription || defaultUser.subscription,
+          apiKeys: user.apiKeys || defaultUser.apiKeys,
+          preferences: user.preferences || defaultUser.preferences,
+        });
+      } else {
+        // User doesn't exist yet, return default
+        return NextResponse.json({
+          id: "new",
+          email,
+          ...defaultUser,
+        });
+      }
+    } catch (dbError: any) {
+      console.error("Database error:", dbError);
+      // Return default user on error
+      return NextResponse.json({
+        id: "error",
+        email,
+        ...defaultUser,
+      });
+    }
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
