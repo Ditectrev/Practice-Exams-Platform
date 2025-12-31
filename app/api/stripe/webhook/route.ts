@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Client, Databases } from "node-appwrite";
 
+// Force dynamic rendering for webhook endpoint
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // Map Stripe price IDs to subscription types
 const PRICE_ID_TO_SUBSCRIPTION: Record<string, string> = {
   [process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || ""]: "ads-free",
@@ -18,6 +22,14 @@ function getAppwriteClient() {
     .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY || "");
 
   return new Databases(client);
+}
+
+// GET handler for testing/health check
+export async function GET() {
+  return NextResponse.json({
+    message: "Stripe webhook endpoint is active",
+    timestamp: new Date().toISOString(),
+  });
 }
 
 export async function POST(request: NextRequest) {
