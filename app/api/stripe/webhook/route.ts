@@ -4,7 +4,6 @@ import { Client, Databases } from "node-appwrite";
 
 // Force dynamic rendering for webhook endpoint
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 // Map Stripe price IDs to subscription types
 const PRICE_ID_TO_SUBSCRIPTION: Record<string, string> = {
