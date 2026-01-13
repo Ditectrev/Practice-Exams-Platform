@@ -25,9 +25,22 @@ function getAppwriteClient() {
 
 // GET handler for testing/health check
 export async function GET() {
+  const SUBSCRIPTIONS_DATABASE_ID =
+    process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
+    process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+  const SUBSCRIPTIONS_COLLECTION_ID =
+    process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+    "subscriptions";
+
   return NextResponse.json({
     message: "Stripe webhook endpoint is active",
     timestamp: new Date().toISOString(),
+    config: {
+      databaseId: SUBSCRIPTIONS_DATABASE_ID || "NOT SET",
+      collectionId: SUBSCRIPTIONS_COLLECTION_ID || "NOT SET",
+      hasDatabaseId: !!SUBSCRIPTIONS_DATABASE_ID,
+      hasCollectionId: !!SUBSCRIPTIONS_COLLECTION_ID,
+    },
   });
 }
 
@@ -82,6 +95,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log("📨 Received Stripe webhook event:", event.type);
+
     // Handle the event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -97,13 +112,14 @@ export async function POST(request: NextRequest) {
       // Get subscription type from price ID
       const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
 
-      console.log("Processing subscription:", {
+      console.log("📥 Processing subscription webhook:", {
         appwriteUserId,
         email: customerEmail,
         subscriptionType,
         priceId,
         subscriptionId,
         customerId,
+        metadata: session.metadata,
       });
 
       // If no Appwrite user ID, we can't link the subscription
@@ -129,10 +145,27 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
         "subscriptions"; // Fallback to default
 
+      console.log("🔍 Webhook configuration:", {
+        SUBSCRIPTIONS_DATABASE_ID,
+        SUBSCRIPTIONS_COLLECTION_ID,
+        hasDatabaseId: !!SUBSCRIPTIONS_DATABASE_ID,
+        hasCollectionId: !!SUBSCRIPTIONS_COLLECTION_ID,
+      });
+
       if (!SUBSCRIPTIONS_DATABASE_ID) {
-        console.error("NEXT_PUBLIC_APPWRITE_DATABASE_ID is not configured");
+        console.error("❌ NEXT_PUBLIC_APPWRITE_DATABASE_ID is not configured");
         return NextResponse.json(
           { error: "Database not configured" },
+          { status: 500 },
+        );
+      }
+
+      if (!SUBSCRIPTIONS_COLLECTION_ID) {
+        console.error(
+          "❌ NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS is not configured",
+        );
+        return NextResponse.json(
+          { error: "Collection not configured" },
           { status: 500 },
         );
       }
@@ -175,16 +208,33 @@ export async function POST(request: NextRequest) {
           console.log("Updated subscription:", existingSub.$id);
         } else {
           // Create new subscription record
-          await databases.createDocument(
+          console.log("Creating new subscription with data:", {
+            databaseId: SUBSCRIPTIONS_DATABASE_ID,
+            collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+            subscriptionData,
+          });
+          const newSubscription = await databases.createDocument(
             SUBSCRIPTIONS_DATABASE_ID,
             SUBSCRIPTIONS_COLLECTION_ID,
             ID.unique(),
             subscriptionData,
           );
-          console.log("Created new subscription for user:", appwriteUserId);
+          console.log(
+            "✅ Created new subscription:",
+            newSubscription.$id,
+            "for user:",
+            appwriteUserId,
+          );
         }
       } catch (dbError: any) {
-        console.error("Database error:", dbError);
+        console.error("❌ Database error creating/updating subscription:", {
+          error: dbError.message,
+          code: dbError.code,
+          type: dbError.type,
+          response: dbError.response,
+          databaseId: SUBSCRIPTIONS_DATABASE_ID,
+          collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+        });
         // Don't fail the webhook - log and continue
         // Stripe will retry if we return an error
       }
@@ -302,11 +352,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log("✅ Webhook processed successfully");
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    console.error("Error processing webhook:", error);
+    console.error("❌ Error processing webhook:", {
+      message: error.message,
+      stack: error.stack,
+      eventType: event?.type,
+    });
     return NextResponse.json(
-      { error: "Webhook processing failed" },
+      { error: "Webhook processing failed", details: error.message },
       { status: 500 },
     );
   }
