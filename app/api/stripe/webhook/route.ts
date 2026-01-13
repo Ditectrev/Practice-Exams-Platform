@@ -4,6 +4,7 @@ import { Client, Databases } from "node-appwrite";
 
 // Force dynamic rendering for webhook endpoint
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs"; // Ensure Node.js runtime for Azure Static Web Apps
 
 // Map Stripe price IDs to subscription types
 const PRICE_ID_TO_SUBSCRIPTION: Record<string, string> = {
@@ -23,14 +24,77 @@ function getAppwriteClient() {
   return new Databases(client);
 }
 
-// GET handler for testing/health check
-export async function GET() {
+// GET handler for testing/health check and manual testing
+export async function GET(request: NextRequest) {
   const SUBSCRIPTIONS_DATABASE_ID =
     process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
     process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
   const SUBSCRIPTIONS_COLLECTION_ID =
     process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
     "subscriptions";
+
+  const searchParams = request.nextUrl.searchParams;
+  const testWrite = searchParams.get("test") === "write";
+
+  // Test database write capability
+  if (testWrite) {
+    try {
+      const databases = getAppwriteClient();
+      if (
+        !databases ||
+        !SUBSCRIPTIONS_DATABASE_ID ||
+        !SUBSCRIPTIONS_COLLECTION_ID
+      ) {
+        return NextResponse.json(
+          {
+            error: "Database not configured",
+            config: {
+              databaseId: SUBSCRIPTIONS_DATABASE_ID || "NOT SET",
+              collectionId: SUBSCRIPTIONS_COLLECTION_ID || "NOT SET",
+            },
+          },
+          { status: 500 },
+        );
+      }
+
+      const { ID } = await import("node-appwrite");
+      const testDoc = await databases.createDocument(
+        SUBSCRIPTIONS_DATABASE_ID,
+        SUBSCRIPTIONS_COLLECTION_ID,
+        ID.unique(),
+        {
+          appwrite_user_id: "test_user_" + Date.now(),
+          subscription_type: "free",
+          subscription_status: "active",
+          email: "test@example.com",
+          test: true, // Mark as test document
+        },
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: "Test document created successfully",
+        documentId: testDoc.$id,
+        config: {
+          databaseId: SUBSCRIPTIONS_DATABASE_ID,
+          collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+        },
+      });
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          error: "Failed to create test document",
+          message: error.message,
+          code: error.code,
+          config: {
+            databaseId: SUBSCRIPTIONS_DATABASE_ID || "NOT SET",
+            collectionId: SUBSCRIPTIONS_COLLECTION_ID || "NOT SET",
+          },
+        },
+        { status: 500 },
+      );
+    }
+  }
 
   return NextResponse.json({
     message: "Stripe webhook endpoint is active",
@@ -41,6 +105,7 @@ export async function GET() {
       hasDatabaseId: !!SUBSCRIPTIONS_DATABASE_ID,
       hasCollectionId: !!SUBSCRIPTIONS_COLLECTION_ID,
     },
+    test: "Add ?test=write to test database write capability",
   });
 }
 
