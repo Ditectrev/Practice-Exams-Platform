@@ -181,18 +181,19 @@ export async function POST(request: NextRequest) {
         );
 
         // Get subscription details from Stripe to get period dates
-        const subscription =
-          await stripe.subscriptions.retrieve(subscriptionId);
+        const subscription = (await stripe.subscriptions.retrieve(
+          subscriptionId,
+        )) as Stripe.Subscription;
 
-        const subscriptionData = {
+        const subscriptionData: Record<string, any> = {
           appwrite_user_id: appwriteUserId,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
           subscription_type: subscriptionType,
           subscription_status: subscription.status,
-          current_period_start: subscription.current_period_start,
-          current_period_end: subscription.current_period_end,
+          current_period_start: (subscription as any).current_period_start,
+          current_period_end: (subscription as any).current_period_end,
           email: customerEmail || "",
         };
 
@@ -284,8 +285,9 @@ export async function POST(request: NextRequest) {
               {
                 subscription_status: subscription.status,
                 subscription_type: subscriptionType,
-                current_period_start: subscription.current_period_start,
-                current_period_end: subscription.current_period_end,
+                current_period_start: (subscription as any)
+                  .current_period_start,
+                current_period_end: (subscription as any).current_period_end,
                 ...(customerEmail && { email: customerEmail }),
               },
             );
