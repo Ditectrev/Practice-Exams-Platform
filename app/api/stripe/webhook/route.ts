@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
           subscription_type: "free",
           subscription_status: "active",
           email: "test@example.com",
-          test: true, // Mark as test document
         },
       );
 
