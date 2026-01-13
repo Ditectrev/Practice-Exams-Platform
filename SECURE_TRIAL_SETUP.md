@@ -26,16 +26,18 @@ The new system tracks trials **server-side** using:
 ### Step 1: Create Appwrite Database
 
 1. **Go to your Appwrite Console**
-2. **Create a new database**:
+2. **Use your existing database** (or create a new one if needed):
 
-   - Database ID: `abc_123`
-   - Name: `ABC 123`
-   - Description: `Database for tracking user trials`
+   - Database ID: `your_database_id` (use the same one for trials and subscriptions)
+   - Name: `Your Database Name` (can be changed anytime)
+   - Description: `Database for tracking trials and subscriptions`
 
-3. **Create a collection**:
+   **Note**: Both trials and subscriptions collections are stored in the same database. This keeps concerns separated while working within database limits.
 
-   - Collection ID: `trials`
-   - Name: `Trial Records`
+3. **Create the trials collection**:
+
+   - Collection ID: `trials` (or your preferred ID - this is immutable once created)
+   - Name: `Trial Records` (display name, can be changed)
    - Add these attributes:
 
      ```text
@@ -61,15 +63,36 @@ The new system tracks trials **server-side** using:
 Add to your `.env.local`:
 
 ```bash
-# Your existing Appwrite config
+# Appwrite Configuration
 NEXT_PUBLIC_APPWRITE_ENDPOINT=your_endpoint
 NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_APPWRITE_API_KEY=your_api_key
 NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
-NEXT_PUBLIC_APPWRITE_COLLECTION_ID=your_collection_id
+
+# Collection IDs (separate collections in the same database)
+NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS=your_trials_collection_id
+NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS=your_subscriptions_collection_id
 ```
 
-### Step 3: Run Setup Script (Optional)
+**Important Notes**:
+
+- `NEXT_PUBLIC_APPWRITE_DATABASE_NAME` is **not needed** - it's only used when creating a brand new database from scratch
+- Collection IDs use suffixes (`_TRIALS` and `_SUBSCRIPTIONS`) to distinguish between different collections
+- Both collections are stored in the same database but serve different purposes:
+  - **Trials collection**: Tracks 15-minute trial sessions (session-based)
+  - **Subscriptions collection**: Tracks Stripe subscriptions (user-based)
+
+### Step 3: Set Up Subscriptions Collection (Optional)
+
+If you're using Stripe subscriptions, you'll also need a subscriptions collection in the same database:
+
+```bash
+node scripts/setup-subscriptions-database.js
+```
+
+This creates a separate `subscriptions` collection for tracking Stripe subscriptions. See `STRIPE_SUBSCRIPTIONS_SETUP.md` for more details.
+
+### Step 4: Run Trial Setup Script (Optional)
 
 ```bash
 # Install dependencies
@@ -79,7 +102,7 @@ npm install appwrite node-appwrite
 node scripts/setup-trial-database.js
 ```
 
-### Step 4: Update Your Code
+### Step 5: Update Your Code
 
 The code has been updated to use `useSecureTrial` instead of `useTrialTimer`. The new hook provides:
 

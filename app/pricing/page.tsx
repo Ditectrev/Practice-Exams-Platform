@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "../../components/Button";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface PricingTier {
   id: string;
@@ -78,6 +79,7 @@ const pricingTiers: PricingTier[] = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
 
   const handleSubscribe = async (priceId: string, tierId: string) => {
     // Validate priceId before making the request
@@ -89,13 +91,23 @@ export default function PricingPage() {
       return;
     }
 
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      alert("Please sign in to subscribe. You'll be redirected to sign in.");
+      // Optionally redirect to sign in or show auth modal
+      return;
+    }
+
     setLoading(tierId);
 
     try {
       const response = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({
+          priceId,
+          appwriteUserId: user.$id, // Pass Appwrite user ID
+        }),
       });
 
       const data = await response.json();

@@ -18,7 +18,7 @@ async function testGuestPermissions() {
 
     const databases = new Databases(client);
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-    const COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID;
+    const COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS;
 
     console.log(`Attempting to access:`);
     console.log(`  Database: ${DATABASE_ID}`);

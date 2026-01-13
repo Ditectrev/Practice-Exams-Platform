@@ -86,36 +86,50 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Get customer email and subscription details
+      // Get Appwrite user ID from metadata (this is the key identifier)
+      const appwriteUserId = session.metadata?.appwriteUserId;
       const customerEmail =
         session.customer_email || session.customer_details?.email;
       const subscriptionId = session.subscription as string;
       const priceId = session.metadata?.priceId || "";
-
-      if (!customerEmail) {
-        console.error("No customer email in session");
-        return NextResponse.json(
-          { error: "No customer email found" },
-          { status: 400 },
-        );
-      }
+      const customerId = session.customer as string;
 
       // Get subscription type from price ID
       const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
 
       console.log("Processing subscription:", {
+        appwriteUserId,
         email: customerEmail,
         subscriptionType,
         priceId,
         subscriptionId,
+        customerId,
       });
 
-      // Update user subscription in Appwrite
-      const databases = getAppwriteClient();
-      const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-      const USERS_COLLECTION_ID = "users"; // You may need to adjust this
+      // If no Appwrite user ID, we can't link the subscription
+      // This should not happen if user is logged in, but handle gracefully
+      if (!appwriteUserId) {
+        console.warn(
+          "No Appwrite user ID in session metadata. Subscription cannot be linked to user.",
+        );
+        // Still return success to Stripe, but log the issue
+        return NextResponse.json({
+          received: true,
+          warning: "No Appwrite user ID found",
+        });
+      }
 
-      if (!DATABASE_ID) {
+      // Update subscription in Appwrite subscriptions collection
+      const databases = getAppwriteClient();
+      // Use the same database as trials, but separate collection
+      const SUBSCRIPTIONS_DATABASE_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID; // Fallback to main database
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions"; // Fallback to default
+
+      if (!SUBSCRIPTIONS_DATABASE_ID) {
         console.error("NEXT_PUBLIC_APPWRITE_DATABASE_ID is not configured");
         return NextResponse.json(
           { error: "Database not configured" },
@@ -124,45 +138,50 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Try to find existing user by email
-        const { Query } = await import("node-appwrite");
-        const existingUsers = await databases.listDocuments(
-          DATABASE_ID,
-          USERS_COLLECTION_ID,
-          [Query.equal("email", customerEmail)],
+        const { Query, ID } = await import("node-appwrite");
+
+        // Check if subscription already exists for this Stripe subscription ID
+        const existingSubscriptions = await databases.listDocuments(
+          SUBSCRIPTIONS_DATABASE_ID,
+          SUBSCRIPTIONS_COLLECTION_ID,
+          [Query.equal("stripe_subscription_id", subscriptionId)],
         );
 
-        if (existingUsers.documents.length > 0) {
-          // Update existing user
-          const user = existingUsers.documents[0];
+        // Get subscription details from Stripe to get period dates
+        const subscription =
+          await stripe.subscriptions.retrieve(subscriptionId);
+
+        const subscriptionData = {
+          appwrite_user_id: appwriteUserId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId,
+          stripe_price_id: priceId,
+          subscription_type: subscriptionType,
+          subscription_status: subscription.status,
+          current_period_start: subscription.current_period_start,
+          current_period_end: subscription.current_period_end,
+          email: customerEmail || "",
+        };
+
+        if (existingSubscriptions.documents.length > 0) {
+          // Update existing subscription
+          const existingSub = existingSubscriptions.documents[0];
           await databases.updateDocument(
-            DATABASE_ID,
-            USERS_COLLECTION_ID,
-            user.$id,
-            {
-              subscription: subscriptionType,
-              stripe_customer_id: session.customer as string,
-              stripe_subscription_id: subscriptionId,
-              updated_at: new Date().toISOString(),
-            },
+            SUBSCRIPTIONS_DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            existingSub.$id,
+            subscriptionData,
           );
-          console.log("Updated user subscription:", user.$id);
+          console.log("Updated subscription:", existingSub.$id);
         } else {
-          // Create new user
+          // Create new subscription record
           await databases.createDocument(
-            DATABASE_ID,
-            USERS_COLLECTION_ID,
-            "unique()",
-            {
-              email: customerEmail,
-              subscription: subscriptionType,
-              stripe_customer_id: session.customer as string,
-              stripe_subscription_id: subscriptionId,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
+            SUBSCRIPTIONS_DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            ID.unique(),
+            subscriptionData,
           );
-          console.log("Created new user with subscription");
+          console.log("Created new subscription for user:", appwriteUserId);
         }
       } catch (dbError: any) {
         console.error("Database error:", dbError);
@@ -171,6 +190,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
+      const subscriptionId = subscription.id;
       const customerId = subscription.customer as string;
 
       // Get customer email from Stripe
@@ -178,44 +198,57 @@ export async function POST(request: NextRequest) {
       const customerEmail =
         customer && !customer.deleted ? customer.email : null;
 
-      if (!customerEmail) {
-        console.error("No customer email found");
-        return NextResponse.json({ received: true });
-      }
-
-      // Determine subscription status
-      const isActive = subscription.status === "active";
+      // Determine subscription status and type
       const priceId = subscription.items.data[0]?.price.id || "";
-      const subscriptionType = isActive
-        ? PRICE_ID_TO_SUBSCRIPTION[priceId] || "free"
-        : "free";
+      const subscriptionType =
+        subscription.status === "active"
+          ? PRICE_ID_TO_SUBSCRIPTION[priceId] || "free"
+          : "free";
 
-      // Update user subscription
+      // Update subscription in subscriptions collection
       const databases = getAppwriteClient();
-      const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-      const USERS_COLLECTION_ID = "users";
+      const SUBSCRIPTIONS_DATABASE_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID; // Fallback to main database
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions"; // Fallback to default
 
-      if (DATABASE_ID) {
+      if (SUBSCRIPTIONS_DATABASE_ID) {
         try {
           const { Query } = await import("node-appwrite");
-          const existingUsers = await databases.listDocuments(
-            DATABASE_ID,
-            USERS_COLLECTION_ID,
-            [Query.equal("email", customerEmail)],
+
+          // Find subscription by Stripe subscription ID
+          const existingSubscriptions = await databases.listDocuments(
+            SUBSCRIPTIONS_DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [Query.equal("stripe_subscription_id", subscriptionId)],
           );
 
-          if (existingUsers.documents.length > 0) {
-            const user = existingUsers.documents[0];
+          if (existingSubscriptions.documents.length > 0) {
+            const existingSub = existingSubscriptions.documents[0];
             await databases.updateDocument(
-              DATABASE_ID,
-              USERS_COLLECTION_ID,
-              user.$id,
+              SUBSCRIPTIONS_DATABASE_ID,
+              SUBSCRIPTIONS_COLLECTION_ID,
+              existingSub.$id,
               {
-                subscription: subscriptionType,
-                updated_at: new Date().toISOString(),
+                subscription_status: subscription.status,
+                subscription_type: subscriptionType,
+                current_period_start: subscription.current_period_start,
+                current_period_end: subscription.current_period_end,
+                ...(customerEmail && { email: customerEmail }),
               },
             );
-            console.log("Updated user subscription status:", user.$id);
+            console.log(
+              "Updated subscription status:",
+              existingSub.$id,
+              subscription.status,
+            );
+          } else {
+            console.warn(
+              "Subscription not found for Stripe subscription ID:",
+              subscriptionId,
+            );
           }
         } catch (dbError: any) {
           console.error("Database error updating subscription:", dbError);
@@ -223,44 +256,48 @@ export async function POST(request: NextRequest) {
       }
     } else if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
+      const subscriptionId = subscription.id;
 
-      // Get customer email from Stripe
-      const customer = await stripe.customers.retrieve(customerId);
-      const customerEmail =
-        customer && !customer.deleted ? customer.email : null;
+      // Update subscription status to canceled in subscriptions collection
+      const databases = getAppwriteClient();
+      const SUBSCRIPTIONS_DATABASE_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID; // Fallback to main database
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions"; // Fallback to default
 
-      if (customerEmail) {
-        // Set subscription to free
-        const databases = getAppwriteClient();
-        const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-        const USERS_COLLECTION_ID = "users";
+      if (SUBSCRIPTIONS_DATABASE_ID) {
+        try {
+          const { Query } = await import("node-appwrite");
 
-        if (DATABASE_ID) {
-          try {
-            const { Query } = await import("node-appwrite");
-            const existingUsers = await databases.listDocuments(
-              DATABASE_ID,
-              USERS_COLLECTION_ID,
-              [Query.equal("email", customerEmail)],
+          // Find subscription by Stripe subscription ID
+          const existingSubscriptions = await databases.listDocuments(
+            SUBSCRIPTIONS_DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [Query.equal("stripe_subscription_id", subscriptionId)],
+          );
+
+          if (existingSubscriptions.documents.length > 0) {
+            const existingSub = existingSubscriptions.documents[0];
+            await databases.updateDocument(
+              SUBSCRIPTIONS_DATABASE_ID,
+              SUBSCRIPTIONS_COLLECTION_ID,
+              existingSub.$id,
+              {
+                subscription_status: "canceled",
+                subscription_type: "free",
+              },
             );
-
-            if (existingUsers.documents.length > 0) {
-              const user = existingUsers.documents[0];
-              await databases.updateDocument(
-                DATABASE_ID,
-                USERS_COLLECTION_ID,
-                user.$id,
-                {
-                  subscription: "free",
-                  updated_at: new Date().toISOString(),
-                },
-              );
-              console.log("Set user subscription to free:", user.$id);
-            }
-          } catch (dbError: any) {
-            console.error("Database error canceling subscription:", dbError);
+            console.log("Marked subscription as canceled:", existingSub.$id);
+          } else {
+            console.warn(
+              "Subscription not found for Stripe subscription ID:",
+              subscriptionId,
+            );
           }
+        } catch (dbError: any) {
+          console.error("Database error canceling subscription:", dbError);
         }
       }
     }
