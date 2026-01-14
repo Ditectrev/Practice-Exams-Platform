@@ -2,16 +2,8 @@
   "routes": [
     {
       "route": "/api/*",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
+      "allowedRoles": ["anonymous"]
     }
-  ],
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": [
-      "/api/*",
-      "/_next/*",
-      "/static/*",
-      "*.{png,jpg,gif,svg,ico,woff,woff2,ttf,eot,json}"
-    ]
-  }
+  ]
 }
