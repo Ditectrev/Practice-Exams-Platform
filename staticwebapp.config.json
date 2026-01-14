@@ -2,23 +2,16 @@
   "routes": [
     {
       "route": "/api/*",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
-      "rewrite": "/api/{*restOfPath}"
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
-      "/static/css/*",
-      "/static/js/*",
-      "/static/media/*",
-      "*.{png,jpg,gif,svg,ico,woff,woff2,ttf,eot}"
+      "/api/*",
+      "/_next/*",
+      "/static/*",
+      "*.{png,jpg,gif,svg,ico,woff,woff2,ttf,eot,json}"
     ]
-  },
-  "responseOverrides": {
-    "404": {
-      "rewrite": "/404.html",
-      "statusCode": 404
-    }
   }
 }
