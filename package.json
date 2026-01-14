@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "cp staticwebapp.config.json .next/standalone/ 2>/dev/null || cp staticwebapp.config.json .next/ 2>/dev/null || true",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
