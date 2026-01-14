@@ -309,7 +309,9 @@ export async function POST(request: NextRequest) {
       const customerId = subscription.customer as string;
 
       // Get customer email from Stripe
-      const customer = await stripe.customers.retrieve(customerId);
+      const customer = (await stripe.customers.retrieve(
+        customerId,
+      )) as Stripe.Customer;
       const customerEmail =
         customer && !customer.deleted ? customer.email : null;
 
