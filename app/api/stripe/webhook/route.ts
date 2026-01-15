@@ -135,11 +135,9 @@ export async function POST(request: NextRequest) {
   try {
     // Verify webhook signature
     // Note: Using NEXT_PUBLIC_ prefix is required for Azure Static Web Apps runtime access
-    // For localhost testing with Stripe CLI, use the webhook secret from: stripe listen --forward-to localhost:3000/api/stripe/webhook
-    const webhookSecret =
-      process.env.STRIPE_WEBHOOK_SECRET ||
-      process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET ||
-      process.env.STRIPE_WEBHOOK_SECRET_LOCAL; // For localhost testing
+    // For localhost testing with Stripe CLI, set NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET to the Stripe CLI secret
+    // (shown when you run: stripe listen --forward-to localhost:3000/api/stripe/webhook)
+    const webhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
       return NextResponse.json(
