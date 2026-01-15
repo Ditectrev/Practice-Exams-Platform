@@ -65,7 +65,7 @@ jobs:
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "/" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: ".next/standalone" # Built app content directory for Next.js standalone mode
+          output_location: "" # Built app content directory - optional (leave empty for Next.js standalone auto-detection)
           app_build_command: "npm run build"
           api_build_command: "rm -rf ./node_modules/@next/swc-* && rm -rf ./.next/cache"
           production_branch: "main" # Only main branch goes to production (custom domain)
