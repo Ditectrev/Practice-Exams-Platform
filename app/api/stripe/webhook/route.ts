@@ -4,7 +4,6 @@ import { Client, Databases } from "node-appwrite";
 
 // Force dynamic rendering for webhook endpoint
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 // Map Stripe price IDs to subscription types
 const PRICE_ID_TO_SUBSCRIPTION: Record<string, string> = {
@@ -22,6 +21,18 @@ function getAppwriteClient() {
     .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY || "");
 
   return new Databases(client);
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, stripe-signature",
+    },
+  });
 }
 
 // GET handler for testing/health check and manual testing
