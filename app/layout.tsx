@@ -8,6 +8,8 @@ import Cookie from "@azure-fundamentals/components/Cookie";
 import { AuthProvider } from "@azure-fundamentals/contexts/AuthContext";
 import { ThemeProvider } from "@azure-fundamentals/contexts/ThemeContext";
 import { TrialWarning } from "@azure-fundamentals/components/TrialWarning";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "styles/globals.css";
 
 const philosopher = Philosopher({
@@ -139,6 +141,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </ApolloProvider>
         </ThemeProvider>
       </body>
+      <Analytics />
+      <SpeedInsights />
     </html>
   );
 }

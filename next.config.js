@@ -11,7 +11,6 @@ const nextConfig = {
   images: {
     domains: ["localhost"],
   },
-  output: "standalone",
 };
 
 const withPWA = require("next-pwa")({

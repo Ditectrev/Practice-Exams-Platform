@@ -1,0 +1,71 @@
+name: Vercel Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+      - 'feature/*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Vercel
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20.x"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        id: vercel-pull
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project Artifacts
+        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # Google Analytics
+          NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
+
+          # Appwrite Configuration
+          NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+          NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+          NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
+          NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}
+
+          # Stripe Configuration
+          NEXT_PUBLIC_STRIPE_SECRET_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET: ${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+          NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+          NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+          NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
+
+          # Azure Cosmos DB Configuration
+          AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
+          AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
+          AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
+
+      - name: Deploy Project Artifacts to Vercel
+        id: vercel-deploy
+        run: vercel deploy ${{ github.ref == 'refs/heads/main' && '--prod' || '--prebuilt' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
