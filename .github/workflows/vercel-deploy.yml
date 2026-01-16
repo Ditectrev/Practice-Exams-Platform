@@ -15,7 +15,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy to Vercel
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -29,32 +29,32 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel Environment Information
-        id: vercel-pull
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Sync Environment Variables to Vercel
+        run: |
+          ENV_TYPE=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+          echo "${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}" | vercel env add NEXT_PUBLIC_GA_TRACKING_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}" | vercel env add NEXT_PUBLIC_APPWRITE_ENDPOINT $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}" | vercel env add NEXT_PUBLIC_APPWRITE_PROJECT_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}" | vercel env add NEXT_PUBLIC_APPWRITE_API_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}" | vercel env add NEXT_PUBLIC_APPWRITE_DATABASE_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}" | vercel env add NEXT_PUBLIC_STRIPE_SECRET_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}" | vercel env add NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_LOCAL $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_BYOK $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_DITECTREV $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_ENDPOINT }}" | vercel env add AZURE_COSMOSDB_ENDPOINT $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_KEY }}" | vercel env add AZURE_COSMOSDB_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_DATABASE }}" | vercel env add AZURE_COSMOSDB_DATABASE $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Sync Environment Variables to Vercel
-        run: |
-          ENV_TYPE=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-          vercel env add NEXT_PUBLIC_GA_TRACKING_ID $ENV_TYPE "${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_ENDPOINT $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_PROJECT_ID $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_API_KEY $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_DATABASE_ID $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS $ENV_TYPE "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_SECRET_KEY $ENV_TYPE "${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET $ENV_TYPE "${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE $ENV_TYPE "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_PRICE_LOCAL $ENV_TYPE "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_PRICE_BYOK $ENV_TYPE "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add NEXT_PUBLIC_STRIPE_PRICE_DITECTREV $ENV_TYPE "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add AZURE_COSMOSDB_ENDPOINT $ENV_TYPE "${{ secrets.AZURE_COSMOSDB_ENDPOINT }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add AZURE_COSMOSDB_KEY $ENV_TYPE "${{ secrets.AZURE_COSMOSDB_KEY }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
-          vercel env add AZURE_COSMOSDB_DATABASE $ENV_TYPE "${{ secrets.AZURE_COSMOSDB_DATABASE }}" --token=${{ secrets.VERCEL_TOKEN }} --yes || true
+      - name: Pull Vercel Environment Information
+        id: vercel-pull
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
