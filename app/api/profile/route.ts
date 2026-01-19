@@ -27,11 +27,10 @@ const defaultUser = {
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Get user email from authentication context
-    // For now, we'll try to get it from query params or use a default
-    // In production, you should get this from your auth system
+    // Get user email and ID from query params
     const email =
       request.nextUrl.searchParams.get("email") || "user@example.com";
+    const userId = request.nextUrl.searchParams.get("userId");
 
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
     const USERS_COLLECTION_ID = "users";
@@ -54,15 +53,83 @@ export async function GET(request: NextRequest) {
         process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
         "subscriptions";
 
-      // Try to find active subscription by email
-      const subscriptions = await databases.listDocuments(
-        DATABASE_ID,
-        SUBSCRIPTIONS_COLLECTION_ID,
-        [
-          Query.equal("email", email),
-          Query.equal("subscription_status", "active"),
-        ],
-      );
+      // Check subscriptions collection for active subscription
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions";
+
+      // Try to find active subscription by appwrite_user_id (preferred) or email
+      let subscriptions;
+      if (userId) {
+        // First try by appwrite_user_id with active status
+        subscriptions = await databases.listDocuments(
+          DATABASE_ID,
+          SUBSCRIPTIONS_COLLECTION_ID,
+          [
+            Query.equal("appwrite_user_id", userId),
+            Query.equal("subscription_status", "active"),
+          ],
+        );
+        console.log(
+          `🔍 Looking for active subscription by userId ${userId}:`,
+          subscriptions.documents.length,
+          "found",
+        );
+
+        // If no active subscription, check all subscriptions for this user
+        if (subscriptions.documents.length === 0) {
+          const allSubs = await databases.listDocuments(
+            DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [Query.equal("appwrite_user_id", userId)],
+          );
+          console.log(
+            `🔍 All subscriptions for userId ${userId}:`,
+            allSubs.documents.length,
+            "found",
+          );
+          if (allSubs.documents.length > 0) {
+            console.log(
+              "Subscription statuses:",
+              allSubs.documents.map((s) => ({
+                status: s.subscription_status,
+                type: s.subscription_type,
+                email: s.email,
+              })),
+            );
+            // Filter for active or trialing subscriptions
+            subscriptions = {
+              documents: allSubs.documents.filter(
+                (sub: any) =>
+                  sub.subscription_status === "active" ||
+                  sub.subscription_status === "trialing",
+              ),
+            };
+            console.log(
+              `✅ Filtered to active/trialing:`,
+              subscriptions.documents.length,
+              "found",
+            );
+          }
+        }
+      }
+
+      // If no subscription found by user ID, try by email
+      if (!subscriptions || subscriptions.documents.length === 0) {
+        subscriptions = await databases.listDocuments(
+          DATABASE_ID,
+          SUBSCRIPTIONS_COLLECTION_ID,
+          [
+            Query.equal("email", email),
+            Query.equal("subscription_status", "active"),
+          ],
+        );
+        console.log(
+          `🔍 Looking for subscription by email ${email}:`,
+          subscriptions.documents.length,
+          "found",
+        );
+      }
 
       let subscriptionType:
         | "free"
@@ -70,7 +137,7 @@ export async function GET(request: NextRequest) {
         | "local"
         | "byok"
         | "ditectrev" = defaultUser.subscription;
-      if (subscriptions.documents.length > 0) {
+      if (subscriptions && subscriptions.documents.length > 0) {
         // Get the most recent active subscription
         const latestSubscription = subscriptions.documents.sort(
           (a, b) =>
@@ -78,6 +145,7 @@ export async function GET(request: NextRequest) {
             (a.$updatedAt ? new Date(a.$updatedAt).getTime() : 0),
         )[0];
         const subType = latestSubscription.subscription_type as string;
+        console.log(`✅ Found subscription type:`, subType);
         if (["ads-free", "local", "byok", "ditectrev"].includes(subType)) {
           subscriptionType = subType as
             | "ads-free"
@@ -85,6 +153,10 @@ export async function GET(request: NextRequest) {
             | "byok"
             | "ditectrev";
         }
+      } else {
+        console.log(
+          `⚠️ No active subscription found for user ${userId || email}`,
+        );
       }
 
       // Try to find user by email in users collection

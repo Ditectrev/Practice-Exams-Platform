@@ -29,7 +29,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,8 +48,9 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (user?.email) {
-      fetchProfile();
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
     }
 
     // Check for success parameter from Stripe checkout
@@ -57,25 +58,42 @@ export default function ProfilePage() {
       setShowSuccessMessage(true);
       // Clear the URL parameters
       window.history.replaceState({}, "", "/profile");
-      // Refresh profile after a short delay to get updated subscription
-      setTimeout(() => {
-        fetchProfile();
-      }, 2000);
+    }
+
+    // Fetch profile if user is available
+    if (user?.email && user?.$id) {
+      fetchProfile();
+
+      // If coming from checkout, refresh after delays to allow webhook to process
+      if (searchParams.get("success") === "true") {
+        setTimeout(() => {
+          fetchProfile();
+        }, 3000);
+        setTimeout(() => {
+          fetchProfile();
+        }, 5000);
+      }
+    } else {
+      // User not authenticated, stop loading
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, user?.email]);
+  }, [searchParams, user?.email, user?.$id, authLoading]);
 
   const fetchProfile = async () => {
     try {
-      // Get user email from auth context
+      // Get user email and ID from auth context
       const userEmail = user?.email;
-      if (!userEmail) {
+      const userId = user?.$id;
+      if (!userEmail || !userId) {
         setLoading(false);
         return;
       }
 
       const response = await fetch(
-        `/api/profile?email=${encodeURIComponent(userEmail)}`,
+        `/api/profile?email=${encodeURIComponent(
+          userEmail,
+        )}&userId=${encodeURIComponent(userId)}`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -157,7 +175,7 @@ export default function ProfilePage() {
     return false;
   };
 
-  if (loading) return <LoadingIndicator />;
+  if (authLoading || loading) return <LoadingIndicator />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -230,13 +248,22 @@ export default function ProfilePage() {
                     {profile?.email}
                   </p>
                 </div>
-                <Button
-                  intent="primary"
-                  size="medium"
-                  onClick={() => (window.location.href = "/pricing")}
-                >
-                  Upgrade Plan
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    intent="secondary"
+                    size="medium"
+                    onClick={fetchProfile}
+                  >
+                    Refresh
+                  </Button>
+                  <Button
+                    intent="primary"
+                    size="medium"
+                    onClick={() => (window.location.href = "/pricing")}
+                  >
+                    Upgrade Plan
+                  </Button>
+                </div>
               </div>
             </div>
 
