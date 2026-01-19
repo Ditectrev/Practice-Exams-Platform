@@ -53,11 +53,6 @@ export async function GET(request: NextRequest) {
         process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
         "subscriptions";
 
-      // Check subscriptions collection for active subscription
-      const SUBSCRIPTIONS_COLLECTION_ID =
-        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
-        "subscriptions";
-
       // Try to find active subscription by appwrite_user_id (preferred) or email
       let subscriptions;
       if (userId) {
