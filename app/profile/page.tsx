@@ -86,10 +86,16 @@ export default function ProfilePage() {
       const userEmail = user?.email;
       const userId = user?.$id;
       if (!userEmail || !userId) {
+        console.log("❌ No user email or ID available:", { userEmail, userId });
         setLoading(false);
         return;
       }
 
+      console.log("🔍 Fetching profile for:", {
+        userEmail,
+        userId,
+        userObject: user,
+      });
       const response = await fetch(
         `/api/profile?email=${encodeURIComponent(
           userEmail,
@@ -97,11 +103,22 @@ export default function ProfilePage() {
       );
       if (response.ok) {
         const data = await response.json();
+        console.log("✅ Profile data received:", {
+          subscription: data.subscription,
+          email: data.email,
+          id: data.id,
+        });
         setProfile(data);
         setApiKeys(data.apiKeys || {});
+      } else {
+        console.error(
+          "❌ Profile fetch failed:",
+          response.status,
+          response.statusText,
+        );
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("❌ Error fetching profile:", error);
     } finally {
       setLoading(false);
     }
