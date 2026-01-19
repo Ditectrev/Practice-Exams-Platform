@@ -106,7 +106,6 @@ export default function PricingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           priceId,
-          appwriteUserId: user.$id, // Pass Appwrite user ID
         }),
       });
 

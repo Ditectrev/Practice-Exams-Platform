@@ -3,7 +3,7 @@ import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId, appwriteUserId } = await request.json();
+    const { priceId } = await request.json();
 
     // Validate priceId
     if (!priceId || typeof priceId !== "string" || priceId.trim() === "") {
@@ -13,9 +13,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
-    // appwriteUserId is optional - if not provided, we'll try to get it from email later
-    // But it's recommended to pass it for proper user linking
 
     // Check for Stripe secret key
     // Note: Using NEXT_PUBLIC_ prefix is required for Azure Static Web Apps runtime access
@@ -77,8 +74,6 @@ export async function POST(request: NextRequest) {
 
     console.log("💳 Creating checkout session:", {
       priceId: priceId.trim(),
-      appwriteUserId,
-      hasUserId: !!appwriteUserId,
     });
 
     // Create Stripe checkout session
@@ -98,14 +93,12 @@ export async function POST(request: NextRequest) {
       customer_email: request.headers.get("x-user-email") || undefined, // Get from auth header if available
       metadata: {
         priceId: priceId.trim(),
-        ...(appwriteUserId && { appwriteUserId: appwriteUserId.trim() }), // Include Appwrite user ID if provided
       },
     });
 
     console.log("✅ Checkout session created:", {
       sessionId: session.id,
       metadata: session.metadata,
-      hasAppwriteUserId: !!session.metadata?.appwriteUserId,
     });
 
     if (!session.url) {

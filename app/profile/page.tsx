@@ -78,44 +78,26 @@ export default function ProfilePage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, user?.email, user?.$id, authLoading]);
+  }, [searchParams, user?.email, authLoading]);
 
   const fetchProfile = async () => {
     try {
-      // Get user email and ID from auth context
+      // Get user email from auth context
       const userEmail = user?.email;
-      const userId = user?.$id;
-      if (!userEmail || !userId) {
-        console.log("❌ No user email or ID available:", { userEmail, userId });
+      if (!userEmail) {
         setLoading(false);
         return;
       }
 
-      console.log("🔍 Fetching profile for:", {
-        userEmail,
-        userId,
-        userObject: user,
-      });
       const response = await fetch(
-        `/api/profile?email=${encodeURIComponent(
-          userEmail,
-        )}&userId=${encodeURIComponent(userId)}`,
+        `/api/profile?email=${encodeURIComponent(userEmail)}`,
       );
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Profile data received:", {
-          subscription: data.subscription,
-          email: data.email,
-          id: data.id,
-        });
         setProfile(data);
         setApiKeys(data.apiKeys || {});
       } else {
-        console.error(
-          "❌ Profile fetch failed:",
-          response.status,
-          response.statusText,
-        );
+        console.error("Failed to fetch profile:", response.status);
       }
     } catch (error) {
       console.error("❌ Error fetching profile:", error);

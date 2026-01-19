@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
         SUBSCRIPTIONS_COLLECTION_ID,
         ID.unique(),
         {
-          appwrite_user_id: "test_user_" + Date.now(),
           subscription_type: "free",
           subscription_status: "active",
           email: "test@example.com",
@@ -174,8 +173,6 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Get Appwrite user ID from metadata (this is the key identifier)
-      const appwriteUserId = session.metadata?.appwriteUserId;
       const customerEmail =
         session.customer_email || session.customer_details?.email;
       const subscriptionId = session.subscription as string;
@@ -186,7 +183,6 @@ export async function POST(request: NextRequest) {
       const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
 
       console.log("📥 Processing subscription webhook:", {
-        appwriteUserId,
         email: customerEmail,
         subscriptionType,
         priceId,
@@ -195,16 +191,15 @@ export async function POST(request: NextRequest) {
         metadata: session.metadata,
       });
 
-      // If no Appwrite user ID, we can't link the subscription
-      // This should not happen if user is logged in, but handle gracefully
-      if (!appwriteUserId) {
+      // Email is required to link the subscription
+      if (!customerEmail) {
         console.warn(
-          "No Appwrite user ID in session metadata. Subscription cannot be linked to user.",
+          "No customer email in session. Subscription cannot be linked to user.",
         );
         // Still return success to Stripe, but log the issue
         return NextResponse.json({
           received: true,
-          warning: "No Appwrite user ID found",
+          warning: "No customer email found",
         });
       }
 
@@ -259,7 +254,6 @@ export async function POST(request: NextRequest) {
         )) as Stripe.Subscription;
 
         const subscriptionData: Record<string, any> = {
-          appwrite_user_id: appwriteUserId,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
@@ -296,8 +290,8 @@ export async function POST(request: NextRequest) {
           console.log(
             "✅ Created new subscription:",
             newSubscription.$id,
-            "for user:",
-            appwriteUserId,
+            "for email:",
+            customerEmail,
           );
         }
       } catch (dbError: any) {

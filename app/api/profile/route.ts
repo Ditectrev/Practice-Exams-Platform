@@ -27,21 +27,15 @@ const defaultUser = {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user email and ID from query params
+    // Get user email from query params
     const email =
       request.nextUrl.searchParams.get("email") || "user@example.com";
-    const userId = request.nextUrl.searchParams.get("userId");
-
-    console.log("📥 Profile API called with:", { email, userId });
 
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
     const USERS_COLLECTION_ID = "users";
     const SUBSCRIPTIONS_COLLECTION_ID =
       process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
       "subscriptions";
-
-    console.log("📥 Database ID:", DATABASE_ID);
-    console.log("📥 Subscriptions Collection ID:", SUBSCRIPTIONS_COLLECTION_ID);
 
     if (!DATABASE_ID) {
       console.warn("Appwrite not configured, returning default user");
@@ -56,17 +50,9 @@ export async function GET(request: NextRequest) {
       const databases = getAppwriteClient();
       const { Query } = await import("node-appwrite");
 
-      // Try to find active subscription by email (more reliable) or appwrite_user_id
+      // Find active subscription by email
       let subscriptions: any = null;
       try {
-        console.log(
-          `🔍 Querying subscriptions for email: "${email}" and userId: "${userId}"`,
-        );
-        console.log(
-          `🔍 Database: ${DATABASE_ID}, Collection: ${SUBSCRIPTIONS_COLLECTION_ID}`,
-        );
-
-        // First try by email with active status (email is more reliable)
         subscriptions = await databases.listDocuments(
           DATABASE_ID,
           SUBSCRIPTIONS_COLLECTION_ID,
@@ -75,103 +61,25 @@ export async function GET(request: NextRequest) {
             Query.equal("subscription_status", "active"),
           ],
         );
-        console.log(
-          `🔍 Looking for active subscription by email "${email}":`,
-          subscriptions.documents.length,
-          "found",
-        );
 
-        if (subscriptions.documents.length > 0) {
-          console.log(
-            "✅ Found subscriptions by email:",
-            subscriptions.documents.map((s: any) => ({
-              id: s.$id,
-              userId: s.appwrite_user_id,
-              email: s.email,
-              type: s.subscription_type,
-              status: s.subscription_status,
-            })),
+        // If no active subscription, check for trialing status
+        if (subscriptions.documents.length === 0) {
+          const allSubs = await databases.listDocuments(
+            DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [Query.equal("email", email)],
           );
-        }
-
-        // If no subscription found by email, try by appwrite_user_id
-        if (!subscriptions || subscriptions.documents.length === 0) {
-          if (userId) {
-            console.log(
-              `🔍 No subscription found by email, trying userId: "${userId}"`,
-            );
-            subscriptions = await databases.listDocuments(
-              DATABASE_ID,
-              SUBSCRIPTIONS_COLLECTION_ID,
-              [
-                Query.equal("appwrite_user_id", userId),
-                Query.equal("subscription_status", "active"),
-              ],
-            );
-            console.log(
-              `🔍 Looking for active subscription by userId "${userId}":`,
-              subscriptions.documents.length,
-              "found",
-            );
-
-            if (subscriptions.documents.length > 0) {
-              console.log(
-                "✅ Found subscriptions by userId:",
-                subscriptions.documents.map((s: any) => ({
-                  id: s.$id,
-                  userId: s.appwrite_user_id,
-                  email: s.email,
-                  type: s.subscription_type,
-                  status: s.subscription_status,
-                })),
-              );
-            }
-
-            // If still no active subscription, check all subscriptions for this user ID
-            if (subscriptions.documents.length === 0) {
-              const allSubs = await databases.listDocuments(
-                DATABASE_ID,
-                SUBSCRIPTIONS_COLLECTION_ID,
-                [Query.equal("appwrite_user_id", userId)],
-              );
-              console.log(
-                `🔍 All subscriptions for userId ${userId}:`,
-                allSubs.documents.length,
-                "found",
-              );
-              if (allSubs.documents.length > 0) {
-                console.log(
-                  "Subscription statuses:",
-                  allSubs.documents.map((s: any) => ({
-                    status: s.subscription_status,
-                    type: s.subscription_type,
-                    email: s.email,
-                    userId: s.appwrite_user_id,
-                  })),
-                );
-                // Filter for active or trialing subscriptions
-                subscriptions = {
-                  documents: allSubs.documents.filter(
-                    (sub: any) =>
-                      sub.subscription_status === "active" ||
-                      sub.subscription_status === "trialing",
-                  ),
-                };
-                console.log(
-                  `✅ Filtered to active/trialing:`,
-                  subscriptions.documents.length,
-                  "found",
-                );
-              }
-            }
-          }
+          // Filter for active or trialing subscriptions
+          subscriptions = {
+            documents: allSubs.documents.filter(
+              (sub: any) =>
+                sub.subscription_status === "active" ||
+                sub.subscription_status === "trialing",
+            ),
+          };
         }
       } catch (subError: any) {
-        console.error("❌ Error querying subscriptions:", {
-          message: subError.message,
-          code: subError.code,
-          type: subError.type,
-        });
+        console.error("Error querying subscriptions:", subError.message);
         // Continue with default subscription if query fails
         subscriptions = { documents: [] };
       }
@@ -190,7 +98,6 @@ export async function GET(request: NextRequest) {
             (a.$updatedAt ? new Date(a.$updatedAt).getTime() : 0),
         )[0];
         const subType = latestSubscription.subscription_type as string;
-        console.log(`✅ Found subscription type:`, subType);
         if (["ads-free", "local", "byok", "ditectrev"].includes(subType)) {
           subscriptionType = subType as
             | "ads-free"
@@ -198,10 +105,6 @@ export async function GET(request: NextRequest) {
             | "byok"
             | "ditectrev";
         }
-      } else {
-        console.log(
-          `⚠️ No active subscription found for user ${userId || email}`,
-        );
       }
 
       // Try to find user by email in users collection (optional - user might not exist)
@@ -218,10 +121,7 @@ export async function GET(request: NextRequest) {
         }
       } catch (userError: any) {
         // Users collection might not exist or have permission issues - that's okay
-        console.log(
-          "⚠️ Could not fetch user from users collection:",
-          userError.message,
-        );
+        // Silently continue without user data
       }
 
       if (userData) {
@@ -235,7 +135,7 @@ export async function GET(request: NextRequest) {
       } else {
         // User doesn't exist yet, return with subscription from subscriptions collection
         return NextResponse.json({
-          id: userId || "new",
+          id: "new",
           email,
           subscription: subscriptionType,
           apiKeys: defaultUser.apiKeys,
@@ -243,25 +143,12 @@ export async function GET(request: NextRequest) {
         });
       }
     } catch (dbError: any) {
-      console.error("Database error:", dbError);
-      console.error("Error details:", {
-        message: dbError.message,
-        code: dbError.code,
-        type: dbError.type,
-        response: dbError.response,
-      });
-      // Return default user on error, but include error info for debugging
+      console.error("Database error:", dbError.message);
+      // Return default user on error
       return NextResponse.json({
         id: "error",
         email,
         ...defaultUser,
-        error:
-          process.env.NODE_ENV !== "production"
-            ? {
-                message: dbError.message,
-                code: dbError.code,
-              }
-            : undefined,
       });
     }
   } catch (error) {
@@ -278,7 +165,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // TODO: Update user in database
-    // const user = await updateUser(userId, body);
+    // const user = await updateUser(email, body);
 
     // For now, just return success
     return NextResponse.json({ success: true });
