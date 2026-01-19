@@ -49,7 +49,45 @@ export async function GET(request: NextRequest) {
       const databases = getAppwriteClient();
       const { Query } = await import("node-appwrite");
 
-      // Try to find user by email
+      // Check subscriptions collection for active subscription
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions";
+
+      // Try to find active subscription by email
+      const subscriptions = await databases.listDocuments(
+        DATABASE_ID,
+        SUBSCRIPTIONS_COLLECTION_ID,
+        [
+          Query.equal("email", email),
+          Query.equal("subscription_status", "active"),
+        ],
+      );
+
+      let subscriptionType:
+        | "free"
+        | "ads-free"
+        | "local"
+        | "byok"
+        | "ditectrev" = defaultUser.subscription;
+      if (subscriptions.documents.length > 0) {
+        // Get the most recent active subscription
+        const latestSubscription = subscriptions.documents.sort(
+          (a, b) =>
+            (b.$updatedAt ? new Date(b.$updatedAt).getTime() : 0) -
+            (a.$updatedAt ? new Date(a.$updatedAt).getTime() : 0),
+        )[0];
+        const subType = latestSubscription.subscription_type as string;
+        if (["ads-free", "local", "byok", "ditectrev"].includes(subType)) {
+          subscriptionType = subType as
+            | "ads-free"
+            | "local"
+            | "byok"
+            | "ditectrev";
+        }
+      }
+
+      // Try to find user by email in users collection
       const users = await databases.listDocuments(
         DATABASE_ID,
         USERS_COLLECTION_ID,
@@ -61,16 +99,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           id: user.$id,
           email: user.email || email,
-          subscription: user.subscription || defaultUser.subscription,
+          subscription: subscriptionType,
           apiKeys: user.apiKeys || defaultUser.apiKeys,
           preferences: user.preferences || defaultUser.preferences,
         });
       } else {
-        // User doesn't exist yet, return default
+        // User doesn't exist yet, return default with subscription from subscriptions collection
         return NextResponse.json({
           id: "new",
           email,
-          ...defaultUser,
+          subscription: subscriptionType,
+          apiKeys: defaultUser.apiKeys,
+          preferences: defaultUser.preferences,
         });
       }
     } catch (dbError: any) {

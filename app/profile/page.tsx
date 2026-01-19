@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../../components/Button";
 import LoadingIndicator from "../../components/LoadingIndicator";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface UserProfile {
   id: string;
@@ -28,6 +29,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,21 +48,35 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    fetchProfile();
+    if (user?.email) {
+      fetchProfile();
+    }
 
     // Check for success parameter from Stripe checkout
     if (searchParams.get("success") === "true") {
       setShowSuccessMessage(true);
       // Clear the URL parameters
       window.history.replaceState({}, "", "/profile");
-      // Hide success message after 5 seconds
-      setTimeout(() => setShowSuccessMessage(false), 5000);
+      // Refresh profile after a short delay to get updated subscription
+      setTimeout(() => {
+        fetchProfile();
+      }, 2000);
     }
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, user?.email]);
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch("/api/profile");
+      // Get user email from auth context
+      const userEmail = user?.email;
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `/api/profile?email=${encodeURIComponent(userEmail)}`,
+      );
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
