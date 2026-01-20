@@ -249,13 +249,6 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    intent="secondary"
-                    size="medium"
-                    onClick={fetchProfile}
-                  >
-                    Refresh
-                  </Button>
-                  <Button
                     intent="primary"
                     size="medium"
                     onClick={() => (window.location.href = "/pricing")}
