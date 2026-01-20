@@ -27,9 +27,10 @@ const defaultUser = {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user email from query params
+    // Get user email and ID from query params
     const email =
       request.nextUrl.searchParams.get("email") || "user@example.com";
+    const userId = request.nextUrl.searchParams.get("userId");
 
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
     const USERS_COLLECTION_ID = "users";
@@ -50,33 +51,67 @@ export async function GET(request: NextRequest) {
       const databases = getAppwriteClient();
       const { Query } = await import("node-appwrite");
 
-      // Find active subscription by email
+      // Find active subscription by appwrite_user_id (primary) or email (fallback)
+      // appwrite_user_id is more reliable since it links to the logged-in user
+      // regardless of what email they used in Stripe checkout
       let subscriptions: any = null;
       try {
-        subscriptions = await databases.listDocuments(
-          DATABASE_ID,
-          SUBSCRIPTIONS_COLLECTION_ID,
-          [
-            Query.equal("email", email),
-            Query.equal("subscription_status", "active"),
-          ],
-        );
-
-        // If no active subscription, check for trialing status
-        if (subscriptions.documents.length === 0) {
-          const allSubs = await databases.listDocuments(
+        // First try by appwrite_user_id (most reliable - links to logged-in user)
+        if (userId) {
+          subscriptions = await databases.listDocuments(
             DATABASE_ID,
             SUBSCRIPTIONS_COLLECTION_ID,
-            [Query.equal("email", email)],
+            [
+              Query.equal("appwrite_user_id", userId),
+              Query.equal("subscription_status", "active"),
+            ],
           );
-          // Filter for active or trialing subscriptions
-          subscriptions = {
-            documents: allSubs.documents.filter(
-              (sub: any) =>
-                sub.subscription_status === "active" ||
-                sub.subscription_status === "trialing",
-            ),
-          };
+
+          // If no active subscription, check for trialing status
+          if (subscriptions.documents.length === 0) {
+            const allSubs = await databases.listDocuments(
+              DATABASE_ID,
+              SUBSCRIPTIONS_COLLECTION_ID,
+              [Query.equal("appwrite_user_id", userId)],
+            );
+            // Filter for active or trialing subscriptions
+            subscriptions = {
+              documents: allSubs.documents.filter(
+                (sub: any) =>
+                  sub.subscription_status === "active" ||
+                  sub.subscription_status === "trialing",
+              ),
+            };
+          }
+        }
+
+        // Fallback to email if no subscription found by user ID
+        if (!subscriptions || subscriptions.documents.length === 0) {
+          subscriptions = await databases.listDocuments(
+            DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [
+              Query.equal("email", email),
+              Query.equal("subscription_status", "active"),
+            ],
+          );
+
+          // If no active subscription, check for trialing status
+          if (subscriptions.documents.length === 0) {
+            const allSubs = await databases.listDocuments(
+              DATABASE_ID,
+              SUBSCRIPTIONS_COLLECTION_ID,
+              [Query.equal("email", email)],
+            );
+            // Filter for active or trialing subscriptions
+            subscriptions = {
+              documents: allSubs.documents.filter(
+                (sub: any) =>
+                  sub.subscription_status === "active" ||
+                  sub.subscription_status === "trialing",
+              ),
+            };
+          }
         }
       } catch (subError: any) {
         console.error("Error querying subscriptions:", subError.message);
@@ -135,7 +170,7 @@ export async function GET(request: NextRequest) {
       } else {
         // User doesn't exist yet, return with subscription from subscriptions collection
         return NextResponse.json({
-          id: "new",
+          id: userId || "new",
           email,
           subscription: subscriptionType,
           apiKeys: defaultUser.apiKeys,

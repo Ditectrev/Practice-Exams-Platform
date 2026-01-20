@@ -74,6 +74,29 @@ async function setupSubscriptionsDatabase() {
     // Create collection attributes
     console.log("📝 Creating collection attributes...");
 
+    // Appwrite User ID attribute (required - links to logged-in user)
+    // This is critical because users may use different emails in Stripe checkout
+    // than their account email, so we need to link by user ID
+    try {
+      await databases.createStringAttribute(
+        databaseId,
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS,
+        "appwrite_user_id",
+        255,
+        true, // required
+      );
+      console.log("✅ Appwrite User ID attribute created");
+    } catch (error) {
+      if (error.code === 409) {
+        console.log("✅ Appwrite User ID attribute already exists");
+      } else {
+        console.log(
+          "⚠️ Error creating appwrite_user_id attribute:",
+          error.message,
+        );
+      }
+    }
+
     // Stripe Customer ID attribute
     try {
       await databases.createStringAttribute(
@@ -221,14 +244,14 @@ async function setupSubscriptionsDatabase() {
       }
     }
 
-    // Email attribute (primary identifier for linking subscriptions to users)
+    // Email attribute (billing email from Stripe - may differ from account email)
     try {
       await databases.createStringAttribute(
         databaseId,
         process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS,
         "email",
         255,
-        true, // required - this is how we link subscriptions to users
+        false, // optional - billing email from Stripe (fallback for lookup)
       );
       console.log("✅ Email attribute created");
     } catch (error) {
@@ -246,7 +269,25 @@ async function setupSubscriptionsDatabase() {
     // Create indexes
     console.log("📊 Creating indexes...");
 
-    // Index on email for fast lookups (primary identifier)
+    // Index on appwrite_user_id for fast lookups (primary identifier)
+    try {
+      await databases.createIndex({
+        databaseId: DATABASE_ID,
+        collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+        key: "idx_appwrite_user_id",
+        type: IndexType.Key,
+        attributes: ["appwrite_user_id"],
+      });
+      console.log("✅ Index on appwrite_user_id created");
+    } catch (error) {
+      if (error.code === 409) {
+        console.log("✅ Index on appwrite_user_id already exists");
+      } else {
+        console.log("⚠️ Error creating index:", error.message);
+      }
+    }
+
+    // Index on email for fallback lookups
     try {
       await databases.createIndex({
         databaseId: DATABASE_ID,
@@ -300,7 +341,25 @@ async function setupSubscriptionsDatabase() {
       }
     }
 
-    // Composite index for active subscriptions by email
+    // Composite index for active subscriptions by user ID (primary)
+    try {
+      await databases.createIndex({
+        databaseId: DATABASE_ID,
+        collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+        key: "idx_user_status",
+        type: IndexType.Key,
+        attributes: ["appwrite_user_id", "subscription_status"],
+      });
+      console.log("✅ Composite index on appwrite_user_id and status created");
+    } catch (error) {
+      if (error.code === 409) {
+        console.log("✅ Composite index already exists");
+      } else {
+        console.log("⚠️ Error creating composite index:", error.message);
+      }
+    }
+
+    // Composite index for active subscriptions by email (fallback)
     try {
       await databases.createIndex({
         databaseId: DATABASE_ID,

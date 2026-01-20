@@ -173,6 +173,8 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
+      // Get Appwrite user ID from metadata (links to logged-in user)
+      const appwriteUserId = session.metadata?.appwriteUserId;
       const customerEmail =
         session.customer_email || session.customer_details?.email;
       const subscriptionId = session.subscription as string;
@@ -183,6 +185,7 @@ export async function POST(request: NextRequest) {
       const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
 
       console.log("📥 Processing subscription webhook:", {
+        appwriteUserId,
         email: customerEmail,
         subscriptionType,
         priceId,
@@ -191,20 +194,20 @@ export async function POST(request: NextRequest) {
         metadata: session.metadata,
       });
 
-      // Email is required to link the subscription
-      if (!customerEmail || customerEmail.trim() === "") {
+      // Appwrite user ID is required to link subscription to logged-in user
+      // Email from Stripe might be different (billing email vs account email)
+      if (!appwriteUserId) {
         console.error(
-          "❌ No customer email in session. Subscription cannot be linked to user.",
+          "❌ No Appwrite user ID in session metadata. Subscription cannot be linked to user.",
           {
             sessionId: session.id,
-            customerEmail,
-            customerDetails: session.customer_details,
+            metadata: session.metadata,
           },
         );
-        // Return error so Stripe retries (email might be available on retry)
+        // Return error so Stripe retries
         return NextResponse.json(
           {
-            error: "No customer email found",
+            error: "No Appwrite user ID found",
             received: true,
           },
           { status: 400 },
@@ -262,6 +265,7 @@ export async function POST(request: NextRequest) {
         )) as Stripe.Subscription;
 
         const subscriptionData: Record<string, any> = {
+          appwrite_user_id: appwriteUserId, // Required: links to logged-in user
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
@@ -269,7 +273,7 @@ export async function POST(request: NextRequest) {
           subscription_status: subscription.status,
           current_period_start: (subscription as any).current_period_start,
           current_period_end: (subscription as any).current_period_end,
-          email: customerEmail.trim(), // Email is required, already validated above
+          email: customerEmail || "", // Optional: billing email from Stripe (may differ from account email)
         };
 
         if (existingSubscriptions.documents.length > 0) {
@@ -298,7 +302,9 @@ export async function POST(request: NextRequest) {
           console.log(
             "✅ Created new subscription:",
             newSubscription.$id,
-            "for email:",
+            "for user:",
+            appwriteUserId,
+            "email:",
             customerEmail,
           );
         }

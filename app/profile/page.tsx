@@ -61,7 +61,7 @@ export default function ProfilePage() {
     }
 
     // Fetch profile if user is available
-    if (user?.email && user?.$id) {
+    if (user?.email) {
       fetchProfile();
 
       // If coming from checkout, refresh after delays to allow webhook to process
@@ -78,20 +78,23 @@ export default function ProfilePage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, user?.email, authLoading]);
+  }, [searchParams, user?.email, user?.$id, authLoading]);
 
   const fetchProfile = async () => {
     try {
-      // Get user email from auth context
+      // Get user email and ID from auth context
       const userEmail = user?.email;
+      const userId = user?.$id;
       if (!userEmail) {
         setLoading(false);
         return;
       }
 
-      const response = await fetch(
-        `/api/profile?email=${encodeURIComponent(userEmail)}`,
-      );
+      const params = new URLSearchParams({
+        email: userEmail,
+        ...(userId && { userId }),
+      });
+      const response = await fetch(`/api/profile?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setProfile(data);

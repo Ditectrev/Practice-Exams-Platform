@@ -3,7 +3,7 @@ import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId } = await request.json();
+    const { priceId, appwriteUserId } = await request.json();
 
     // Validate priceId
     if (!priceId || typeof priceId !== "string" || priceId.trim() === "") {
@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       customer_email: request.headers.get("x-user-email") || undefined, // Get from auth header if available
       metadata: {
         priceId: priceId.trim(),
+        ...(appwriteUserId && { appwriteUserId: appwriteUserId.trim() }), // Include Appwrite user ID if provided
       },
     });
 
