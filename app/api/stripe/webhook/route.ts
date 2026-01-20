@@ -192,15 +192,23 @@ export async function POST(request: NextRequest) {
       });
 
       // Email is required to link the subscription
-      if (!customerEmail) {
-        console.warn(
-          "No customer email in session. Subscription cannot be linked to user.",
+      if (!customerEmail || customerEmail.trim() === "") {
+        console.error(
+          "❌ No customer email in session. Subscription cannot be linked to user.",
+          {
+            sessionId: session.id,
+            customerEmail,
+            customerDetails: session.customer_details,
+          },
         );
-        // Still return success to Stripe, but log the issue
-        return NextResponse.json({
-          received: true,
-          warning: "No customer email found",
-        });
+        // Return error so Stripe retries (email might be available on retry)
+        return NextResponse.json(
+          {
+            error: "No customer email found",
+            received: true,
+          },
+          { status: 400 },
+        );
       }
 
       // Update subscription in Appwrite subscriptions collection
@@ -261,7 +269,7 @@ export async function POST(request: NextRequest) {
           subscription_status: subscription.status,
           current_period_start: (subscription as any).current_period_start,
           current_period_end: (subscription as any).current_period_end,
-          email: customerEmail || "",
+          email: customerEmail.trim(), // Email is required, already validated above
         };
 
         if (existingSubscriptions.documents.length > 0) {
@@ -300,11 +308,22 @@ export async function POST(request: NextRequest) {
           code: dbError.code,
           type: dbError.type,
           response: dbError.response,
+          stack: dbError.stack,
           databaseId: SUBSCRIPTIONS_DATABASE_ID,
           collectionId: SUBSCRIPTIONS_COLLECTION_ID,
+          email: customerEmail,
+          subscriptionId,
+          priceId,
         });
-        // Don't fail the webhook - log and continue
-        // Stripe will retry if we return an error
+        // Return error so Stripe retries the webhook
+        return NextResponse.json(
+          {
+            error: "Database error",
+            message: dbError.message,
+            code: dbError.code,
+          },
+          { status: 500 },
+        );
       }
     } else if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
