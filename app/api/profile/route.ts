@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
         | "local"
         | "byok"
         | "ditectrev" = defaultUser.subscription;
+      let subscriptionExpiresAt: number | undefined = undefined;
       if (subscriptions && subscriptions.documents.length > 0) {
         // Get the most recent active subscription
         const latestSubscription = subscriptions.documents.sort(
@@ -139,6 +140,10 @@ export async function GET(request: NextRequest) {
             | "local"
             | "byok"
             | "ditectrev";
+        }
+        // Get expiration date (current_period_end is a Unix timestamp)
+        if (latestSubscription.current_period_end) {
+          subscriptionExpiresAt = latestSubscription.current_period_end;
         }
       }
 
@@ -164,6 +169,7 @@ export async function GET(request: NextRequest) {
           id: userData.$id,
           email: userData.email || email,
           subscription: subscriptionType,
+          subscriptionExpiresAt,
           apiKeys: userData.apiKeys || defaultUser.apiKeys,
           preferences: userData.preferences || defaultUser.preferences,
         });
@@ -173,6 +179,7 @@ export async function GET(request: NextRequest) {
           id: userId || "new",
           email,
           subscription: subscriptionType,
+          subscriptionExpiresAt,
           apiKeys: defaultUser.apiKeys,
           preferences: defaultUser.preferences,
         });

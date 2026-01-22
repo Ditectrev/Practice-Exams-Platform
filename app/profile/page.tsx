@@ -9,7 +9,8 @@ import { useAuth } from "../../contexts/AuthContext";
 interface UserProfile {
   id: string;
   email: string;
-  subscription: "ads-free" | "local" | "byok" | "ditectrev";
+  subscription: "free" | "ads-free" | "local" | "byok" | "ditectrev";
+  subscriptionExpiresAt?: number; // Unix timestamp for subscription expiration
   apiKeys: {
     openai?: string;
     gemini?: string;
@@ -249,6 +250,19 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     {profile?.email}
                   </p>
+                  {profile?.subscriptionExpiresAt &&
+                    profile?.subscription !== "free" && (
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                        Active until:{" "}
+                        {new Date(
+                          profile.subscriptionExpiresAt * 1000,
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    )}
                 </div>
                 <div className="flex gap-2">
                   <Button
