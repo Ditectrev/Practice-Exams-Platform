@@ -261,36 +261,78 @@ export async function POST(request: NextRequest) {
 
         // Get subscription details from Stripe to get period dates
         // Note: checkout.session doesn't include period dates, we must fetch the subscription object
-        // Expand the subscription to ensure we get all fields including period dates
-        const subscription = (await stripe.subscriptions.retrieve(
-          subscriptionId,
-          {
-            expand: [], // No expansion needed, but ensures we get full object
-          },
-        )) as Stripe.Subscription;
+        // Sometimes the subscription might not be fully initialized immediately after checkout,
+        // so we'll retry if period dates are missing
+        let subscription: Stripe.Subscription | null = null;
+        let periodStart: number | null = null;
+        let periodEnd: number | null = null;
+        let retries = 0;
+        const maxRetries = 3;
 
-        // Log the full subscription object to see its structure
-        console.log("📦 Full Stripe subscription object:", {
-          id: subscription.id,
-          status: subscription.status,
-          current_period_start: (subscription as any).current_period_start,
-          current_period_end: (subscription as any).current_period_end,
-          keys: Object.keys(subscription),
-        });
+        while (
+          retries < maxRetries &&
+          (periodStart === null || periodEnd === null)
+        ) {
+          subscription = (await stripe.subscriptions.retrieve(
+            subscriptionId,
+          )) as Stripe.Subscription;
 
-        // Extract period dates - ensure they're numbers (Unix timestamps)
-        const periodStart = (subscription as any).current_period_start;
-        const periodEnd = (subscription as any).current_period_end;
+          // Try to get period dates from subscription object
+          periodStart = (subscription as any).current_period_start ?? null;
+          periodEnd = (subscription as any).current_period_end ?? null;
 
-        console.log("📅 Stripe subscription period dates:", {
-          subscriptionId,
-          current_period_start: periodStart,
-          current_period_end: periodEnd,
-          type_start: typeof periodStart,
-          type_end: typeof periodEnd,
-          has_start: periodStart !== undefined && periodStart !== null,
-          has_end: periodEnd !== undefined && periodEnd !== null,
-        });
+          // Convert to numbers if they're strings
+          if (periodStart && typeof periodStart === "string") {
+            periodStart = parseInt(periodStart, 10);
+          }
+          if (periodEnd && typeof periodEnd === "string") {
+            periodEnd = parseInt(periodEnd, 10);
+          }
+
+          console.log(`📦 Stripe subscription (attempt ${retries + 1}):`, {
+            id: subscription.id,
+            status: subscription.status,
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
+            type_start: typeof periodStart,
+            type_end: typeof periodEnd,
+            raw_start: (subscription as any).current_period_start,
+            raw_end: (subscription as any).current_period_end,
+          });
+
+          // If we have both dates, break out of the loop
+          if (periodStart && periodEnd) {
+            break;
+          }
+
+          // If dates are still missing, wait a bit and retry (subscription might still be initializing)
+          if (retries < maxRetries - 1) {
+            console.log(
+              `⏳ Period dates missing, waiting 1 second before retry...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          retries++;
+        }
+
+        if (!periodStart || !periodEnd) {
+          console.error(
+            "❌ Could not get period dates from Stripe subscription:",
+            {
+              subscriptionId,
+              attempts: retries,
+              periodStart,
+              periodEnd,
+              subscriptionStatus: subscription?.status || "unknown",
+            },
+          );
+        } else {
+          console.log("✅ Successfully extracted period dates:", {
+            subscriptionId,
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
+          });
+        }
 
         const subscriptionData: Record<string, any> = {
           appwrite_user_id: appwriteUserId, // Required: links to logged-in user
@@ -298,16 +340,23 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
           subscription_type: subscriptionType,
-          subscription_status: subscription.status,
-          current_period_start: periodStart ? Number(periodStart) : null,
-          current_period_end: periodEnd ? Number(periodEnd) : null,
+          subscription_status: subscription?.status || "active",
           email: customerEmail || "", // Optional: billing email from Stripe (may differ from account email)
         };
+
+        // Only add period dates if we successfully retrieved them
+        // Don't set them to null - omit them if missing (Appwrite will keep existing values)
+        if (periodStart && periodEnd) {
+          subscriptionData.current_period_start = Number(periodStart);
+          subscriptionData.current_period_end = Number(periodEnd);
+        }
 
         console.log("💾 Subscription data to save:", {
           ...subscriptionData,
           has_period_start: !!subscriptionData.current_period_start,
           has_period_end: !!subscriptionData.current_period_end,
+          period_start_value: subscriptionData.current_period_start,
+          period_end_value: subscriptionData.current_period_end,
         });
 
         if (existingSubscriptions.documents.length > 0) {

@@ -160,28 +160,70 @@ export async function GET(request: NextRequest) {
               const stripeSubscription = (await stripe.subscriptions.retrieve(
                 latestSubscription.stripe_subscription_id,
               )) as Stripe.Subscription;
-              periodEnd = (stripeSubscription as any).current_period_end;
+
+              console.log("🔍 Stripe subscription from profile API:", {
+                id: stripeSubscription.id,
+                status: stripeSubscription.status,
+                current_period_start: (stripeSubscription as any)
+                  .current_period_start,
+                current_period_end: (stripeSubscription as any)
+                  .current_period_end,
+                type_start: typeof (stripeSubscription as any)
+                  .current_period_start,
+                type_end: typeof (stripeSubscription as any).current_period_end,
+                keys: Object.keys(stripeSubscription).slice(0, 20), // First 20 keys
+              });
+
+              let fetchedPeriodEnd = (stripeSubscription as any)
+                .current_period_end;
+              let fetchedPeriodStart = (stripeSubscription as any)
+                .current_period_start;
+
+              // Convert to numbers if needed
+              if (fetchedPeriodEnd && typeof fetchedPeriodEnd === "string") {
+                fetchedPeriodEnd = parseInt(fetchedPeriodEnd, 10);
+              }
+              if (
+                fetchedPeriodStart &&
+                typeof fetchedPeriodStart === "string"
+              ) {
+                fetchedPeriodStart = parseInt(fetchedPeriodStart, 10);
+              }
+
+              // Update periodEnd for use below
+              periodEnd = fetchedPeriodEnd;
 
               // Update the database with the fetched value for future requests
-              try {
-                await databases.updateDocument(
-                  DATABASE_ID,
-                  SUBSCRIPTIONS_COLLECTION_ID,
-                  latestSubscription.$id,
-                  {
-                    current_period_end: periodEnd,
-                    current_period_start: (stripeSubscription as any)
-                      .current_period_start,
-                  },
-                );
-                console.log(
-                  "✅ Updated subscription with period dates from Stripe",
-                );
-              } catch (updateError: any) {
-                console.warn(
-                  "⚠️ Could not update subscription period dates:",
-                  updateError.message,
-                );
+              if (fetchedPeriodStart && fetchedPeriodEnd) {
+                try {
+                  await databases.updateDocument(
+                    DATABASE_ID,
+                    SUBSCRIPTIONS_COLLECTION_ID,
+                    latestSubscription.$id,
+                    {
+                      current_period_end: Number(fetchedPeriodEnd),
+                      current_period_start: Number(fetchedPeriodStart),
+                    },
+                  );
+                  console.log(
+                    "✅ Updated subscription with period dates from Stripe:",
+                    {
+                      period_start: fetchedPeriodStart,
+                      period_end: fetchedPeriodEnd,
+                    },
+                  );
+                } catch (updateError: any) {
+                  console.warn(
+                    "⚠️ Could not update subscription period dates:",
+                    updateError.message,
+                  );
+                }
+              } else {
+                console.warn("⚠️ Stripe subscription missing period dates:", {
+                  subscriptionId: latestSubscription.stripe_subscription_id,
+                  periodStart: fetchedPeriodStart,
+                  periodEnd: fetchedPeriodEnd,
+                });
               }
             }
           } catch (stripeError: any) {
