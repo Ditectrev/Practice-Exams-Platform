@@ -98,6 +98,11 @@ export default function ProfilePage() {
       const response = await fetch(`/api/profile?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("📥 Profile data received:", {
+          subscription: data.subscription,
+          subscriptionExpiresAt: data.subscriptionExpiresAt,
+          hasExpiration: !!data.subscriptionExpiresAt,
+        });
         setProfile(data);
         setApiKeys(data.apiKeys || {});
       } else {
@@ -251,7 +256,8 @@ export default function ProfilePage() {
                     {profile?.email}
                   </p>
                   {profile?.subscriptionExpiresAt &&
-                    profile?.subscription !== "free" && (
+                    profile?.subscription !== "free" &&
+                    profile.subscriptionExpiresAt > 0 && (
                       <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                         Active until:{" "}
                         {new Date(

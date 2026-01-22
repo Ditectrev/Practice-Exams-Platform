@@ -142,8 +142,18 @@ export async function GET(request: NextRequest) {
             | "ditectrev";
         }
         // Get expiration date (current_period_end is a Unix timestamp)
-        if (latestSubscription.current_period_end) {
-          subscriptionExpiresAt = latestSubscription.current_period_end;
+        // Handle both integer and string formats
+        const periodEnd = latestSubscription.current_period_end;
+        console.log("🔍 Subscription data:", {
+          subscriptionType: subType,
+          current_period_end: periodEnd,
+          type: typeof periodEnd,
+          fullSubscription: latestSubscription,
+        });
+        if (periodEnd !== undefined && periodEnd !== null) {
+          // Convert to number if it's a string
+          subscriptionExpiresAt =
+            typeof periodEnd === "string" ? parseInt(periodEnd, 10) : periodEnd;
         }
       }
 
@@ -164,26 +174,22 @@ export async function GET(request: NextRequest) {
         // Silently continue without user data
       }
 
-      if (userData) {
-        return NextResponse.json({
-          id: userData.$id,
-          email: userData.email || email,
-          subscription: subscriptionType,
-          subscriptionExpiresAt,
-          apiKeys: userData.apiKeys || defaultUser.apiKeys,
-          preferences: userData.preferences || defaultUser.preferences,
-        });
-      } else {
-        // User doesn't exist yet, return with subscription from subscriptions collection
-        return NextResponse.json({
-          id: userId || "new",
-          email,
-          subscription: subscriptionType,
-          subscriptionExpiresAt,
-          apiKeys: defaultUser.apiKeys,
-          preferences: defaultUser.preferences,
-        });
-      }
+      const responseData = {
+        id: userData?.$id || userId || "new",
+        email: userData?.email || email,
+        subscription: subscriptionType,
+        subscriptionExpiresAt,
+        apiKeys: userData?.apiKeys || defaultUser.apiKeys,
+        preferences: userData?.preferences || defaultUser.preferences,
+      };
+
+      console.log("📤 Returning profile data:", {
+        subscription: subscriptionType,
+        subscriptionExpiresAt,
+        hasExpiration: !!subscriptionExpiresAt,
+      });
+
+      return NextResponse.json(responseData);
     } catch (dbError: any) {
       console.error("Database error:", dbError.message);
       // Return default user on error
