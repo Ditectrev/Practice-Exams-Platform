@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client, Databases } from "node-appwrite";
+import Stripe from "stripe";
 
 // Initialize Appwrite client
 function getAppwriteClient() {
@@ -143,14 +144,62 @@ export async function GET(request: NextRequest) {
         }
         // Get expiration date (current_period_end is a Unix timestamp)
         // Handle both integer and string formats
-        const periodEnd = latestSubscription.current_period_end;
+        let periodEnd = latestSubscription.current_period_end;
+
+        // If missing from database, fetch from Stripe as fallback
+        if (
+          (periodEnd === undefined || periodEnd === null || periodEnd === 0) &&
+          latestSubscription.stripe_subscription_id
+        ) {
+          try {
+            const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+            if (stripeSecretKey) {
+              const stripe = new Stripe(stripeSecretKey, {
+                apiVersion: "2025-11-17.clover",
+              });
+              const stripeSubscription = (await stripe.subscriptions.retrieve(
+                latestSubscription.stripe_subscription_id,
+              )) as Stripe.Subscription;
+              periodEnd = (stripeSubscription as any).current_period_end;
+
+              // Update the database with the fetched value for future requests
+              try {
+                await databases.updateDocument(
+                  DATABASE_ID,
+                  SUBSCRIPTIONS_COLLECTION_ID,
+                  latestSubscription.$id,
+                  {
+                    current_period_end: periodEnd,
+                    current_period_start: (stripeSubscription as any)
+                      .current_period_start,
+                  },
+                );
+                console.log(
+                  "✅ Updated subscription with period dates from Stripe",
+                );
+              } catch (updateError: any) {
+                console.warn(
+                  "⚠️ Could not update subscription period dates:",
+                  updateError.message,
+                );
+              }
+            }
+          } catch (stripeError: any) {
+            console.warn(
+              "⚠️ Could not fetch subscription from Stripe:",
+              stripeError.message,
+            );
+          }
+        }
+
         console.log("🔍 Subscription data:", {
           subscriptionType: subType,
           current_period_end: periodEnd,
           type: typeof periodEnd,
-          fullSubscription: latestSubscription,
+          stripe_subscription_id: latestSubscription.stripe_subscription_id,
         });
-        if (periodEnd !== undefined && periodEnd !== null) {
+
+        if (periodEnd !== undefined && periodEnd !== null && periodEnd > 0) {
           // Convert to number if it's a string
           subscriptionExpiresAt =
             typeof periodEnd === "string" ? parseInt(periodEnd, 10) : periodEnd;
