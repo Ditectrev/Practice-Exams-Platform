@@ -260,9 +260,37 @@ export async function POST(request: NextRequest) {
         );
 
         // Get subscription details from Stripe to get period dates
+        // Note: checkout.session doesn't include period dates, we must fetch the subscription object
+        // Expand the subscription to ensure we get all fields including period dates
         const subscription = (await stripe.subscriptions.retrieve(
           subscriptionId,
+          {
+            expand: [], // No expansion needed, but ensures we get full object
+          },
         )) as Stripe.Subscription;
+
+        // Log the full subscription object to see its structure
+        console.log("📦 Full Stripe subscription object:", {
+          id: subscription.id,
+          status: subscription.status,
+          current_period_start: (subscription as any).current_period_start,
+          current_period_end: (subscription as any).current_period_end,
+          keys: Object.keys(subscription),
+        });
+
+        // Extract period dates - ensure they're numbers (Unix timestamps)
+        const periodStart = (subscription as any).current_period_start;
+        const periodEnd = (subscription as any).current_period_end;
+
+        console.log("📅 Stripe subscription period dates:", {
+          subscriptionId,
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          type_start: typeof periodStart,
+          type_end: typeof periodEnd,
+          has_start: periodStart !== undefined && periodStart !== null,
+          has_end: periodEnd !== undefined && periodEnd !== null,
+        });
 
         const subscriptionData: Record<string, any> = {
           appwrite_user_id: appwriteUserId, // Required: links to logged-in user
@@ -271,10 +299,16 @@ export async function POST(request: NextRequest) {
           stripe_price_id: priceId,
           subscription_type: subscriptionType,
           subscription_status: subscription.status,
-          current_period_start: (subscription as any).current_period_start,
-          current_period_end: (subscription as any).current_period_end,
+          current_period_start: periodStart ? Number(periodStart) : null,
+          current_period_end: periodEnd ? Number(periodEnd) : null,
           email: customerEmail || "", // Optional: billing email from Stripe (may differ from account email)
         };
+
+        console.log("💾 Subscription data to save:", {
+          ...subscriptionData,
+          has_period_start: !!subscriptionData.current_period_start,
+          has_period_end: !!subscriptionData.current_period_end,
+        });
 
         if (existingSubscriptions.documents.length > 0) {
           // Update existing subscription
@@ -331,6 +365,72 @@ export async function POST(request: NextRequest) {
           { status: 500 },
         );
       }
+    } else if (event.type === "customer.subscription.created") {
+      // Handle subscription creation - ensure period dates are set
+      const subscription = event.data.object as Stripe.Subscription;
+      const subscriptionId = subscription.id;
+      const customerId = subscription.customer as string;
+
+      // Get customer email from Stripe
+      const customer = (await stripe.customers.retrieve(
+        customerId,
+      )) as Stripe.Customer;
+      const customerEmail =
+        customer && !customer.deleted ? customer.email : null;
+
+      // Determine subscription type from price ID
+      const priceId = subscription.items.data[0]?.price.id || "";
+      const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
+
+      // Update subscription in subscriptions collection
+      const databases = getAppwriteClient();
+      const SUBSCRIPTIONS_DATABASE_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_SUBSCRIPTIONS_DATABASE_ID ||
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+      const SUBSCRIPTIONS_COLLECTION_ID =
+        process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
+        "subscriptions";
+
+      if (SUBSCRIPTIONS_DATABASE_ID) {
+        try {
+          const { Query } = await import("node-appwrite");
+
+          // Find subscription by Stripe subscription ID
+          const existingSubscriptions = await databases.listDocuments(
+            SUBSCRIPTIONS_DATABASE_ID,
+            SUBSCRIPTIONS_COLLECTION_ID,
+            [Query.equal("stripe_subscription_id", subscriptionId)],
+          );
+
+          if (existingSubscriptions.documents.length > 0) {
+            const existingSub = existingSubscriptions.documents[0];
+            const periodStart = (subscription as any).current_period_start;
+            const periodEnd = (subscription as any).current_period_end;
+
+            await databases.updateDocument(
+              SUBSCRIPTIONS_DATABASE_ID,
+              SUBSCRIPTIONS_COLLECTION_ID,
+              existingSub.$id,
+              {
+                subscription_status: subscription.status,
+                subscription_type: subscriptionType,
+                current_period_start: periodStart ? Number(periodStart) : null,
+                current_period_end: periodEnd ? Number(periodEnd) : null,
+                ...(customerEmail && { email: customerEmail }),
+              },
+            );
+            console.log(
+              "✅ Updated subscription with period dates from customer.subscription.created:",
+              existingSub.$id,
+            );
+          }
+        } catch (dbError: any) {
+          console.error(
+            "Database error updating subscription from created event:",
+            dbError,
+          );
+        }
+      }
     } else if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
       const subscriptionId = subscription.id;
@@ -379,9 +479,12 @@ export async function POST(request: NextRequest) {
               {
                 subscription_status: subscription.status,
                 subscription_type: subscriptionType,
-                current_period_start: (subscription as any)
-                  .current_period_start,
-                current_period_end: (subscription as any).current_period_end,
+                current_period_start: (subscription as any).current_period_start
+                  ? Number((subscription as any).current_period_start)
+                  : null,
+                current_period_end: (subscription as any).current_period_end
+                  ? Number((subscription as any).current_period_end)
+                  : null,
                 ...(customerEmail && { email: customerEmail }),
               },
             );
