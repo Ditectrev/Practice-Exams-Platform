@@ -289,6 +289,8 @@ export async function POST(request: NextRequest) {
             periodEnd = parseInt(periodEnd, 10);
           }
 
+          // Log the full subscription object structure to debug
+          const subAny = subscription as any;
           console.log(`📦 Stripe subscription (attempt ${retries + 1}):`, {
             id: subscription.id,
             status: subscription.status,
@@ -296,8 +298,15 @@ export async function POST(request: NextRequest) {
             current_period_end: periodEnd,
             type_start: typeof periodStart,
             type_end: typeof periodEnd,
-            raw_start: (subscription as any).current_period_start,
-            raw_end: (subscription as any).current_period_end,
+            raw_start: subAny.current_period_start,
+            raw_end: subAny.current_period_end,
+            // Log all keys to see what's available
+            allKeys: Object.keys(subAny),
+            // Check for alternative field names
+            hasCurrentPeriodStart: "current_period_start" in subAny,
+            hasCurrentPeriodEnd: "current_period_end" in subAny,
+            // Log the actual subscription object (first level only)
+            subscriptionPreview: JSON.stringify(subAny).substring(0, 500),
           });
 
           // If we have both dates, break out of the loop

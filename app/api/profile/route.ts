@@ -161,17 +161,19 @@ export async function GET(request: NextRequest) {
                 latestSubscription.stripe_subscription_id,
               )) as Stripe.Subscription;
 
+              const subAny = stripeSubscription as any;
               console.log("🔍 Stripe subscription from profile API:", {
                 id: stripeSubscription.id,
                 status: stripeSubscription.status,
-                current_period_start: (stripeSubscription as any)
-                  .current_period_start,
-                current_period_end: (stripeSubscription as any)
-                  .current_period_end,
-                type_start: typeof (stripeSubscription as any)
-                  .current_period_start,
-                type_end: typeof (stripeSubscription as any).current_period_end,
-                keys: Object.keys(stripeSubscription).slice(0, 20), // First 20 keys
+                current_period_start: subAny.current_period_start,
+                current_period_end: subAny.current_period_end,
+                type_start: typeof subAny.current_period_start,
+                type_end: typeof subAny.current_period_end,
+                keys: Object.keys(subAny).slice(0, 30), // First 30 keys
+                hasCurrentPeriodStart: "current_period_start" in subAny,
+                hasCurrentPeriodEnd: "current_period_end" in subAny,
+                // Log a preview of the full object
+                subscriptionPreview: JSON.stringify(subAny).substring(0, 1000),
               });
 
               let fetchedPeriodEnd = (stripeSubscription as any)
