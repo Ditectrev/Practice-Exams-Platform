@@ -98,11 +98,6 @@ export default function ProfilePage() {
       const response = await fetch(`/api/profile?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        console.log("📥 Profile data received:", {
-          subscription: data.subscription,
-          subscriptionExpiresAt: data.subscriptionExpiresAt,
-          hasExpiration: !!data.subscriptionExpiresAt,
-        });
         setProfile(data);
         setApiKeys(data.apiKeys || {});
       } else {

@@ -167,8 +167,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    console.log("📨 Received Stripe webhook event:", event.type);
-
     // Handle the event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -183,16 +181,6 @@ export async function POST(request: NextRequest) {
 
       // Get subscription type from price ID
       const subscriptionType = PRICE_ID_TO_SUBSCRIPTION[priceId] || "free";
-
-      console.log("📥 Processing subscription webhook:", {
-        appwriteUserId,
-        email: customerEmail,
-        subscriptionType,
-        priceId,
-        subscriptionId,
-        customerId,
-        metadata: session.metadata,
-      });
 
       // Appwrite user ID is required to link subscription to logged-in user
       // Email from Stripe might be different (billing email vs account email)
@@ -224,15 +212,8 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
         "subscriptions"; // Fallback to default
 
-      console.log("🔍 Webhook configuration:", {
-        SUBSCRIPTIONS_DATABASE_ID,
-        SUBSCRIPTIONS_COLLECTION_ID,
-        hasDatabaseId: !!SUBSCRIPTIONS_DATABASE_ID,
-        hasCollectionId: !!SUBSCRIPTIONS_COLLECTION_ID,
-      });
-
       if (!SUBSCRIPTIONS_DATABASE_ID) {
-        console.error("❌ NEXT_PUBLIC_APPWRITE_DATABASE_ID is not configured");
+        console.error("NEXT_PUBLIC_APPWRITE_DATABASE_ID is not configured");
         return NextResponse.json(
           { error: "Database not configured" },
           { status: 500 },
@@ -241,7 +222,7 @@ export async function POST(request: NextRequest) {
 
       if (!SUBSCRIPTIONS_COLLECTION_ID) {
         console.error(
-          "❌ NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS is not configured",
+          "NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS is not configured",
         );
         return NextResponse.json(
           { error: "Collection not configured" },
@@ -297,25 +278,6 @@ export async function POST(request: NextRequest) {
             periodEnd = parseInt(periodEnd, 10);
           }
 
-          // Log the full subscription object structure to debug
-          console.log(`📦 Stripe subscription (attempt ${retries + 1}):`, {
-            id: subscription.id,
-            status: subscription.status,
-            current_period_start: periodStart,
-            current_period_end: periodEnd,
-            type_start: typeof periodStart,
-            type_end: typeof periodEnd,
-            raw_start: subAny.current_period_start,
-            raw_end: subAny.current_period_end,
-            // Log all keys to see what's available
-            allKeys: Object.keys(subAny),
-            // Check for alternative field names
-            hasCurrentPeriodStart: "current_period_start" in subAny,
-            hasCurrentPeriodEnd: "current_period_end" in subAny,
-            // Log the actual subscription object (first level only)
-            subscriptionPreview: JSON.stringify(subAny).substring(0, 500),
-          });
-
           // If we have both dates, break out of the loop
           if (periodStart && periodEnd) {
             break;
@@ -323,32 +285,13 @@ export async function POST(request: NextRequest) {
 
           // If dates are still missing, wait a bit and retry (subscription might still be initializing)
           if (retries < maxRetries - 1) {
-            console.log(
-              `⏳ Period dates missing, waiting 1 second before retry...`,
-            );
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
           retries++;
         }
 
-        if (!periodStart || !periodEnd) {
-          console.error(
-            "❌ Could not get period dates from Stripe subscription:",
-            {
-              subscriptionId,
-              attempts: retries,
-              periodStart,
-              periodEnd,
-              subscriptionStatus: subscription?.status || "unknown",
-            },
-          );
-        } else {
-          console.log("✅ Successfully extracted period dates:", {
-            subscriptionId,
-            current_period_start: periodStart,
-            current_period_end: periodEnd,
-          });
-        }
+        // Period dates will be set to null if not available
+        // They may be populated later via customer.subscription.updated event
 
         const subscriptionData: Record<string, any> = {
           appwrite_user_id: appwriteUserId, // Required: links to logged-in user
@@ -367,14 +310,6 @@ export async function POST(request: NextRequest) {
           subscriptionData.current_period_end = Number(periodEnd);
         }
 
-        console.log("💾 Subscription data to save:", {
-          ...subscriptionData,
-          has_period_start: !!subscriptionData.current_period_start,
-          has_period_end: !!subscriptionData.current_period_end,
-          period_start_value: subscriptionData.current_period_start,
-          period_end_value: subscriptionData.current_period_end,
-        });
-
         if (existingSubscriptions.documents.length > 0) {
           // Update existing subscription
           const existingSub = existingSubscriptions.documents[0];
@@ -384,31 +319,17 @@ export async function POST(request: NextRequest) {
             existingSub.$id,
             subscriptionData,
           );
-          console.log("Updated subscription:", existingSub.$id);
         } else {
           // Create new subscription record
-          console.log("Creating new subscription with data:", {
-            databaseId: SUBSCRIPTIONS_DATABASE_ID,
-            collectionId: SUBSCRIPTIONS_COLLECTION_ID,
-            subscriptionData,
-          });
-          const newSubscription = await databases.createDocument(
+          await databases.createDocument(
             SUBSCRIPTIONS_DATABASE_ID,
             SUBSCRIPTIONS_COLLECTION_ID,
             ID.unique(),
             subscriptionData,
           );
-          console.log(
-            "✅ Created new subscription:",
-            newSubscription.$id,
-            "for user:",
-            appwriteUserId,
-            "email:",
-            customerEmail,
-          );
         }
       } catch (dbError: any) {
-        console.error("❌ Database error creating/updating subscription:", {
+        console.error("Database error creating/updating subscription:", {
           error: dbError.message,
           code: dbError.code,
           type: dbError.type,
@@ -492,16 +413,9 @@ export async function POST(request: NextRequest) {
                 ...(customerEmail && { email: customerEmail }),
               },
             );
-            console.log(
-              "✅ Updated subscription with period dates from customer.subscription.created:",
-              existingSub.$id,
-            );
           }
         } catch (dbError: any) {
-          console.error(
-            "Database error updating subscription from created event:",
-            dbError,
-          );
+          console.error("Database error updating subscription:", dbError);
         }
       }
     } else if (event.type === "customer.subscription.updated") {
@@ -567,16 +481,6 @@ export async function POST(request: NextRequest) {
                 ...(customerEmail && { email: customerEmail }),
               },
             );
-            console.log(
-              "Updated subscription status:",
-              existingSub.$id,
-              subscription.status,
-            );
-          } else {
-            console.warn(
-              "Subscription not found for Stripe subscription ID:",
-              subscriptionId,
-            );
           }
         } catch (dbError: any) {
           console.error("Database error updating subscription:", dbError);
@@ -617,12 +521,6 @@ export async function POST(request: NextRequest) {
                 subscription_type: "free",
               },
             );
-            console.log("Marked subscription as canceled:", existingSub.$id);
-          } else {
-            console.warn(
-              "Subscription not found for Stripe subscription ID:",
-              subscriptionId,
-            );
           }
         } catch (dbError: any) {
           console.error("Database error canceling subscription:", dbError);
@@ -630,10 +528,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log("✅ Webhook processed successfully");
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    console.error("❌ Error processing webhook:", {
+    console.error("Error processing webhook:", {
       message: error.message,
       stack: error.stack,
       eventType: event?.type,

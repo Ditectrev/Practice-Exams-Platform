@@ -161,22 +161,8 @@ export async function GET(request: NextRequest) {
                 latestSubscription.stripe_subscription_id,
               )) as Stripe.Subscription;
 
-              const subAny = stripeSubscription as any;
-              console.log("🔍 Stripe subscription from profile API:", {
-                id: stripeSubscription.id,
-                status: stripeSubscription.status,
-                current_period_start: subAny.current_period_start,
-                current_period_end: subAny.current_period_end,
-                type_start: typeof subAny.current_period_start,
-                type_end: typeof subAny.current_period_end,
-                keys: Object.keys(subAny).slice(0, 30), // First 30 keys
-                hasCurrentPeriodStart: "current_period_start" in subAny,
-                hasCurrentPeriodEnd: "current_period_end" in subAny,
-                // Log a preview of the full object
-                subscriptionPreview: JSON.stringify(subAny).substring(0, 1000),
-              });
-
               // In newer Stripe API, period dates are in items.data[0], not at top level
+              const subAny = stripeSubscription as any;
               let fetchedPeriodEnd =
                 subAny.current_period_end ??
                 subAny.items?.data?.[0]?.current_period_end ??
@@ -212,41 +198,15 @@ export async function GET(request: NextRequest) {
                       current_period_start: Number(fetchedPeriodStart),
                     },
                   );
-                  console.log(
-                    "✅ Updated subscription with period dates from Stripe:",
-                    {
-                      period_start: fetchedPeriodStart,
-                      period_end: fetchedPeriodEnd,
-                    },
-                  );
                 } catch (updateError: any) {
-                  console.warn(
-                    "⚠️ Could not update subscription period dates:",
-                    updateError.message,
-                  );
+                  // Silently fail - period dates will be set on next webhook event
                 }
-              } else {
-                console.warn("⚠️ Stripe subscription missing period dates:", {
-                  subscriptionId: latestSubscription.stripe_subscription_id,
-                  periodStart: fetchedPeriodStart,
-                  periodEnd: fetchedPeriodEnd,
-                });
               }
             }
           } catch (stripeError: any) {
-            console.warn(
-              "⚠️ Could not fetch subscription from Stripe:",
-              stripeError.message,
-            );
+            // Silently fail - period dates will be set on next webhook event
           }
         }
-
-        console.log("🔍 Subscription data:", {
-          subscriptionType: subType,
-          current_period_end: periodEnd,
-          type: typeof periodEnd,
-          stripe_subscription_id: latestSubscription.stripe_subscription_id,
-        });
 
         if (periodEnd !== undefined && periodEnd !== null && periodEnd > 0) {
           // Convert to number if it's a string
@@ -280,12 +240,6 @@ export async function GET(request: NextRequest) {
         apiKeys: userData?.apiKeys || defaultUser.apiKeys,
         preferences: userData?.preferences || defaultUser.preferences,
       };
-
-      console.log("📤 Returning profile data:", {
-        subscription: subscriptionType,
-        subscriptionExpiresAt,
-        hasExpiration: !!subscriptionExpiresAt,
-      });
 
       return NextResponse.json(responseData);
     } catch (dbError: any) {

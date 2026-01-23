@@ -69,13 +69,6 @@ export async function POST(request: NextRequest) {
       baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
     }
 
-    // Log for debugging
-    console.log("Base URL for Stripe redirects:", baseUrl);
-
-    console.log("💳 Creating checkout session:", {
-      priceId: priceId.trim(),
-    });
-
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -95,11 +88,6 @@ export async function POST(request: NextRequest) {
         priceId: priceId.trim(),
         ...(appwriteUserId && { appwriteUserId: appwriteUserId.trim() }), // Include Appwrite user ID if provided
       },
-    });
-
-    console.log("✅ Checkout session created:", {
-      sessionId: session.id,
-      metadata: session.metadata,
     });
 
     if (!session.url) {
