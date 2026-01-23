@@ -278,8 +278,16 @@ export async function POST(request: NextRequest) {
           )) as Stripe.Subscription;
 
           // Try to get period dates from subscription object
-          periodStart = (subscription as any).current_period_start ?? null;
-          periodEnd = (subscription as any).current_period_end ?? null;
+          // In newer Stripe API, period dates are in items.data[0], not at top level
+          const subAny = subscription as any;
+          periodStart =
+            subAny.current_period_start ??
+            subAny.items?.data?.[0]?.current_period_start ??
+            null;
+          periodEnd =
+            subAny.current_period_end ??
+            subAny.items?.data?.[0]?.current_period_end ??
+            null;
 
           // Convert to numbers if they're strings
           if (periodStart && typeof periodStart === "string") {
@@ -290,7 +298,6 @@ export async function POST(request: NextRequest) {
           }
 
           // Log the full subscription object structure to debug
-          const subAny = subscription as any;
           console.log(`📦 Stripe subscription (attempt ${retries + 1}):`, {
             id: subscription.id,
             status: subscription.status,
@@ -462,8 +469,16 @@ export async function POST(request: NextRequest) {
 
           if (existingSubscriptions.documents.length > 0) {
             const existingSub = existingSubscriptions.documents[0];
-            const periodStart = (subscription as any).current_period_start;
-            const periodEnd = (subscription as any).current_period_end;
+            // In newer Stripe API, period dates are in items.data[0], not at top level
+            const subAny = subscription as any;
+            const periodStart =
+              subAny.current_period_start ??
+              subAny.items?.data?.[0]?.current_period_start ??
+              null;
+            const periodEnd =
+              subAny.current_period_end ??
+              subAny.items?.data?.[0]?.current_period_end ??
+              null;
 
             await databases.updateDocument(
               SUBSCRIPTIONS_DATABASE_ID,
@@ -530,6 +545,16 @@ export async function POST(request: NextRequest) {
 
           if (existingSubscriptions.documents.length > 0) {
             const existingSub = existingSubscriptions.documents[0];
+            // In newer Stripe API, period dates are in items.data[0], not at top level
+            const subAny = subscription as any;
+            const periodStart =
+              subAny.current_period_start ??
+              subAny.items?.data?.[0]?.current_period_start ??
+              null;
+            const periodEnd =
+              subAny.current_period_end ??
+              subAny.items?.data?.[0]?.current_period_end ??
+              null;
             await databases.updateDocument(
               SUBSCRIPTIONS_DATABASE_ID,
               SUBSCRIPTIONS_COLLECTION_ID,
@@ -537,12 +562,8 @@ export async function POST(request: NextRequest) {
               {
                 subscription_status: subscription.status,
                 subscription_type: subscriptionType,
-                current_period_start: (subscription as any).current_period_start
-                  ? Number((subscription as any).current_period_start)
-                  : null,
-                current_period_end: (subscription as any).current_period_end
-                  ? Number((subscription as any).current_period_end)
-                  : null,
+                current_period_start: periodStart ? Number(periodStart) : null,
+                current_period_end: periodEnd ? Number(periodEnd) : null,
                 ...(customerEmail && { email: customerEmail }),
               },
             );

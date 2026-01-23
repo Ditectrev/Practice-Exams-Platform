@@ -176,10 +176,15 @@ export async function GET(request: NextRequest) {
                 subscriptionPreview: JSON.stringify(subAny).substring(0, 1000),
               });
 
-              let fetchedPeriodEnd = (stripeSubscription as any)
-                .current_period_end;
-              let fetchedPeriodStart = (stripeSubscription as any)
-                .current_period_start;
+              // In newer Stripe API, period dates are in items.data[0], not at top level
+              let fetchedPeriodEnd =
+                subAny.current_period_end ??
+                subAny.items?.data?.[0]?.current_period_end ??
+                null;
+              let fetchedPeriodStart =
+                subAny.current_period_start ??
+                subAny.items?.data?.[0]?.current_period_start ??
+                null;
 
               // Convert to numbers if needed
               if (fetchedPeriodEnd && typeof fetchedPeriodEnd === "string") {
