@@ -8,6 +8,10 @@ import typeDefs from "@azure-fundamentals/lib/graphql/schemas";
 import resolvers from "@azure-fundamentals/lib/graphql/resolvers";
 import { fetchQuestions } from "@azure-fundamentals/lib/graphql/repoQuestions";
 
+// Force Node.js runtime for Apollo Server
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 interface ContextValue {
   dataSources: {
     questionsDB: BaseContext;
@@ -57,10 +61,18 @@ const handler = startServerAndCreateNextHandler(server, {
 const wrappedHandler = async (req: Request) => {
   try {
     return await handler(req);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("GraphQL handler error:", error);
     return new Response(
       JSON.stringify({
-        errors: [{ message: "Internal server error" }],
+        errors: [
+          {
+            message: error?.message || "Internal server error",
+            ...(process.env.NODE_ENV !== "production" && {
+              stack: error?.stack,
+            }),
+          },
+        ],
       }),
       {
         status: 500,
