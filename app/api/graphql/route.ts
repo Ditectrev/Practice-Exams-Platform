@@ -56,11 +56,30 @@ const handler = startServerAndCreateNextHandler(server, {
 // Wrap the handler to handle errors
 const wrappedHandler = async (req: Request) => {
   try {
-    return await handler(req);
-  } catch (error) {
+    const response = await handler(req);
+    // Ensure response has proper headers
+    if (!response.headers.get("Content-Type")) {
+      const newHeaders = new Headers(response.headers);
+      newHeaders.set("Content-Type", "application/json");
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders,
+      });
+    }
+    return response;
+  } catch (error: any) {
+    console.error("GraphQL route error:", error);
     return new Response(
       JSON.stringify({
-        errors: [{ message: "Internal server error" }],
+        errors: [
+          {
+            message: error?.message || "Internal server error",
+            ...(process.env.NODE_ENV !== "production" && {
+              stack: error?.stack,
+            }),
+          },
+        ],
       }),
       {
         status: 500,
