@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Import modules normally - lazy loading was causing issues
 import {
   CombinedQuestionsDataSource,
   RepoQuestionsDataSource,
 } from "@azure-fundamentals/lib/graphql/questionsDataSource";
-import { ApolloServer, BaseContext } from "@apollo/server";
+import { ApolloServer } from "@apollo/server";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import typeDefs from "@azure-fundamentals/lib/graphql/schemas";
 import resolvers from "@azure-fundamentals/lib/graphql/resolvers";
@@ -15,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 interface ContextValue {
   dataSources: {
-    questionsDB: BaseContext;
+    questionsDB: any;
   };
 }
 
@@ -76,7 +78,18 @@ function getHandler() {
 async function handleRequest(request: NextRequest) {
   try {
     const graphqlHandler = getHandler();
-    const response = await graphqlHandler(request);
+    // Convert NextRequest to raw Request for Apollo handler
+    const url = new URL(request.url);
+    const rawRequest = new Request(url, {
+      method: request.method,
+      headers: request.headers,
+      body:
+        request.method !== "GET" && request.method !== "HEAD"
+          ? await request.text()
+          : undefined,
+    });
+
+    const response = await graphqlHandler(rawRequest);
     return response;
   } catch (error: any) {
     console.error("GraphQL handler error:", error);
