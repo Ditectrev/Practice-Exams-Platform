@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { FiExternalLink } from "react-icons/fi";
 import ThemeSwitch from "./ThemeSwitch";
+import { AuthModal } from "./AuthModal";
 
 const Header = () => {
   const router = useRouter();
@@ -16,6 +17,7 @@ const Header = () => {
   const [windowWidth, setWindowWidth] = useState<number>(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -177,7 +179,7 @@ const Header = () => {
               </div>
             ) : (
               <button
-                onClick={() => router.push("/auth/callback")}
+                onClick={() => setShowAuthModal(true)}
                 className="btn-primary text-white px-4 py-2 rounded-lg text-sm font-medium"
               >
                 Sign In
@@ -301,6 +303,11 @@ const Header = () => {
           </div>
         )}
       </div>
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        trialExpired={false}
+      />
     </header>
   );
 };

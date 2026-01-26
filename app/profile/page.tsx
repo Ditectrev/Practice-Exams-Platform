@@ -41,6 +41,12 @@ export default function ProfilePage() {
     mistral: "",
     deepseek: "",
   });
+  const [originalMaskedKeys, setOriginalMaskedKeys] = useState({
+    openai: "",
+    gemini: "",
+    mistral: "",
+    deepseek: "",
+  });
   const [showKeys, setShowKeys] = useState({
     openai: false,
     gemini: false,
@@ -100,6 +106,8 @@ export default function ProfilePage() {
         const data = await response.json();
         setProfile(data);
         setApiKeys(data.apiKeys || {});
+        // Store original masked keys for restore on blur
+        setOriginalMaskedKeys(data.apiKeys || {});
       } else {
         console.error("Failed to fetch profile:", response.status);
       }
@@ -417,6 +425,23 @@ export default function ProfilePage() {
                                 setApiKeys((prev) => ({
                                   ...prev,
                                   [provider]: "",
+                                }));
+                              }
+                            }}
+                            onBlur={() => {
+                              // Restore masked value if user didn't enter anything
+                              if (
+                                !apiKeys[provider as keyof typeof apiKeys] &&
+                                originalMaskedKeys[
+                                  provider as keyof typeof originalMaskedKeys
+                                ]
+                              ) {
+                                setApiKeys((prev) => ({
+                                  ...prev,
+                                  [provider]:
+                                    originalMaskedKeys[
+                                      provider as keyof typeof originalMaskedKeys
+                                    ],
                                 }));
                               }
                             }}
