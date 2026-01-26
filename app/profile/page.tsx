@@ -411,9 +411,17 @@ export default function ProfilePage() {
                                 [provider]: e.target.value,
                               }))
                             }
+                            onFocus={() => {
+                              // Clear masked value when user wants to edit
+                              if (key && key.startsWith("••")) {
+                                setApiKeys((prev) => ({
+                                  ...prev,
+                                  [provider]: "",
+                                }));
+                              }
+                            }}
                             placeholder={`Enter your ${displayName} API key`}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            readOnly={!!(key && key.startsWith("••"))}
                           />
                           {key && !key.startsWith("••") && (
                             <button
