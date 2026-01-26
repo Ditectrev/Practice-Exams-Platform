@@ -398,9 +398,11 @@ export default function ProfilePage() {
                         <div className="flex-1 relative">
                           <input
                             type={
-                              showKeys[provider as keyof typeof showKeys]
-                                ? "text"
-                                : "password"
+                              key && !key.startsWith("••")
+                                ? showKeys[provider as keyof typeof showKeys]
+                                  ? "text"
+                                  : "password"
+                                : "text"
                             }
                             value={key}
                             onChange={(e) =>
@@ -411,22 +413,25 @@ export default function ProfilePage() {
                             }
                             placeholder={`Enter your ${displayName} API key`}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            readOnly={key && key.startsWith("••")}
                           />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowKeys((prev) => ({
-                                ...prev,
-                                [provider]:
-                                  !prev[provider as keyof typeof prev],
-                              }))
-                            }
-                            className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showKeys[provider as keyof typeof showKeys]
-                              ? "🙈"
-                              : "👁️"}
-                          </button>
+                          {key && !key.startsWith("••") && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowKeys((prev) => ({
+                                  ...prev,
+                                  [provider]:
+                                    !prev[provider as keyof typeof prev],
+                                }))
+                              }
+                              className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showKeys[provider as keyof typeof showKeys]
+                                ? "🙈"
+                                : "👁️"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
