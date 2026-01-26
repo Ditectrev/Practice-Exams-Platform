@@ -379,45 +379,58 @@ export default function ProfilePage() {
                   API Keys Management
                 </h2>
                 <div className="space-y-4">
-                  {Object.entries(apiKeys).map(([provider, key]) => (
-                    <div key={provider} className="flex items-center space-x-4">
-                      <label className="w-24 text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                        {provider}:
-                      </label>
-                      <div className="flex-1 relative">
-                        <input
-                          type={
-                            showKeys[provider as keyof typeof showKeys]
-                              ? "text"
-                              : "password"
-                          }
-                          value={key}
-                          onChange={(e) =>
-                            setApiKeys((prev) => ({
-                              ...prev,
-                              [provider]: e.target.value,
-                            }))
-                          }
-                          placeholder={`Enter your ${provider} API key`}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowKeys((prev) => ({
-                              ...prev,
-                              [provider]: !prev[provider as keyof typeof prev],
-                            }))
-                          }
-                          className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-                        >
-                          {showKeys[provider as keyof typeof showKeys]
-                            ? "🙈"
-                            : "👁️"}
-                        </button>
+                  {Object.entries(apiKeys).map(([provider, key]) => {
+                    const providerNames: Record<string, string> = {
+                      openai: "OpenAI",
+                      gemini: "Google Gemini",
+                      mistral: "Mistral AI",
+                      deepseek: "DeepSeek",
+                    };
+                    const displayName = providerNames[provider] || provider;
+                    return (
+                      <div
+                        key={provider}
+                        className="flex items-center space-x-4"
+                      >
+                        <label className="w-28 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {displayName}:
+                        </label>
+                        <div className="flex-1 relative">
+                          <input
+                            type={
+                              showKeys[provider as keyof typeof showKeys]
+                                ? "text"
+                                : "password"
+                            }
+                            value={key}
+                            onChange={(e) =>
+                              setApiKeys((prev) => ({
+                                ...prev,
+                                [provider]: e.target.value,
+                              }))
+                            }
+                            placeholder={`Enter your ${displayName} API key`}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowKeys((prev) => ({
+                                ...prev,
+                                [provider]:
+                                  !prev[provider as keyof typeof prev],
+                              }))
+                            }
+                            className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showKeys[provider as keyof typeof showKeys]
+                              ? "🙈"
+                              : "👁️"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <Button
                     intent="primary"
                     size="medium"

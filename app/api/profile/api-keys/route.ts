@@ -74,9 +74,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!DATABASE_ID) {
+    if (!DATABASE_ID || !API_KEYS_COLLECTION_ID) {
       return NextResponse.json(
-        { error: "Database not configured" },
+        {
+          error: "Database not configured",
+          details: `DATABASE_ID: ${!!DATABASE_ID}, COLLECTION_ID: ${!!API_KEYS_COLLECTION_ID}`,
+        },
         { status: 500 },
       );
     }
@@ -122,9 +125,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error saving API keys:", error.message);
+    console.error("Error saving API keys:", error.message, error.response);
     return NextResponse.json(
-      { error: "Failed to save API keys" },
+      { error: "Failed to save API keys", details: error.message },
       { status: 500 },
     );
   }
