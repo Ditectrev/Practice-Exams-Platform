@@ -310,8 +310,16 @@ export const CombinedQuestionsDataSource = () => {
         }
 
         return [];
-      } catch (err) {
-        throw new Error("Error fetching random questions: " + err);
+      } catch (err: any) {
+        const errorMessage = err?.message || String(err);
+        // Don't wrap JSON parse errors - pass them through as-is
+        if (
+          errorMessage.includes("Unexpected token") ||
+          errorMessage.includes("JSON")
+        ) {
+          throw err;
+        }
+        throw new Error("Error fetching random questions: " + errorMessage);
       }
     },
   };

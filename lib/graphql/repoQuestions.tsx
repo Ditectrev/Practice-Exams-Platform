@@ -47,15 +47,51 @@ const scrapeQuestions = (markdownText: string) => {
 
 export const fetchQuestions = async (link: string) => {
   try {
-    const res = await fetch(link);
+    const res = await fetch(link, {
+      headers: {
+        "User-Agent": "Practice-Exams-Platform/1.0",
+        Accept: "text/plain, text/markdown, */*",
+      },
+    });
     if (!res.ok) {
-      throw new Error(res.statusText);
+      const errorText = await res.text().catch(() => res.statusText);
+      throw new Error(
+        `Failed to fetch ${link}: ${res.status} ${
+          res.statusText
+        }. Response: ${errorText.substring(0, 200)}`,
+      );
     }
+
+    const contentType = res.headers.get("content-type");
     const markdown = await res.text();
+
+    // Check if we got HTML instead of markdown (GitHub error page)
+    if (
+      markdown.trim().startsWith("<!DOCTYPE") ||
+      markdown.trim().startsWith("<html")
+    ) {
+      throw new Error(
+        `Received HTML instead of markdown from ${link}. Response starts with: ${markdown.substring(
+          0,
+          100,
+        )}`,
+      );
+    }
+
+    // Check content type
+    if (
+      contentType &&
+      !contentType.includes("text/plain") &&
+      !contentType.includes("text/markdown") &&
+      !contentType.includes("text/html")
+    ) {
+      console.warn(`Unexpected content-type: ${contentType} for ${link}`);
+    }
 
     return scrapeQuestions(markdown);
   } catch (err: any) {
-    console.error(err.message);
+    console.error("fetchQuestions error:", err.message);
+    throw err; // Re-throw so GraphQL can handle it properly
   }
 };
 
@@ -63,15 +99,42 @@ export const fetchQuestionsAndChecksum = async (
   link: string,
 ): Promise<{ questions: any[]; checksum: string } | undefined> => {
   try {
-    const res = await fetch(link);
+    const res = await fetch(link, {
+      headers: {
+        "User-Agent": "Practice-Exams-Platform/1.0",
+        Accept: "text/plain, text/markdown, */*",
+      },
+    });
     if (!res.ok) {
-      throw new Error(res.statusText);
+      const errorText = await res.text().catch(() => res.statusText);
+      throw new Error(
+        `Failed to fetch ${link}: ${res.status} ${
+          res.statusText
+        }. Response: ${errorText.substring(0, 200)}`,
+      );
     }
+
+    const contentType = res.headers.get("content-type");
     const markdown = await res.text();
+
+    // Check if we got HTML instead of markdown (GitHub error page)
+    if (
+      markdown.trim().startsWith("<!DOCTYPE") ||
+      markdown.trim().startsWith("<html")
+    ) {
+      throw new Error(
+        `Received HTML instead of markdown from ${link}. Response starts with: ${markdown.substring(
+          0,
+          100,
+        )}`,
+      );
+    }
+
     const questions = scrapeQuestions(markdown);
     const checksum = createHash("sha256").update(markdown).digest("hex");
     return { questions, checksum };
   } catch (err: any) {
-    console.error(err.message);
+    console.error("fetchQuestionsAndChecksum error:", err.message);
+    throw err; // Re-throw so GraphQL can handle it properly
   }
 };
