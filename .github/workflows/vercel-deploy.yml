@@ -39,6 +39,9 @@ jobs:
           echo "${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}" | vercel env add NEXT_PUBLIC_APPWRITE_DATABASE_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
           echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
           echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.ENCRYPTION_SECRET }}" | vercel env add ENCRYPTION_SECRET $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.DITECTREV_AI_KEY }}" | vercel env add DITECTREV_AI_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
           echo "${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}" | vercel env add NEXT_PUBLIC_STRIPE_SECRET_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
           echo "${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}" | vercel env add NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
           echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
@@ -72,6 +75,11 @@ jobs:
           NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
           NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}
           NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS }}
+
+          # Encryption & AI Keys
+          ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
+          DITECTREV_AI_KEY: ${{ secrets.DITECTREV_AI_KEY }}
 
           # Stripe Configuration
           NEXT_PUBLIC_STRIPE_SECRET_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}
