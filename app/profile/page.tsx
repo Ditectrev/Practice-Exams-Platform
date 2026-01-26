@@ -113,15 +113,36 @@ export default function ProfilePage() {
   const saveApiKeys = async () => {
     setSaving(true);
     try {
+      // Filter out masked keys (keys that start with •) - only send new/changed keys
+      const keysToSave: Record<string, string> = {};
+      for (const [provider, key] of Object.entries(apiKeys)) {
+        if (key && !key.startsWith("••")) {
+          keysToSave[provider] = key;
+        }
+      }
+
+      if (Object.keys(keysToSave).length === 0) {
+        alert("No new API keys to save. Enter a key to update it.");
+        setSaving(false);
+        return;
+      }
+
       const response = await fetch("/api/profile/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKeys }),
+        body: JSON.stringify({
+          apiKeys: keysToSave,
+          userId: user?.$id,
+          email: user?.email,
+        }),
       });
 
       if (response.ok) {
         alert("API keys saved successfully!");
         fetchProfile();
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to save API keys");
       }
     } catch (error) {
       console.error("Error saving API keys:", error);
@@ -136,7 +157,11 @@ export default function ProfilePage() {
       const response = await fetch("/api/profile/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ explanationProvider: provider }),
+        body: JSON.stringify({
+          explanationProvider: provider,
+          userId: user?.$id,
+          email: user?.email,
+        }),
       });
 
       if (response.ok) {

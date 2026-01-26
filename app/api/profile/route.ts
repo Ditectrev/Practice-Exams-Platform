@@ -26,6 +26,20 @@ const defaultUser = {
   },
 };
 
+// Helper to mask API keys for display
+function maskApiKey(key: string | undefined): string {
+  if (!key) return "";
+  // If key is already masked or encrypted, show indicator
+  if (key.includes(":") || key.startsWith("••")) {
+    return "••••••••";
+  }
+  // Show last 4 chars
+  if (key.length > 4) {
+    return "••••••••" + key.slice(-4);
+  }
+  return "••••••••";
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get user email and ID from query params
@@ -34,7 +48,8 @@ export async function GET(request: NextRequest) {
     const userId = request.nextUrl.searchParams.get("userId");
 
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-    const USERS_COLLECTION_ID = "users";
+    const API_KEYS_COLLECTION_ID =
+      process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS!;
     const SUBSCRIPTIONS_COLLECTION_ID =
       process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS ||
       "subscriptions";
@@ -215,30 +230,67 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Try to find user by email in users collection (optional - user might not exist)
+      // Try to find user preferences/API keys in users collection
       let userData = null;
       try {
-        const users = await databases.listDocuments(
-          DATABASE_ID,
-          USERS_COLLECTION_ID,
-          [Query.equal("email", email)],
-        );
+        // First try by appwrite_user_id (most reliable)
+        if (userId) {
+          const users = await databases.listDocuments(
+            DATABASE_ID,
+            API_KEYS_COLLECTION_ID,
+            [Query.equal("appwrite_user_id", userId)],
+          );
+          if (users.documents.length > 0) {
+            userData = users.documents[0];
+          }
+        }
 
-        if (users.documents.length > 0) {
-          userData = users.documents[0];
+        // Fallback to email lookup if no user found by ID
+        if (!userData) {
+          const users = await databases.listDocuments(
+            DATABASE_ID,
+            API_KEYS_COLLECTION_ID,
+            [Query.equal("email", email)],
+          );
+          if (users.documents.length > 0) {
+            userData = users.documents[0];
+          }
         }
       } catch (userError: any) {
         // Users collection might not exist or have permission issues - that's okay
         // Silently continue without user data
       }
 
+      // Build API keys object with masked values for display
+      const apiKeys = {
+        openai: userData?.openai_api_key
+          ? maskApiKey(userData.openai_api_key)
+          : "",
+        gemini: userData?.gemini_api_key
+          ? maskApiKey(userData.gemini_api_key)
+          : "",
+        mistral: userData?.mistral_api_key
+          ? maskApiKey(userData.mistral_api_key)
+          : "",
+        deepseek: userData?.deepseek_api_key
+          ? maskApiKey(userData.deepseek_api_key)
+          : "",
+      };
+
+      // Build preferences object
+      const preferences = {
+        explanationProvider:
+          userData?.explanation_provider ||
+          defaultUser.preferences.explanationProvider,
+      };
+
       const responseData = {
         id: userData?.$id || userId || "new",
         email: userData?.email || email,
         subscription: subscriptionType,
         subscriptionExpiresAt,
-        apiKeys: userData?.apiKeys || defaultUser.apiKeys,
-        preferences: userData?.preferences || defaultUser.preferences,
+        apiKeys,
+        preferences,
       };
 
       return NextResponse.json(responseData);

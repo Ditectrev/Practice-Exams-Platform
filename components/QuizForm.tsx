@@ -7,6 +7,7 @@ import { Button } from "./Button";
 import NumberInputComponent from "./NumberInputComponent";
 import LoadingIndicator from "./LoadingIndicator";
 import { SiHelpdesk } from "react-icons/si";
+import { useAuth } from "../contexts/AuthContext";
 
 const QuizForm: FC<Props> = ({
   isLoading,
@@ -17,6 +18,7 @@ const QuizForm: FC<Props> = ({
   link,
 }) => {
   const { register, handleSubmit, reset, watch } = useForm();
+  const { user } = useAuth();
 
   const [showCorrectAnswer, setShowCorrectAnswer] = useState<boolean>(false);
   const [lastIndex, setLastIndex] = useState<number>(1);
@@ -63,8 +65,17 @@ const QuizForm: FC<Props> = ({
   useEffect(() => {
     const checkExplanationAvailability = async () => {
       try {
+        if (!user?.email) {
+          setExplanationAvailable(false);
+          return;
+        }
+
         // Check if user has any explanation capability
-        const response = await fetch("/api/profile");
+        const params = new URLSearchParams({
+          email: user.email,
+          ...(user.$id && { userId: user.$id }),
+        });
+        const response = await fetch(`/api/profile?${params.toString()}`);
         if (response.ok) {
           const profile = await response.json();
           const hasExplanationAccess = ["local", "byok", "ditectrev"].includes(
@@ -78,7 +89,7 @@ const QuizForm: FC<Props> = ({
     };
 
     checkExplanationAvailability();
-  }, []);
+  }, [user?.email, user?.$id]);
 
   const isOptionChecked = (optionText: string): boolean | undefined => {
     const savedAnswer = savedAnswers[currentQuestionIndex];
@@ -97,6 +108,10 @@ const QuizForm: FC<Props> = ({
     try {
       setExplanationError(null);
 
+      if (!user?.$id) {
+        throw new Error("Please log in to use AI explanations");
+      }
+
       const correctAnswers = options
         .filter((o) => o.isAnswer === true)
         .map((o) => o.text);
@@ -109,6 +124,7 @@ const QuizForm: FC<Props> = ({
         body: JSON.stringify({
           question,
           correctAnswers,
+          userId: user.$id,
         }),
       });
 
