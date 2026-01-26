@@ -1,109 +1,67 @@
-import { NextRequest, NextResponse } from "next/server";
-
-// Import modules normally - lazy loading was causing issues
 import {
   CombinedQuestionsDataSource,
   RepoQuestionsDataSource,
 } from "@azure-fundamentals/lib/graphql/questionsDataSource";
-import { ApolloServer } from "@apollo/server";
+import { ApolloServer, BaseContext } from "@apollo/server";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import typeDefs from "@azure-fundamentals/lib/graphql/schemas";
 import resolvers from "@azure-fundamentals/lib/graphql/resolvers";
 import { fetchQuestions } from "@azure-fundamentals/lib/graphql/repoQuestions";
 
-// Force Node.js runtime for Apollo Server
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 interface ContextValue {
   dataSources: {
-    questionsDB: any;
+    questionsDB: BaseContext;
   };
 }
 
-let server: ApolloServer<ContextValue> | null = null;
-let handler: ((req: Request) => Promise<Response>) | null = null;
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: process.env.NODE_ENV !== "production",
+});
 
-// Initialize server lazily to catch initialization errors
-function getHandler() {
-  if (handler) return handler;
-
-  try {
-    server = new ApolloServer<ContextValue>({
-      typeDefs,
-      resolvers,
-      introspection: process.env.NODE_ENV !== "production",
-    });
-
-    handler = startServerAndCreateNextHandler(server, {
-      context: async () => {
-        if (process.env.AZURE_COSMOSDB_ENDPOINT) {
-          return {
-            dataSources: {
-              questionsDB: CombinedQuestionsDataSource(),
+const handler = startServerAndCreateNextHandler(server, {
+  context: async () => {
+    if (process.env.AZURE_COSMOSDB_ENDPOINT) {
+      return {
+        dataSources: {
+          questionsDB: CombinedQuestionsDataSource(),
+        },
+      };
+    } else {
+      // Fallback to GitHub-only data source
+      return {
+        dataSources: {
+          questionsDB: {
+            getQuestion: async (id: string, link: string) => {
+              const questions = await fetchQuestions(link);
+              return questions?.find((q: any) => q.id === id);
             },
-          };
-        } else {
-          // Fallback to GitHub-only data source
-          return {
-            dataSources: {
-              questionsDB: {
-                getQuestion: async (id: string, link: string) => {
-                  const questions = await fetchQuestions(link);
-                  return questions?.find((q: any) => q.id === id);
-                },
-                getQuestions: async (link: string) => {
-                  const questions = await fetchQuestions(link);
-                  return { count: questions?.length || 0 };
-                },
-                getRandomQuestions: async (range: number, link: string) => {
-                  const questions = await fetchQuestions(link);
-                  const shuffled = questions?.sort(() => 0.5 - Math.random());
-                  return shuffled?.slice(0, range) || [];
-                },
-              },
+            getQuestions: async (link: string) => {
+              const questions = await fetchQuestions(link);
+              return { count: questions?.length || 0 };
             },
-          };
-        }
-      },
-    });
-
-    return handler;
-  } catch (error: any) {
-    console.error("Failed to initialize Apollo Server:", error);
-    throw error;
-  }
-}
-
-async function handleRequest(request: NextRequest) {
-  try {
-    const graphqlHandler = getHandler();
-    // Convert NextRequest to raw Request for Apollo handler
-    const url = new URL(request.url);
-    const rawRequest = new Request(url, {
-      method: request.method,
-      headers: request.headers,
-      body:
-        request.method !== "GET" && request.method !== "HEAD"
-          ? await request.text()
-          : undefined,
-    });
-
-    const response = await graphqlHandler(rawRequest);
-    return response;
-  } catch (error: any) {
-    console.error("GraphQL handler error:", error);
-    return NextResponse.json(
-      {
-        errors: [
-          {
-            message: error?.message || "Internal server error",
-            ...(process.env.NODE_ENV !== "production" && {
-              stack: error?.stack,
-            }),
+            getRandomQuestions: async (range: number, link: string) => {
+              const questions = await fetchQuestions(link);
+              const shuffled = questions?.sort(() => 0.5 - Math.random());
+              return shuffled?.slice(0, range) || [];
+            },
           },
-        ],
-      },
+        },
+      };
+    }
+  },
+});
+
+// Wrap the handler to handle errors
+const wrappedHandler = async (req: Request) => {
+  try {
+    return await handler(req);
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        errors: [{ message: "Internal server error" }],
+      }),
       {
         status: 500,
         headers: {
@@ -112,12 +70,6 @@ async function handleRequest(request: NextRequest) {
       },
     );
   }
-}
+};
 
-export async function GET(request: NextRequest) {
-  return handleRequest(request);
-}
-
-export async function POST(request: NextRequest) {
-  return handleRequest(request);
-}
+export { wrappedHandler as GET, wrappedHandler as POST };
