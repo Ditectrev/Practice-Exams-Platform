@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import {
   CombinedQuestionsDataSource,
   RepoQuestionsDataSource,
@@ -18,53 +19,69 @@ interface ContextValue {
   };
 }
 
-const server = new ApolloServer<ContextValue>({
-  typeDefs,
-  resolvers,
-  introspection: process.env.NODE_ENV !== "production",
-});
+let server: ApolloServer<ContextValue> | null = null;
+let handler: ((req: Request) => Promise<Response>) | null = null;
 
-const handler = startServerAndCreateNextHandler(server, {
-  context: async () => {
-    if (process.env.AZURE_COSMOSDB_ENDPOINT) {
-      return {
-        dataSources: {
-          questionsDB: CombinedQuestionsDataSource(),
-        },
-      };
-    } else {
-      // Fallback to GitHub-only data source
-      return {
-        dataSources: {
-          questionsDB: {
-            getQuestion: async (id: string, link: string) => {
-              const questions = await fetchQuestions(link);
-              return questions?.find((q: any) => q.id === id);
-            },
-            getQuestions: async (link: string) => {
-              const questions = await fetchQuestions(link);
-              return { count: questions?.length || 0 };
-            },
-            getRandomQuestions: async (range: number, link: string) => {
-              const questions = await fetchQuestions(link);
-              const shuffled = questions?.sort(() => 0.5 - Math.random());
-              return shuffled?.slice(0, range) || [];
-            },
-          },
-        },
-      };
-    }
-  },
-});
+// Initialize server lazily to catch initialization errors
+function getHandler() {
+  if (handler) return handler;
 
-// Wrap the handler to handle errors
-const wrappedHandler = async (req: Request) => {
   try {
-    return await handler(req);
+    server = new ApolloServer<ContextValue>({
+      typeDefs,
+      resolvers,
+      introspection: process.env.NODE_ENV !== "production",
+    });
+
+    handler = startServerAndCreateNextHandler(server, {
+      context: async () => {
+        if (process.env.AZURE_COSMOSDB_ENDPOINT) {
+          return {
+            dataSources: {
+              questionsDB: CombinedQuestionsDataSource(),
+            },
+          };
+        } else {
+          // Fallback to GitHub-only data source
+          return {
+            dataSources: {
+              questionsDB: {
+                getQuestion: async (id: string, link: string) => {
+                  const questions = await fetchQuestions(link);
+                  return questions?.find((q: any) => q.id === id);
+                },
+                getQuestions: async (link: string) => {
+                  const questions = await fetchQuestions(link);
+                  return { count: questions?.length || 0 };
+                },
+                getRandomQuestions: async (range: number, link: string) => {
+                  const questions = await fetchQuestions(link);
+                  const shuffled = questions?.sort(() => 0.5 - Math.random());
+                  return shuffled?.slice(0, range) || [];
+                },
+              },
+            },
+          };
+        }
+      },
+    });
+
+    return handler;
+  } catch (error: any) {
+    console.error("Failed to initialize Apollo Server:", error);
+    throw error;
+  }
+}
+
+async function handleRequest(request: NextRequest) {
+  try {
+    const graphqlHandler = getHandler();
+    const response = await graphqlHandler(request);
+    return response;
   } catch (error: any) {
     console.error("GraphQL handler error:", error);
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         errors: [
           {
             message: error?.message || "Internal server error",
@@ -73,7 +90,7 @@ const wrappedHandler = async (req: Request) => {
             }),
           },
         ],
-      }),
+      },
       {
         status: 500,
         headers: {
@@ -82,6 +99,12 @@ const wrappedHandler = async (req: Request) => {
       },
     );
   }
-};
+}
 
-export { wrappedHandler as GET, wrappedHandler as POST };
+export async function GET(request: NextRequest) {
+  return handleRequest(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleRequest(request);
+}
