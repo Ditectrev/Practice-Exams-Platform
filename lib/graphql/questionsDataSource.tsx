@@ -164,8 +164,15 @@ const ensureExamSynced = async (
       // Backfill updatedAt for old meta docs
       await writeMeta(container, examId, checksum);
     }
-  } catch (err) {
-    console.warn("ensureExamSynced failed:", err);
+  } catch (err: any) {
+    const errorMessage = err?.message || String(err);
+    // Log safe error message (avoid HTML content in logs)
+    const safeMessage =
+      errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html")
+        ? "Failed to fetch exam data from source"
+        : errorMessage;
+    console.warn("ensureExamSynced failed:", safeMessage);
+    // Don't throw - allow fallback to direct fetchQuestions calls
   }
 };
 
@@ -174,28 +181,41 @@ export const CombinedQuestionsDataSource = () => {
     async getQuestion(id: string, link: string) {
       try {
         const examId = extractExamId(link);
-        const questionsContainer = await getQuestionsContainer();
 
-        // Ensure the partition is up to date with source content
-        await ensureExamSynced(questionsContainer, examId, link);
+        // Try Cosmos DB first (most efficient) - wrap in try-catch to handle connection errors
+        let questionsContainer;
+        try {
+          questionsContainer = await getQuestionsContainer();
+          // Ensure the partition is up to date with source content
+          await ensureExamSynced(questionsContainer, examId, link);
 
-        // Try Cosmos DB first (most efficient)
-        const querySpec = {
-          query: "SELECT * FROM c WHERE c.id = @id AND c.examId = @examId",
-          parameters: [
-            { name: "@id", value: id },
-            { name: "@examId", value: examId },
-          ],
-        };
-        const { resources: items } = await questionsContainer.items
-          .query(querySpec)
-          .fetchAll();
+          const querySpec = {
+            query: "SELECT * FROM c WHERE c.id = @id AND c.examId = @examId",
+            parameters: [
+              { name: "@id", value: id },
+              { name: "@examId", value: examId },
+            ],
+          };
+          const { resources: items } = await questionsContainer.items
+            .query(querySpec)
+            .fetchAll();
 
-        if (items.length > 0) {
-          return items[0];
+          if (items.length > 0) {
+            return items[0];
+          }
+        } catch (cosmosErr: any) {
+          // Cosmos DB failed, log and fall through to GitHub fallback
+          const cosmosErrorMsg = cosmosErr?.message || String(cosmosErr);
+          console.warn(
+            "Cosmos DB query failed, falling back to GitHub:",
+            cosmosErrorMsg.includes("<!DOCTYPE") ||
+              cosmosErrorMsg.includes("<html")
+              ? "Received HTML error response"
+              : cosmosErrorMsg.substring(0, 100),
+          );
         }
 
-        // Fallback to GitHub if not found in database
+        // Fallback to GitHub if not found in database or Cosmos DB failed
         const questions = await fetchQuestions(link);
         if (questions) {
           const question = questions.find((q: any) => q.id === id);
@@ -206,104 +226,149 @@ export const CombinedQuestionsDataSource = () => {
               examId: examId,
             };
 
-            try {
-              await questionsContainer.items.upsert(questionWithExamId);
-            } catch (err) {
-              console.warn("Failed to upload question to Cosmos DB:", err);
+            // Only try to upload if Cosmos DB container is available
+            if (questionsContainer) {
+              try {
+                await questionsContainer.items.upsert(questionWithExamId);
+              } catch (err) {
+                console.warn("Failed to upload question to Cosmos DB:", err);
+              }
             }
             return question;
           }
         }
 
         return null;
-      } catch (err) {
-        throw new Error("Error fetching question: " + err);
+      } catch (err: any) {
+        const errorMessage = err?.message || String(err);
+        // Extract safe error message (avoid HTML content)
+        const safeMessage =
+          errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html")
+            ? "Failed to fetch question data from source"
+            : errorMessage;
+        throw new Error(`Error fetching question: ${safeMessage}`);
       }
     },
 
     async getQuestions(link: string) {
       try {
         const examId = extractExamId(link);
-        const questionsContainer = await getQuestionsContainer();
 
-        await ensureExamSynced(questionsContainer, examId, link);
+        // Try Cosmos DB first - wrap in try-catch to handle connection errors
+        let questionsContainer;
+        try {
+          questionsContainer = await getQuestionsContainer();
+          await ensureExamSynced(questionsContainer, examId, link);
 
-        // Try Cosmos DB first
-        const querySpec = {
-          query: "SELECT VALUE COUNT(c.id) FROM c WHERE c.examId = @examId",
-          parameters: [{ name: "@examId", value: examId }],
-        };
-        const { resources: items } = await questionsContainer.items
-          .query(querySpec)
-          .fetchAll();
+          const querySpec = {
+            query: "SELECT VALUE COUNT(c.id) FROM c WHERE c.examId = @examId",
+            parameters: [{ name: "@examId", value: examId }],
+          };
+          const { resources: items } = await questionsContainer.items
+            .query(querySpec)
+            .fetchAll();
 
-        if (items[0] > 0) {
-          return { count: items[0] };
+          if (items[0] > 0) {
+            return { count: items[0] };
+          }
+        } catch (cosmosErr: any) {
+          // Cosmos DB failed, log and fall through to GitHub fallback
+          const cosmosErrorMsg = cosmosErr?.message || String(cosmosErr);
+          console.warn(
+            "Cosmos DB query failed, falling back to GitHub:",
+            cosmosErrorMsg.includes("<!DOCTYPE") ||
+              cosmosErrorMsg.includes("<html")
+              ? "Received HTML error response"
+              : cosmosErrorMsg.substring(0, 100),
+          );
         }
 
-        // Fallback to GitHub if no questions found in database
+        // Fallback to GitHub if no questions found in database or Cosmos DB failed
         const questions = await fetchQuestions(link);
         if (questions) {
-          // Upload all questions to database (only if they don't exist)
-          try {
-            for (const question of questions) {
-              const questionWithExamId = {
-                ...question,
-                examId: examId,
-              };
-              await questionsContainer.items.upsert(questionWithExamId);
+          // Upload all questions to database (only if they don't exist and Cosmos DB is available)
+          if (questionsContainer) {
+            try {
+              for (const question of questions) {
+                const questionWithExamId = {
+                  ...question,
+                  examId: examId,
+                };
+                await questionsContainer.items.upsert(questionWithExamId);
+              }
+            } catch (err) {
+              console.warn("Failed to upload questions to Cosmos DB:", err);
             }
-          } catch (err) {
-            console.warn("Failed to upload questions to Cosmos DB:", err);
           }
           return { count: questions.length };
         }
 
         return { count: 0 };
-      } catch (err) {
-        throw new Error("Error fetching questions: " + err);
+      } catch (err: any) {
+        const errorMessage = err?.message || String(err);
+        // Extract safe error message (avoid HTML content)
+        const safeMessage =
+          errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html")
+            ? "Failed to fetch questions data from source"
+            : errorMessage;
+        throw new Error(`Error fetching questions: ${safeMessage}`);
       }
     },
 
     async getRandomQuestions(range: number, link: string) {
       try {
         const examId = extractExamId(link);
-        const questionsContainer = await getQuestionsContainer();
 
-        await ensureExamSynced(questionsContainer, examId, link);
+        // Try Cosmos DB first - wrap in try-catch to handle connection errors
+        let questionsContainer;
+        try {
+          questionsContainer = await getQuestionsContainer();
+          await ensureExamSynced(questionsContainer, examId, link);
 
-        // Try Cosmos DB first
-        const querySpec = {
-          query: "SELECT * FROM c WHERE c.examId = @examId",
-          parameters: [{ name: "@examId", value: examId }],
-        };
-        const { resources: items } = await questionsContainer.items
-          .query(querySpec)
-          .fetchAll();
+          const querySpec = {
+            query: "SELECT * FROM c WHERE c.examId = @examId",
+            parameters: [{ name: "@examId", value: examId }],
+          };
+          const { resources: items } = await questionsContainer.items
+            .query(querySpec)
+            .fetchAll();
 
-        if (items.length > 0) {
-          // Questions exist in database, return random selection
-          const shuffled = [...items].sort(() => 0.5 - Math.random());
-          return shuffled.slice(0, range);
+          if (items.length > 0) {
+            // Questions exist in database, return random selection
+            const shuffled = [...items].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, range);
+          }
+        } catch (cosmosErr: any) {
+          // Cosmos DB failed, log and fall through to GitHub fallback
+          const cosmosErrorMsg = cosmosErr?.message || String(cosmosErr);
+          console.warn(
+            "Cosmos DB query failed, falling back to GitHub:",
+            cosmosErrorMsg.includes("<!DOCTYPE") ||
+              cosmosErrorMsg.includes("<html")
+              ? "Received HTML error response"
+              : cosmosErrorMsg.substring(0, 100),
+          );
         }
 
-        // Fallback to GitHub if no questions found in database
+        // Fallback to GitHub if no questions found in database or Cosmos DB failed
         const questions = await fetchQuestions(link);
         if (questions) {
           const shuffled = [...questions].sort(() => 0.5 - Math.random());
           const selected = shuffled.slice(0, range);
 
-          // Upload selected questions to database (only if they don't exist)
-          try {
-            for (const question of selected) {
-              const questionWithExamId = {
-                ...question,
-                examId: examId,
-              };
-              await questionsContainer.items.upsert(questionWithExamId);
+          // Upload selected questions to database (only if they don't exist and Cosmos DB is available)
+          if (questionsContainer) {
+            try {
+              for (const question of selected) {
+                const questionWithExamId = {
+                  ...question,
+                  examId: examId,
+                };
+                await questionsContainer.items.upsert(questionWithExamId);
+              }
+            } catch (err) {
+              console.warn("Failed to upload questions to Cosmos DB:", err);
             }
-          } catch (err) {
-            console.warn("Failed to upload questions to Cosmos DB:", err);
           }
 
           return selected;
@@ -312,14 +377,15 @@ export const CombinedQuestionsDataSource = () => {
         return [];
       } catch (err: any) {
         const errorMessage = err?.message || String(err);
-        // Don't wrap JSON parse errors - pass them through as-is
-        if (
-          errorMessage.includes("Unexpected token") ||
-          errorMessage.includes("JSON")
-        ) {
-          throw err;
-        }
-        throw new Error("Error fetching random questions: " + errorMessage);
+        // Extract safe error message (avoid HTML content)
+        const safeMessage =
+          errorMessage.includes("<!DOCTYPE") || errorMessage.includes("<html")
+            ? "Failed to fetch random questions data from source"
+            : errorMessage.includes("Unexpected token") ||
+              errorMessage.includes("JSON")
+            ? "Failed to parse response from source"
+            : errorMessage;
+        throw new Error(`Error fetching random questions: ${safeMessage}`);
       }
     },
   };
