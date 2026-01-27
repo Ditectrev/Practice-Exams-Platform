@@ -44,12 +44,8 @@ export const metadata: Metadata = {
       name: "Daniel Danielecki",
       url: "https://github.com/danieldanielecki",
     },
-    {
-      name: "Eduard-Constantin Ibinceanu",
-      url: "https://github.com/eduardconstantin",
-    },
   ],
-  creator: "Eduard-Constantin Ibinceanu",
+  creator: "Ditectrev",
   description:
     "🎓 Practice Exams (Web) Platform developed by Ditectrev's Community. #Build Your Digital Future with us.",
   formatDetection: { telephone: true },
@@ -83,7 +79,9 @@ export const metadata: Metadata = {
     images: [
       {
         alt: "Ditectrev Logo",
-        url: "/logo.svg",
+        url: "https://education.ditectrev.com/icons/icon-512x512.png",
+        width: 512,
+        height: 512,
       },
     ],
     siteName: "🧪 Practice Exams Platform | Ditectrev",
@@ -109,7 +107,7 @@ export const metadata: Metadata = {
     images: [
       {
         alt: "Ditectrev Logo",
-        url: "/logo.svg",
+        url: "https://education.ditectrev.com/icons/icon-512x512.png",
       },
     ],
     site: "@ditectrev",
