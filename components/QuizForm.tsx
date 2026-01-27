@@ -1,3 +1,5 @@
+"use client";
+
 import { type FC, useState, useEffect } from "react";
 import { useForm, FieldValues } from "react-hook-form";
 import { Props } from "./types";
@@ -8,6 +10,7 @@ import NumberInputComponent from "./NumberInputComponent";
 import LoadingIndicator from "./LoadingIndicator";
 import { SiHelpdesk } from "react-icons/si";
 import { useAuth } from "../contexts/AuthContext";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 const QuizForm: FC<Props> = ({
   isLoading,
@@ -310,9 +313,12 @@ const QuizForm: FC<Props> = ({
             </svg>
           </button>
         </div>
-        <p className="text-gray-900 dark:text-white md:px-12 pt-10 pb-5 select-none">
-          {question}
-        </p>
+        <div
+          className="text-gray-900 dark:text-white md:px-12 pt-10 pb-5 select-none"
+          suppressHydrationWarning
+        >
+          <MarkdownRenderer variant="question">{question}</MarkdownRenderer>
+        </div>
         {images && (
           <ul className="flex flex-row justify-center gap-2 mt-5 mb-8 select-none md:px-12 px-0">
             {images.map((image) => (
@@ -399,13 +405,20 @@ const QuizForm: FC<Props> = ({
               </h3>
             </div>
             <div
-              className={`leading-relaxed whitespace-pre-line ${
+              className={`leading-relaxed ${
                 explanationError
                   ? "text-red-700 dark:text-red-300"
                   : "text-slate-200"
               }`}
+              suppressHydrationWarning
             >
-              {explanationError || explanation}
+              {explanationError ? (
+                <p>{explanationError}</p>
+              ) : (
+                <MarkdownRenderer variant="explanation">
+                  {explanation || ""}
+                </MarkdownRenderer>
+              )}
             </div>
             {explanationError && (
               <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">

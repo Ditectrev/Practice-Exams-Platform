@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, type FC } from "react";
 import Image from "next/image";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -5,6 +7,7 @@ import { Button } from "./Button";
 import useResults from "@azure-fundamentals/hooks/useResults";
 import { Question, Option } from "@azure-fundamentals/components/types";
 import LoadingIndicator from "./LoadingIndicator";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 type Props = {
   isLoading: boolean;
@@ -176,9 +179,14 @@ const QuizExamForm: FC<Props> = ({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="relative min-h-40">
         <div className="relative min-h-40 mt-8">
-          <p className="text-gray-900 dark:text-white px-12 py-6 select-none">
-            {currentQuestionIndex + 1}. {question}
-          </p>
+          <div
+            className="text-gray-900 dark:text-white px-12 py-6 select-none"
+            suppressHydrationWarning
+          >
+            <MarkdownRenderer variant="question">
+              {`${currentQuestionIndex + 1}. ${question}`}
+            </MarkdownRenderer>
+          </div>
         </div>
         {images && (
           <ul className="flex flex-row justify-center gap-2 mt-5 mb-8 select-none md:px-12 px-0">
@@ -288,8 +296,13 @@ const QuizExamForm: FC<Props> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full">
-                {option?.text}
+              <span
+                className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full"
+                suppressHydrationWarning
+              >
+                <MarkdownRenderer variant="answer">
+                  {option?.text || ""}
+                </MarkdownRenderer>
               </span>
             </label>
           </li>
