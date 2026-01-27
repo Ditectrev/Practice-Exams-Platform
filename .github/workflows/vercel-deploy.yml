@@ -12,6 +12,16 @@ on:
       - 'feature/*'
 
 jobs:
+  pr-review:
+    name: AI PR Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: AI-based PR Reviewer & Summarizer with Mistral 8x7B Chat Capabilities
+        uses: Onigam/ai-mistral-pr-reviewer@v0.7
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   deploy:
     runs-on: ubuntu-latest
     name: Deploy to Vercel
