@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for Stripe secret key
-    // Note: Using NEXT_PUBLIC_ prefix is required for Azure Static Web Apps runtime access
+    // Note: Using NEXT_PUBLIC_ prefix for environment variable access
     // This is safe because it's only used in server-side API routes, never in client components
     const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {

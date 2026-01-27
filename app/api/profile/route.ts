@@ -311,21 +311,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    // TODO: Update user in database
-    // const user = await updateUser(email, body);
-
-    // For now, just return success
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    return NextResponse.json(
-      { error: "Failed to update profile" },
-      { status: 500 },
-    );
-  }
-}
