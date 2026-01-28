@@ -107,7 +107,7 @@ const Header = () => {
                   <button
                     key={link.href}
                     onClick={() => router.push(link.href)}
-                    className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium"
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-sm font-medium cursor-pointer"
                   >
                     {link.title}
                   </button>
@@ -249,7 +249,7 @@ const Header = () => {
                       router.push(link.href);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="block w-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3"
+                    className="block w-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 text-lg font-medium py-3 cursor-pointer"
                   >
                     {link.title}
                   </button>
