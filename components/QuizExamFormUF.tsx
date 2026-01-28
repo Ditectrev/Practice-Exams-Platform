@@ -183,9 +183,7 @@ const QuizExamForm: FC<Props> = ({
             className="text-gray-900 dark:text-white px-12 py-6 select-none"
             suppressHydrationWarning
           >
-            <MarkdownRenderer variant="question">
-              {`${currentQuestionIndex + 1}. ${question}`}
-            </MarkdownRenderer>
+            <MarkdownRenderer variant="question">{question}</MarkdownRenderer>
           </div>
         </div>
         {images && (

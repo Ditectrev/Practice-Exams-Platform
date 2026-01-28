@@ -66,9 +66,7 @@ const ExamQuizForm: FC<Props> = ({
           className="text-white px-12 py-6 select-none"
           suppressHydrationWarning
         >
-          <MarkdownRenderer variant="question">
-            {`${currentQuestionIndex}. ${question}`}
-          </MarkdownRenderer>
+          <MarkdownRenderer variant="question">{question}</MarkdownRenderer>
         </div>
       </div>
       <ul className="flex flex-col gap-2 mt-5 mb-16 select-none md:px-12 px-0 h-max min-h-[250px]">
