@@ -406,7 +406,7 @@ const QuizForm: FC<Props> = ({
               </h3>
             </div>
             <div
-              className={`leading-relaxed ${
+              className={`leading-relaxed overflow-visible ${
                 explanationError
                   ? "text-red-700 dark:text-red-300"
                   : "text-slate-200"
