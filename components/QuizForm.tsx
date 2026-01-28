@@ -94,11 +94,13 @@ const QuizForm: FC<Props> = ({
     checkExplanationAvailability();
   }, [user?.email, user?.$id]);
 
-  // Clear explanation when question changes (Bug 1 fix)
+  // Clear explanation and reset form when question changes (Bug 1 & navigation fix)
   useEffect(() => {
     setExplanation(null);
     setExplanationError(null);
-  }, [currentQuestionIndex]);
+    // Reset form to clear any selected options from previous question
+    reset();
+  }, [currentQuestionIndex, reset]);
 
   const isOptionChecked = (optionText: string): boolean | undefined => {
     const savedAnswer = savedAnswers[currentQuestionIndex];
@@ -244,7 +246,7 @@ const QuizForm: FC<Props> = ({
 
   const noOfAnswers = options.filter((el) => el.isAnswer === true).length;
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form key={currentQuestionIndex} onSubmit={handleSubmit(onSubmit)}>
       <div className="relative min-h-40">
         <div className="flex justify-center ">
           <button
