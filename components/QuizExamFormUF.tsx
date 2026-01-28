@@ -207,7 +207,14 @@ const QuizExamForm: FC<Props> = ({
           </ul>
         )}
         {selectedImage && (
-          <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm">
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedImage(null);
+              }
+            }}
+            className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm"
+          >
             <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
