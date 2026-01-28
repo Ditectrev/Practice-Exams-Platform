@@ -100,7 +100,10 @@ const QuizForm: FC<Props> = ({
     setExplanationError(null);
     // Reset form to clear any selected options from previous question
     reset();
-  }, [currentQuestionIndex, reset]);
+    // Reset showCorrectAnswer based on whether we've answered this question before
+    const hasAnswered = savedAnswers[currentQuestionIndex] !== undefined;
+    setShowCorrectAnswer(hasAnswered);
+  }, [currentQuestionIndex, reset, savedAnswers]);
 
   const isOptionChecked = (optionText: string): boolean | undefined => {
     const savedAnswer = savedAnswers[currentQuestionIndex];
@@ -252,11 +255,6 @@ const QuizForm: FC<Props> = ({
           <button
             type="button"
             onClick={() => {
-              if (currentQuestionIndex < lastIndex + 2) {
-                setShowCorrectAnswer(true);
-              } else {
-                setShowCorrectAnswer(false);
-              }
               reset();
               handleNextQuestion(currentQuestionIndex - 1);
             }}
@@ -294,11 +292,6 @@ const QuizForm: FC<Props> = ({
           <button
             type="button"
             onClick={() => {
-              if (currentQuestionIndex < lastIndex) {
-                setShowCorrectAnswer(true);
-              } else {
-                setShowCorrectAnswer(false);
-              }
               reset();
               handleNextQuestion(currentQuestionIndex + 1);
             }}
