@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "20.x"
+          node-version: "24.x"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest

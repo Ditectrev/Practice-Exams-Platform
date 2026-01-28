@@ -389,6 +389,7 @@ const QuizForm: FC<Props> = ({
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-full flex items-center justify-center">
+                {/* @ts-ignore - react-icons types incompatible with React 18.3 strict types */}
                 <SiHelpdesk
                   className={`w-5 h-5 ${
                     explanationError ? "text-red-500" : "text-white"

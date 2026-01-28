@@ -62,6 +62,7 @@ const Header = () => {
   ];
 
   const ExternalLinkIcon = () => (
+    // @ts-ignore - react-icons types incompatible with React 18.3 strict types
     <FiExternalLink className="inline-block ml-1 w-3 h-3 external-link-icon" />
   );
 

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { NextPage } from "next";
-import { gql, useQuery } from "@apollo/client";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import useTimer from "@azure-fundamentals/hooks/useTimer";
 import { Button } from "@azure-fundamentals/components/Button";
 import QuizExamForm from "@azure-fundamentals/components/QuizExamFormUF";
@@ -27,16 +28,23 @@ const questionsQuery = gql`
   }
 `;
 
+type RandomQuestionsData = {
+  randomQuestions: Question[];
+};
+
 const Exam: NextPage = () => {
   const { isAccessBlocked, isInTrial } = useTrialAccess();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
     null,
   );
   const url = searchParams?.get("url") || "";
-  const { data, loading, error } = useQuery(questionsQuery, {
-    variables: { range: 30, link: url },
-    skip: !url, // Skip query if URL is not available
-  });
+  const { data, loading, error } = useQuery<RandomQuestionsData>(
+    questionsQuery,
+    {
+      variables: { range: 30, link: url },
+      skip: !url, // Skip query if URL is not available
+    },
+  );
   // Calculate timer: 2 minutes per question (30 questions = 60 minutes)
   const examQuestionCount = 30; // Fixed number of questions in exam mode
   const minutesPerQuestion = 2;
@@ -81,7 +89,7 @@ const Exam: NextPage = () => {
   };
 
   const getResultPoints = (points: number) => {
-    const maxPoints = data?.randomQuestions?.length;
+    const maxPoints = data?.randomQuestions?.length ?? 1;
     const percentage = Math.round((points / maxPoints) * 10000) / 100;
     if (percentage >= 75) {
       setPassed(true);

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   SiDiscord,
   SiGithub,
@@ -21,44 +22,50 @@ const Footer = () => {
   const iconSize = 28;
   const { theme } = useTheme();
 
-  const socialMediaLinks = [
-    {
-      url: "https://discord.gg/RFjtXKfJy3",
-      icon: <SiDiscord className="discord" size={iconSize} />,
-    },
-    {
-      url: "https://github.com/ditectrev",
-      icon: <SiGithub className="github" size={iconSize} />,
-    },
-    {
-      url: "https://instagram.com/ditectrev",
-      icon: <SiInstagram className="instagram" size={iconSize} />,
-    },
-    {
-      url: "https://linkedin.com/company/ditectrev",
-      icon: <SiLinkedin className="linkedin" size={iconSize} />,
-    },
-    {
-      url: "https://medium.com/@ditectrev",
-      icon: <SiMedium className="medium" size={iconSize} />,
-    },
-    {
-      url: "https://patreon.com/Ditectrev",
-      icon: <SiPatreon className="patreon" size={iconSize} />,
-    },
-    {
-      url: "https://udemy.com/user/social-ditectrev",
-      icon: <SiUdemy className="udemy" size={iconSize} />,
-    },
-    {
-      url: "https://x.com/ditectrev",
-      icon: <SiX className="x" size={iconSize} />,
-    },
-    {
-      url: "https://youtube.com/@Ditectrev",
-      icon: <SiYoutube className="youtube" size={iconSize} />,
-    },
-  ];
+  const socialMediaLinks: Array<{ url: string; Icon: any; className: string }> =
+    [
+      {
+        url: "https://discord.gg/RFjtXKfJy3",
+        Icon: SiDiscord,
+        className: "discord",
+      },
+      {
+        url: "https://github.com/ditectrev",
+        Icon: SiGithub,
+        className: "github",
+      },
+      {
+        url: "https://instagram.com/ditectrev",
+        Icon: SiInstagram,
+        className: "instagram",
+      },
+      {
+        url: "https://linkedin.com/company/ditectrev",
+        Icon: SiLinkedin,
+        className: "linkedin",
+      },
+      {
+        url: "https://medium.com/@ditectrev",
+        Icon: SiMedium,
+        className: "medium",
+      },
+      {
+        url: "https://patreon.com/Ditectrev",
+        Icon: SiPatreon,
+        className: "patreon",
+      },
+      {
+        url: "https://udemy.com/user/social-ditectrev",
+        Icon: SiUdemy,
+        className: "udemy",
+      },
+      { url: "https://x.com/ditectrev", Icon: SiX, className: "x" },
+      {
+        url: "https://youtube.com/@Ditectrev",
+        Icon: SiYoutube,
+        className: "youtube",
+      },
+    ];
 
   const gradientClass =
     theme === "dark"
@@ -69,18 +76,22 @@ const Footer = () => {
     <footer className={`relative ${gradientClass} overflow-hidden`}>
       <ParticlesFooter />
       <div className="relative z-10 mx-3 my-3 social-icons-container text-white">
-        {socialMediaLinks.map((link, index) => (
-          <a
-            key={index}
-            className="px-2"
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Visit ${link.url}`}
-          >
-            {link.icon}
-          </a>
-        ))}
+        {socialMediaLinks.map((link, index) => {
+          const IconComponent = link.Icon;
+          return (
+            <a
+              key={index}
+              className="px-2"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit ${link.url}`}
+            >
+              {/* @ts-ignore - react-icons types incompatible with React 18.3 strict types */}
+              <IconComponent className={link.className} size={iconSize} />
+            </a>
+          );
+        })}
       </div>
 
       {/* GitHub Star */}
@@ -104,7 +115,7 @@ const Footer = () => {
 
       {/* Copyright */}
       <p className="relative z-10 text-white text-sm flex justify-center">
-        &copy; 2026 Ditectrev and its contributors
+        &copy; {currentYear} Ditectrev and its contributors
       </p>
     </footer>
   );

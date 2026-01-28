@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  turbopack: {},
   webpack: (config) => {
     if (!config.experiments) {
       config.experiments = {};
@@ -9,7 +10,10 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ["localhost"],
+    remotePatterns: [
+      { protocol: "http", hostname: "localhost", pathname: "/**" },
+      { protocol: "https", hostname: "localhost", pathname: "/**" },
+    ],
   },
 };
 

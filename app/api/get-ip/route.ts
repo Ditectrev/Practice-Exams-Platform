@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
 
     let ip = forwarded?.split(",")[0] || realIp || cfConnectingIp;
 
-    // If no IP found in headers, try to get from connection
+    // If no IP found in headers, use fallback (request.ip removed in Next 15+)
     if (!ip) {
-      ip = request.ip || "127.0.0.1";
+      ip = "127.0.0.1";
     }
 
     // Clean up the IP (remove port if present)
