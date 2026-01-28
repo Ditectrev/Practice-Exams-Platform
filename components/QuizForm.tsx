@@ -94,6 +94,12 @@ const QuizForm: FC<Props> = ({
     checkExplanationAvailability();
   }, [user?.email, user?.$id]);
 
+  // Clear explanation when question changes (Bug 1 fix)
+  useEffect(() => {
+    setExplanation(null);
+    setExplanationError(null);
+  }, [currentQuestionIndex]);
+
   const isOptionChecked = (optionText: string): boolean | undefined => {
     const savedAnswer = savedAnswers[currentQuestionIndex];
     if (savedAnswer === null) {
@@ -447,10 +453,21 @@ const QuizForm: FC<Props> = ({
             size="medium"
             variant="outlined"
             disabled={isThinking}
-            onClick={() => {
+            onClick={async () => {
               setShowCorrectAnswer(true);
               setIsThinking(true);
-              explainCorrectAnswer();
+              // Save current answer if any is selected before explaining
+              if (watchInput) {
+                setSavedAnswers((prev) => ({
+                  ...prev,
+                  [currentQuestionIndex]: watchInput,
+                }));
+              }
+              // Update lastIndex to enable "Next Question" button
+              if (currentQuestionIndex >= lastIndex) {
+                setLastIndex(currentQuestionIndex);
+              }
+              await explainCorrectAnswer();
               reset();
             }}
           >
@@ -462,8 +479,9 @@ const QuizForm: FC<Props> = ({
             type="button"
             intent="primary"
             size="medium"
-            disabled={currentQuestionIndex < lastIndex}
+            disabled={currentQuestionIndex < lastIndex && !showCorrectAnswer}
             onClick={() => {
+              // Save answer if not already saved
               if (!showCorrectAnswer) {
                 setSavedAnswers((prev) => ({
                   ...prev,
@@ -472,6 +490,7 @@ const QuizForm: FC<Props> = ({
               }
               setShowCorrectAnswer(false);
               setExplanation(null);
+              setExplanationError(null);
               // Only navigate if we're not on the last question
               if (currentQuestionIndex < totalQuestions) {
                 handleNextQuestion(currentQuestionIndex + 1);
