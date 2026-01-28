@@ -98,6 +98,7 @@ const QuizForm: FC<Props> = ({
   useEffect(() => {
     setExplanation(null);
     setExplanationError(null);
+    setIsThinking(false); // Reset thinking state when question changes
     // Reset form to clear any selected options from previous question
     reset();
     // Reset showCorrectAnswer based on whether we've answered this question before
@@ -203,13 +204,13 @@ const QuizForm: FC<Props> = ({
             <div className="space-y-4">
               <button
                 onClick={() => (window.location.href = "/")}
-                className="w-full sm:w-auto bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+                className="w-full sm:w-auto bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 cursor-pointer"
               >
                 🏠 Return to Home
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 ml-0 sm:ml-4"
+                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 ml-0 sm:ml-4 cursor-pointer"
               >
                 🔄 Start Over
               </button>
@@ -259,7 +260,7 @@ const QuizForm: FC<Props> = ({
               handleNextQuestion(currentQuestionIndex - 1);
             }}
             disabled={!(currentQuestionIndex > 1) || !canGoBack}
-            className="group"
+            className="group cursor-pointer disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -296,7 +297,7 @@ const QuizForm: FC<Props> = ({
               handleNextQuestion(currentQuestionIndex + 1);
             }}
             disabled={!(currentQuestionIndex < lastIndex)}
-            className="group"
+            className="group cursor-pointer disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -343,7 +344,7 @@ const QuizForm: FC<Props> = ({
         {selectedImage && (
           <div
             onClick={handleClickOutside}
-            className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50"
+            className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm"
           >
             <Image
               src={link + selectedImage.url}
@@ -355,7 +356,7 @@ const QuizForm: FC<Props> = ({
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md"
+              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md cursor-pointer"
             >
               Close
             </button>
@@ -384,7 +385,7 @@ const QuizForm: FC<Props> = ({
             className={`border rounded-lg p-6 shadow-lg ${
               explanationError
                 ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                : "bg-slate-800 border-slate-600"
+                : "bg-blue-50 dark:bg-slate-800 border-blue-200 dark:border-slate-600"
             }`}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -392,7 +393,9 @@ const QuizForm: FC<Props> = ({
                 {/* @ts-ignore - react-icons types incompatible with React 18.3 strict types */}
                 <SiHelpdesk
                   className={`w-5 h-5 ${
-                    explanationError ? "text-red-500" : "text-white"
+                    explanationError
+                      ? "text-red-500"
+                      : "text-blue-600 dark:text-white"
                   }`}
                 />
               </div>
@@ -400,7 +403,7 @@ const QuizForm: FC<Props> = ({
                 className={`text-lg font-semibold ${
                   explanationError
                     ? "text-red-700 dark:text-red-300"
-                    : "text-white"
+                    : "text-blue-900 dark:text-white"
                 }`}
               >
                 {explanationError ? "Explanation Error" : "Explanation"}
@@ -410,7 +413,7 @@ const QuizForm: FC<Props> = ({
               className={`leading-relaxed overflow-visible ${
                 explanationError
                   ? "text-red-700 dark:text-red-300"
-                  : "text-slate-200"
+                  : "text-blue-900 dark:text-slate-200"
               }`}
               suppressHydrationWarning
             >
@@ -487,6 +490,7 @@ const QuizForm: FC<Props> = ({
               setShowCorrectAnswer(false);
               setExplanation(null);
               setExplanationError(null);
+              setIsThinking(false); // Reset thinking state when navigating
               // Only navigate if we're not on the last question
               if (currentQuestionIndex < totalQuestions) {
                 handleNextQuestion(currentQuestionIndex + 1);

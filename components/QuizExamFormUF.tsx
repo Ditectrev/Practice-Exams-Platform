@@ -207,7 +207,7 @@ const QuizExamForm: FC<Props> = ({
           </ul>
         )}
         {selectedImage && (
-          <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50">
+          <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm">
             <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
@@ -218,7 +218,7 @@ const QuizExamForm: FC<Props> = ({
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md"
+              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md cursor-pointer"
             >
               Close
             </button>
@@ -267,12 +267,12 @@ const QuizExamForm: FC<Props> = ({
                           : ""
                       }`
                   : option.checked
-                  ? "border-gray-400 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20"
-                  : `border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20 hover:border-primary-500 dark:hover:border-primary-500 ${
-                      option.checked
-                        ? "border-gray-400 dark:border-gray-500 hover:border-primary-500 bg-gray-100 dark:bg-gray-700"
-                        : ""
-                    }`
+                    ? "border-gray-400 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20"
+                    : `border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-xl dark:hover:shadow-primary-500/20 hover:border-primary-500 dark:hover:border-primary-500 ${
+                        option.checked
+                          ? "border-gray-400 dark:border-gray-500 hover:border-primary-500 bg-gray-100 dark:bg-gray-700"
+                          : ""
+                      }`
               }`}
             >
               <svg

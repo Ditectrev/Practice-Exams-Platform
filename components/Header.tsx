@@ -56,7 +56,7 @@ const Header = () => {
     },
     {
       href: "https://apps.apple.com/app/cloudmaster-swift/id6503601139",
-      title: "iOS App",
+      title: "iOS/iPadOS/macOS App",
       external: true,
     },
   ];

@@ -39,7 +39,8 @@ const button = cva("button", {
 });
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof button> {}
 
 export const Button: React.FC<ButtonProps> = ({
@@ -54,7 +55,7 @@ export const Button: React.FC<ButtonProps> = ({
       intent,
       size,
       variant,
-    })} rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+    })} rounded-lg focus:outline-none focus:ring-1 border mb-2 sm:mb-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
       className || ""
     }`}
     {...props}

@@ -115,7 +115,7 @@ const Footer = () => {
 
       {/* Copyright */}
       <p className="relative z-10 text-white text-sm flex justify-center">
-        &copy; {currentYear} Ditectrev and its contributors
+        &copy; {currentYear} Ditectrev and our contributors
       </p>
     </footer>
   );

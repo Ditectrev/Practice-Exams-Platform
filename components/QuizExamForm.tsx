@@ -226,7 +226,7 @@ const QuizExamForm: FC<Props> = ({
           </ul>
         )}
         {selectedImage && (
-          <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50">
+          <div className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm">
             <Image
               src={link + selectedImage.url}
               alt={selectedImage.alt}
@@ -237,7 +237,7 @@ const QuizExamForm: FC<Props> = ({
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md"
+              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md cursor-pointer"
             >
               Close
             </button>
@@ -302,12 +302,12 @@ const QuizExamForm: FC<Props> = ({
                                   : ""
                               }`
                           : formik.values.options[index]?.checked
-                          ? "border-gray-400 bg-gray-500/25 hover:border-gray-300 hover:bg-gray-600"
-                          : `border-slate-500 bg-gray-600/25 hover:border-gray-400/75 hover:bg-gray-600/75 ${
-                              formik.values.options[index]?.checked
-                                ? "border-gray-400 hover:border-slate-300 bg-gray-600"
-                                : ""
-                            }`
+                            ? "border-gray-400 bg-gray-500/25 hover:border-gray-300 hover:bg-gray-600"
+                            : `border-slate-500 bg-gray-600/25 hover:border-gray-400/75 hover:bg-gray-600/75 ${
+                                formik.values.options[index]?.checked
+                                  ? "border-gray-400 hover:border-slate-300 bg-gray-600"
+                                  : ""
+                              }`
                       }`}
                     >
                       <svg
