@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     ];
     if (!validProviders.includes(explanationProvider)) {
       return NextResponse.json(
-        { error: "Invalid explanation provider" },
+        { error: "Invalid Explanations Provider" },
         { status: 400 },
       );
     }

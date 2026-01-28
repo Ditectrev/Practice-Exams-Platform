@@ -347,10 +347,10 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Explanation Provider Selection */}
+            {/* Explanations Provider Selection */}
             <div>
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Explanation Provider
+                Explanations Provider
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
@@ -422,7 +422,7 @@ export default function ProfilePage() {
                   onClick={savePreference}
                   disabled={saving || !hasUnsavedChanges}
                 >
-                  {saving ? "Saving..." : "Save Explanation Provider"}
+                  {saving ? "Saving..." : "Save Explanations Provider"}
                 </Button>
               </div>
             </div>
