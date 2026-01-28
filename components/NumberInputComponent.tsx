@@ -17,6 +17,11 @@ const NumberInputComponent: React.FC<Props> = ({
   const debouncedInputValue = useDebounce(inputValue, 1000);
   const { reset } = useForm();
 
+  // Sync inputValue with currentQuestionIndex when it changes externally
+  useEffect(() => {
+    setInputValue(currentQuestionIndex);
+  }, [currentQuestionIndex]);
+
   useEffect(() => {
     if (debouncedInputValue !== currentQuestionIndex) {
       handleNextQuestion(debouncedInputValue);

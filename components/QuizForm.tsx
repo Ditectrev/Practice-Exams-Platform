@@ -371,7 +371,7 @@ const QuizForm: FC<Props> = ({
       </div>
       <ul className="flex flex-col gap-2 mt-5 mb-16 select-none md:px-12 px-0 h-max min-h-[250px]">
         {options.map((option, index) => (
-          <li key={index}>
+          <li key={`${currentQuestionIndex}-${index}`}>
             <SelectionInput
               {...register(`options.${currentQuestionIndex}`)}
               index={`${currentQuestionIndex}.${index}`}
