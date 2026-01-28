@@ -33,22 +33,13 @@ export class ExplanationService {
       );
     }
 
-    // Check if provider is available (skip for Ollama as it may be running on user's machine)
-    // For Ollama, we'll attempt the request and let it fail gracefully if not available
-    if (preferredProvider !== "ollama") {
-      const isAvailable = await checkProviderAvailability(preferredProvider);
-      if (!isAvailable) {
-        throw new Error(
-          `${preferredProvider} is not available. Please check your configuration.`,
-        );
-      }
-    }
-
     // Get the appropriate provider
     const provider = getAIProvider(preferredProvider);
 
     // Generate explanation based on provider type
     if (preferredProvider === "ollama" || preferredProvider === "ditectrev") {
+      // Skip availability check for Ollama (may be running on user's machine)
+      // and Ditectrev (internal service, always available)
       return await provider.generateExplanation(question, correctAnswers);
     } else {
       // BYOK providers need API keys
@@ -58,6 +49,18 @@ export class ExplanationService {
           `Please add your ${preferredProvider} API key in your profile settings`,
         );
       }
+
+      // Check if provider is available with the provided API key
+      const isAvailable = await checkProviderAvailability(
+        preferredProvider,
+        apiKey,
+      );
+      if (!isAvailable) {
+        throw new Error(
+          `${preferredProvider} is not available. Please check your configuration.`,
+        );
+      }
+
       return await provider.generateExplanation(
         question,
         correctAnswers,

@@ -127,7 +127,12 @@ const QuizForm: FC<Props> = ({
         throw new Error("Please log in to use AI explanations");
       }
 
-      const correctAnswers = options
+      // Ensure questionSet is available
+      if (!questionSet) {
+        throw new Error("Question data is not available. Please try again.");
+      }
+
+      const correctAnswers = questionSet.options
         .filter((o) => o.isAnswer === true)
         .map((o) => o.text);
 
@@ -137,7 +142,7 @@ const QuizForm: FC<Props> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question,
+          question: questionSet.question,
           correctAnswers,
           userId: user.$id,
         }),
@@ -154,7 +159,7 @@ const QuizForm: FC<Props> = ({
       // Handle client-side Ollama request
       if (responseData.useClientSideOllama) {
         try {
-          const prompt = `${question} Explain why these answers are correct: ${correctAnswers.join(", ")}`;
+          const prompt = `${questionSet.question} Explain why these answers are correct: ${correctAnswers.join(", ")}`;
 
           // Ollama runs on user's machine, so browser can access localhost:11434
           // For remote deployments, ensure Ollama is running with CORS enabled:
@@ -173,7 +178,22 @@ const QuizForm: FC<Props> = ({
           );
 
           if (!ollamaResponse.ok) {
-            throw new Error(`Ollama API error: ${ollamaResponse.status}`);
+            // Check for CORS error (403 on preflight or actual request)
+            if (ollamaResponse.status === 403) {
+              const currentOrigin = window.location.origin;
+              throw new Error(
+                `CORS Error (403): Ollama is rejecting the request.\n\n` +
+                  `To fix:\n` +
+                  `1. Stop Ollama (Ctrl+C in terminal)\n` +
+                  `2. Run: OLLAMA_ORIGINS="${currentOrigin}" ollama serve\n` +
+                  `3. Make sure the origin matches exactly: ${currentOrigin}\n` +
+                  `4. Refresh this page\n\n` +
+                  `If Ollama is already running, you may need to restart it with the correct CORS origin.`,
+              );
+            }
+            throw new Error(
+              `Ollama API error: ${ollamaResponse.status} ${ollamaResponse.statusText}`,
+            );
           }
 
           const ollamaData = await ollamaResponse.json();
@@ -183,22 +203,38 @@ const QuizForm: FC<Props> = ({
           }
 
           setExplanation(ollamaData.response);
-        } catch (ollamaError) {
+        } catch (ollamaError: any) {
           const errorMessage =
             ollamaError instanceof Error
               ? ollamaError.message
-              : "Unknown error";
+              : String(ollamaError) || "Unknown error";
+
+          // Log the full error for debugging
+          console.error("Ollama error details:", {
+            error: ollamaError,
+            message: errorMessage,
+            name: ollamaError?.name,
+            stack: ollamaError?.stack,
+          });
+
+          const isLocalhost =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+          const currentOrigin = window.location.origin;
+
+          // Check for various CORS/network error patterns
           if (
             errorMessage.includes("fetch failed") ||
-            errorMessage.includes("Failed to fetch")
+            errorMessage.includes("Failed to fetch") ||
+            errorMessage.includes("NetworkError") ||
+            errorMessage.includes("CORS") ||
+            errorMessage.includes("403") ||
+            errorMessage.includes("TypeError") ||
+            (ollamaError?.name === "TypeError" &&
+              errorMessage.includes("fetch"))
           ) {
-            const isLocalhost =
-              window.location.hostname === "localhost" ||
-              window.location.hostname === "127.0.0.1";
-            const currentOrigin = window.location.origin;
-
             let setupInstructions =
-              "Ollama is not running or not accessible.\n\n";
+              "Ollama connection failed (likely CORS issue).\n\n";
             setupInstructions += "To use Ollama explanations:\n";
             setupInstructions +=
               "1. Install Ollama: https://webinstall.dev/ollama/\n";
@@ -208,14 +244,36 @@ const QuizForm: FC<Props> = ({
                 "2. Start Ollama: Run `ollama serve` in your terminal\n";
               setupInstructions += "3. Refresh this page\n";
             } else {
-              setupInstructions += `2. Start Ollama with CORS enabled: Run \`OLLAMA_ORIGINS="${currentOrigin}" ollama serve\` in your terminal\n`;
-              setupInstructions += "3. Refresh this page\n";
+              // Detect macOS
+              const isMac =
+                navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
+              if (isMac) {
+                setupInstructions += `2. On macOS, Ollama runs as a service. Set CORS:\n`;
+                setupInstructions += `   Run: launchctl setenv OLLAMA_ORIGINS "${currentOrigin}"\n`;
+                setupInstructions += `   Or allow all: launchctl setenv OLLAMA_ORIGINS "*"\n`;
+                setupInstructions += `3. Quit Ollama app completely (not just terminal)\n`;
+                setupInstructions += `4. Restart Ollama application\n`;
+                setupInstructions += `5. Refresh this page\n`;
+              } else {
+                setupInstructions += `2. Stop Ollama if running (Ctrl+C)\n`;
+                setupInstructions += `3. Start with CORS: Run \`OLLAMA_ORIGINS="${currentOrigin}" ollama serve\`\n`;
+                setupInstructions += `4. Verify origin matches exactly: ${currentOrigin}\n`;
+                setupInstructions += "5. Refresh this page\n";
+              }
+              setupInstructions += "\nTroubleshooting:\n";
+              setupInstructions += "- Check Ollama logs for 403 errors\n";
               setupInstructions +=
-                "\nNote: If you see 'address already in use', see: https://github.com/ollama/ollama/issues/707";
+                "- Make sure there are no typos in the origin\n";
+              setupInstructions +=
+                "- On macOS, you must use launchctl, not terminal env vars\n";
+              setupInstructions +=
+                "- If 'address already in use': https://github.com/ollama/ollama/issues/707";
             }
 
             throw new Error(setupInstructions);
           }
+
           throw new Error(`Ollama connection failed: ${errorMessage}`);
         }
       } else if (responseData && responseData.explanation) {
@@ -524,14 +582,20 @@ const QuizForm: FC<Props> = ({
         >
           Reveal Answer
         </Button>
-        {explanationAvailable && (
+        {explanationAvailable && questionSet && (
           <Button
             type="button"
             intent="secondary"
             size="medium"
             variant="outlined"
-            disabled={isThinking}
+            disabled={isThinking || !questionSet}
             onClick={async () => {
+              if (!questionSet) {
+                setExplanationError(
+                  "Question data is not available. Please try again.",
+                );
+                return;
+              }
               setShowCorrectAnswer(true);
               setIsThinking(true);
               // Save current answer if any is selected before explaining
