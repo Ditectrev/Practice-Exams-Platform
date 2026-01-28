@@ -151,7 +151,74 @@ const QuizForm: FC<Props> = ({
         );
       }
 
-      if (responseData && responseData.explanation) {
+      // Handle client-side Ollama request
+      if (responseData.useClientSideOllama) {
+        try {
+          const prompt = `${question} Explain why these answers are correct: ${correctAnswers.join(", ")}`;
+
+          // Ollama runs on user's machine, so browser can access localhost:11434
+          // For remote deployments, ensure Ollama is running with CORS enabled:
+          // OLLAMA_ORIGINS="https://education.ditectrev.com" ollama serve
+          const ollamaResponse = await fetch(
+            "http://localhost:11434/api/generate",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "mistral",
+                prompt: prompt,
+                stream: false,
+              }),
+            },
+          );
+
+          if (!ollamaResponse.ok) {
+            throw new Error(`Ollama API error: ${ollamaResponse.status}`);
+          }
+
+          const ollamaData = await ollamaResponse.json();
+
+          if (!ollamaData.response) {
+            throw new Error("Invalid response from Ollama");
+          }
+
+          setExplanation(ollamaData.response);
+        } catch (ollamaError) {
+          const errorMessage =
+            ollamaError instanceof Error
+              ? ollamaError.message
+              : "Unknown error";
+          if (
+            errorMessage.includes("fetch failed") ||
+            errorMessage.includes("Failed to fetch")
+          ) {
+            const isLocalhost =
+              window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1";
+            const currentOrigin = window.location.origin;
+
+            let setupInstructions =
+              "Ollama is not running or not accessible.\n\n";
+            setupInstructions += "To use Ollama explanations:\n";
+            setupInstructions +=
+              "1. Install Ollama: https://webinstall.dev/ollama/\n";
+
+            if (isLocalhost) {
+              setupInstructions +=
+                "2. Start Ollama: Run `ollama serve` in your terminal\n";
+              setupInstructions += "3. Refresh this page\n";
+            } else {
+              setupInstructions += `2. Start Ollama with CORS enabled: Run \`OLLAMA_ORIGINS="${currentOrigin}" ollama serve\` in your terminal\n`;
+              setupInstructions += "3. Refresh this page\n";
+              setupInstructions +=
+                "\nNote: If you see 'address already in use', see: https://github.com/ollama/ollama/issues/707";
+            }
+
+            throw new Error(setupInstructions);
+          }
+          throw new Error(`Ollama connection failed: ${errorMessage}`);
+        }
+      } else if (responseData && responseData.explanation) {
         setExplanation(responseData.explanation);
       } else {
         throw new Error("No explanation received");
@@ -412,13 +479,13 @@ const QuizForm: FC<Props> = ({
             <div
               className={`leading-relaxed overflow-visible ${
                 explanationError
-                  ? "text-red-700 dark:text-red-300"
+                  ? "text-red-700 dark:text-red-300 whitespace-pre-line"
                   : "text-blue-900 dark:text-slate-200"
               }`}
               suppressHydrationWarning
             >
               {explanationError ? (
-                <p>{explanationError}</p>
+                <p className="whitespace-pre-line">{explanationError}</p>
               ) : (
                 <MarkdownRenderer variant="explanation">
                   {explanation || ""}

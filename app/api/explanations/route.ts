@@ -179,7 +179,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate explanation
+    // For Ollama, we need to make the request client-side since it runs on user's machine
+    // Validate subscription and return provider info for client-side request
+    if (provider === "ollama") {
+      // Validate subscription allows Ollama
+      if (!["local", "byok", "ditectrev"].includes(subscriptionType)) {
+        return NextResponse.json(
+          {
+            error:
+              "Your subscription does not include AI explanations. Please upgrade to access this feature.",
+          },
+          { status: 403 },
+        );
+      }
+
+      // Return indication that client should make Ollama request
+      return NextResponse.json({
+        useClientSideOllama: true,
+        provider: "ollama",
+      });
+    }
+
+    // Generate explanation for other providers (server-side)
     const explanationService = new ExplanationService();
 
     const explanation = await explanationService.generateExplanation({

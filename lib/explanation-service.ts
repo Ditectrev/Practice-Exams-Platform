@@ -33,12 +33,15 @@ export class ExplanationService {
       );
     }
 
-    // Check if provider is available
-    const isAvailable = await checkProviderAvailability(preferredProvider);
-    if (!isAvailable && preferredProvider === "ollama") {
-      throw new Error(
-        "Ollama is not running. Please start Ollama or choose a different provider.",
-      );
+    // Check if provider is available (skip for Ollama as it may be running on user's machine)
+    // For Ollama, we'll attempt the request and let it fail gracefully if not available
+    if (preferredProvider !== "ollama") {
+      const isAvailable = await checkProviderAvailability(preferredProvider);
+      if (!isAvailable) {
+        throw new Error(
+          `${preferredProvider} is not available. Please check your configuration.`,
+        );
+      }
     }
 
     // Get the appropriate provider
