@@ -438,10 +438,22 @@ const QuizForm: FC<Props> = ({
       )}
       <div className="flex justify-center flex-col sm:flex-row">
         <Button
-          type="submit"
+          type="button"
           intent="secondary"
           size="medium"
           disabled={showCorrectAnswer}
+          onClick={() => {
+            // Save current answer if any is selected
+            if (watchInput) {
+              setSavedAnswers((prev) => ({
+                ...prev,
+                [currentQuestionIndex]: watchInput,
+              }));
+            }
+            setShowCorrectAnswer(true);
+            setCanGoBack(true);
+            reset();
+          }}
         >
           Reveal Answer
         </Button>
