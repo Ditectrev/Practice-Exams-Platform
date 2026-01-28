@@ -33,8 +33,15 @@ const Exam: NextPage = () => {
     null,
   );
   const url = searchParams?.get("url") || "";
+  const { data, loading, error } = useQuery(questionsQuery, {
+    variables: { range: 30, link: url },
+    skip: !url, // Skip query if URL is not available
+  });
+  // Calculate timer: 2 minutes per question (30 questions = 60 minutes)
+  const examQuestionCount = 30; // Fixed number of questions in exam mode
+  const minutesPerQuestion = 2;
   const { minutes, seconds } = {
-    minutes: 15,
+    minutes: examQuestionCount * minutesPerQuestion,
     seconds: 0,
   };
   const totalTimeInSeconds = minutes * 60 + seconds;
@@ -44,10 +51,6 @@ const Exam: NextPage = () => {
   const [revealExam, setRevealExam] = useState<boolean>(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [countAnswered, setCountAnswered] = useState<number>(0);
-  const { data, loading, error } = useQuery(questionsQuery, {
-    variables: { range: 30, link: url },
-    skip: !url, // Skip query if URL is not available
-  });
   const [resultPoints, setResultPoints] = useState<number>(0);
   const [passed, setPassed] = useState<boolean>(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);
