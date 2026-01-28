@@ -53,6 +53,9 @@ export default function ProfilePage() {
     mistral: false,
     deepseek: false,
   });
+  const [selectedProvider, setSelectedProvider] = useState<
+    "ollama" | "openai" | "gemini" | "mistral" | "deepseek" | "ditectrev" | null
+  >(null);
 
   useEffect(() => {
     // Wait for auth to finish loading
@@ -108,6 +111,8 @@ export default function ProfilePage() {
         setApiKeys(data.apiKeys || {});
         // Store original masked keys for restore on blur
         setOriginalMaskedKeys(data.apiKeys || {});
+        // Sync selected provider with saved preference
+        setSelectedProvider(data.preferences?.explanationProvider || "ollama");
       } else {
         console.error("Failed to fetch profile:", response.status);
       }
@@ -130,7 +135,6 @@ export default function ProfilePage() {
       }
 
       if (Object.keys(keysToSave).length === 0) {
-        alert("No new API keys to save. Enter a key to update it.");
         setSaving(false);
         return;
       }
@@ -147,7 +151,7 @@ export default function ProfilePage() {
 
       if (response.ok) {
         alert("API keys saved successfully!");
-        fetchProfile();
+        await fetchProfile();
       } else {
         const error = await response.json();
         alert(error.error || "Failed to save API keys");
@@ -160,24 +164,55 @@ export default function ProfilePage() {
     }
   };
 
-  const updatePreference = async (provider: string) => {
+  const savePreference = async () => {
+    if (!selectedProvider) return;
+
+    setSaving(true);
     try {
       const response = await fetch("/api/profile/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          explanationProvider: provider,
+          explanationProvider: selectedProvider,
           userId: user?.$id,
           email: user?.email,
         }),
       });
 
       if (response.ok) {
-        fetchProfile();
+        // Refresh profile to sync with server
+        await fetchProfile();
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to save preference");
       }
     } catch (error) {
       console.error("Error updating preferences:", error);
+      alert("Failed to save preference");
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const hasUnsavedChanges =
+    selectedProvider !== null &&
+    selectedProvider !== profile?.preferences.explanationProvider;
+
+  const hasUnsavedApiKeys = () => {
+    // Check if any API key has been changed (not masked and different from original)
+    for (const [provider, key] of Object.entries(apiKeys)) {
+      const originalKey =
+        originalMaskedKeys[provider as keyof typeof originalMaskedKeys];
+      // If key exists and doesn't start with •• (masked), it's been changed
+      if (key && !key.startsWith("••")) {
+        return true;
+      }
+      // If key was cleared but there was an original, it's a change
+      if (!key && originalKey && originalKey.startsWith("••")) {
+        return true;
+      }
+    }
+    return false;
   };
 
   const getSubscriptionBadge = (subscription: string) => {
@@ -298,15 +333,17 @@ export default function ProfilePage() {
                       </p>
                     )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    intent="primary"
-                    size="medium"
-                    onClick={() => (window.location.href = "/pricing")}
-                  >
-                    Upgrade Plan
-                  </Button>
-                </div>
+                {profile?.subscription !== "ditectrev" && (
+                  <div className="flex gap-2">
+                    <Button
+                      intent="primary"
+                      size="medium"
+                      onClick={() => (window.location.href = "/pricing")}
+                    >
+                      Upgrade Plan
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -351,7 +388,7 @@ export default function ProfilePage() {
                   <div
                     key={provider.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      profile?.preferences.explanationProvider === provider.id
+                      selectedProvider === provider.id
                         ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                         : "border-gray-200 dark:border-gray-700"
                     } ${
@@ -361,7 +398,7 @@ export default function ProfilePage() {
                     }`}
                     onClick={() =>
                       canUseProvider(provider.id) &&
-                      updatePreference(provider.id)
+                      setSelectedProvider(provider.id as any)
                     }
                   >
                     <h3 className="font-medium text-gray-900 dark:text-white">
@@ -377,6 +414,16 @@ export default function ProfilePage() {
                     )}
                   </div>
                 ))}
+              </div>
+              <div className="mt-4">
+                <Button
+                  intent="primary"
+                  size="medium"
+                  onClick={savePreference}
+                  disabled={saving || !hasUnsavedChanges}
+                >
+                  {saving ? "Saving..." : "Save Explanation Provider"}
+                </Button>
               </div>
             </div>
 
@@ -458,7 +505,7 @@ export default function ProfilePage() {
                                     !prev[provider as keyof typeof prev],
                                 }))
                               }
-                              className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                              className="absolute right-2 top-2 text-gray-500 hover:text-gray-700 cursor-pointer"
                             >
                               {showKeys[provider as keyof typeof showKeys]
                                 ? "🙈"
@@ -473,7 +520,7 @@ export default function ProfilePage() {
                     intent="primary"
                     size="medium"
                     onClick={saveApiKeys}
-                    disabled={saving}
+                    disabled={saving || !hasUnsavedApiKeys()}
                   >
                     {saving ? "Saving..." : "Save API Keys"}
                   </Button>

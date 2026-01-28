@@ -269,7 +269,7 @@ export class GeminiProvider implements AIProvider {
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
@@ -745,8 +745,8 @@ export class DitectrevProvider implements AIProvider {
           response.status === 401
             ? "auth"
             : response.status === 429
-            ? "rate_limit"
-            : "network";
+              ? "rate_limit"
+              : "network";
         throw new AIProviderError(
           this.name,
           errorType,
