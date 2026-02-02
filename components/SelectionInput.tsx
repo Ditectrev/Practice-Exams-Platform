@@ -1,4 +1,7 @@
+"use client";
+
 import React, { forwardRef, InputHTMLAttributes } from "react";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 type Props = {
   index?: string;
@@ -70,8 +73,13 @@ const SelectionInput = forwardRef<HTMLInputElement, Props>(
             />
           </svg>
 
-          <span className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full">
-            {label}
+          <span
+            className="text-gray-900 dark:text-white pl-7 break-words inline-block w-full"
+            suppressHydrationWarning
+          >
+            <MarkdownRenderer variant="answer">
+              {String(label || "")}
+            </MarkdownRenderer>
           </span>
         </label>
       </>

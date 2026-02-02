@@ -1,3 +1,5 @@
+"use client";
+
 import { type FC, useState, useEffect } from "react";
 import { useForm, FieldValues } from "react-hook-form";
 import { Props } from "./types";
@@ -7,6 +9,8 @@ import { Button } from "./Button";
 import NumberInputComponent from "./NumberInputComponent";
 import LoadingIndicator from "./LoadingIndicator";
 import { SiHelpdesk } from "react-icons/si";
+import { useAuth } from "../contexts/AuthContext";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 const QuizForm: FC<Props> = ({
   isLoading,
@@ -17,6 +21,7 @@ const QuizForm: FC<Props> = ({
   link,
 }) => {
   const { register, handleSubmit, reset, watch } = useForm();
+  const { user } = useAuth();
 
   const [showCorrectAnswer, setShowCorrectAnswer] = useState<boolean>(false);
   const [lastIndex, setLastIndex] = useState<number>(1);
@@ -35,8 +40,10 @@ const QuizForm: FC<Props> = ({
   } | null>(null);
 
   const [isThinking, setIsThinking] = useState<boolean>(false);
-  const [ollamaAvailable, setOllamaAvailable] = useState<boolean>(false);
+  const [explanationAvailable, setExplanationAvailable] =
+    useState<boolean>(false);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [explanationError, setExplanationError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -59,19 +66,45 @@ const QuizForm: FC<Props> = ({
   };
 
   useEffect(() => {
-    const checkOllamaStatus = async () => {
+    const checkExplanationAvailability = async () => {
       try {
-        const response = await fetch("http://localhost:11434");
+        if (!user?.email) {
+          setExplanationAvailable(false);
+          return;
+        }
+
+        // Check if user has any explanation capability
+        const params = new URLSearchParams({
+          email: user.email,
+          ...(user.$id && { userId: user.$id }),
+        });
+        const response = await fetch(`/api/profile?${params.toString()}`);
         if (response.ok) {
-          setOllamaAvailable(true);
+          const profile = await response.json();
+          const hasExplanationAccess = ["local", "byok", "ditectrev"].includes(
+            profile.subscription,
+          );
+          setExplanationAvailable(hasExplanationAccess);
         }
       } catch (error) {
-        console.error("Error checking server status:", error);
+        console.error("Error checking explanation availability:", error);
       }
     };
 
-    checkOllamaStatus();
-  }, []);
+    checkExplanationAvailability();
+  }, [user?.email, user?.$id]);
+
+  // Clear explanation and reset form when question changes (Bug 1 & navigation fix)
+  useEffect(() => {
+    setExplanation(null);
+    setExplanationError(null);
+    setIsThinking(false); // Reset thinking state when question changes
+    // Reset form to clear any selected options from previous question
+    reset();
+    // Reset showCorrectAnswer based on whether we've answered this question before
+    const hasAnswered = savedAnswers[currentQuestionIndex] !== undefined;
+    setShowCorrectAnswer(hasAnswered);
+  }, [currentQuestionIndex, reset, savedAnswers]);
 
   const isOptionChecked = (optionText: string): boolean | undefined => {
     const savedAnswer = savedAnswers[currentQuestionIndex];
@@ -88,35 +121,173 @@ const QuizForm: FC<Props> = ({
 
   const explainCorrectAnswer = async () => {
     try {
-      const prompt = `${question} Explain why these answers are correct: ${options
-        .filter((o) => o.isAnswer == true)
-        .map((o) => o.text)}`;
+      setExplanationError(null);
 
-      const response = await fetch("http://localhost:11434/api/generate", {
+      if (!user?.$id) {
+        throw new Error("Please log in to use AI explanations");
+      }
+
+      // Ensure questionSet is available
+      if (!questionSet) {
+        throw new Error("Question data is not available. Please try again.");
+      }
+
+      const correctAnswers = questionSet.options
+        .filter((o) => o.isAnswer === true)
+        .map((o) => o.text);
+
+      const response = await fetch("/api/explanations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "mistral",
-          prompt: prompt,
-          stream: false,
+          question: questionSet.question,
+          correctAnswers,
+          userId: user.$id,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
       const responseData = await response.json();
 
-      if (responseData && "response" in responseData) {
-        setExplanation(responseData.response);
+      if (!response.ok) {
+        throw new Error(
+          responseData.error || `HTTP error! Status: ${response.status}`,
+        );
+      }
+
+      // Handle client-side Ollama request
+      if (responseData.useClientSideOllama) {
+        try {
+          const prompt = `${questionSet.question} Explain why these answers are correct: ${correctAnswers.join(", ")}`;
+
+          // Ollama runs on user's machine, so browser can access localhost:11434
+          // For remote deployments, ensure Ollama is running with CORS enabled:
+          // OLLAMA_ORIGINS="https://education.ditectrev.com" ollama serve
+          const ollamaResponse = await fetch(
+            "http://localhost:11434/api/generate",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "mistral",
+                prompt: prompt,
+                stream: false,
+              }),
+            },
+          );
+
+          if (!ollamaResponse.ok) {
+            // Check for CORS error (403 on preflight or actual request)
+            if (ollamaResponse.status === 403) {
+              const currentOrigin = window.location.origin;
+              throw new Error(
+                `CORS Error (403): Ollama is rejecting the request.\n\n` +
+                  `To fix:\n` +
+                  `1. Stop Ollama (Ctrl+C in terminal)\n` +
+                  `2. Run: OLLAMA_ORIGINS="${currentOrigin}" ollama serve\n` +
+                  `3. Make sure the origin matches exactly: ${currentOrigin}\n` +
+                  `4. Refresh this page\n\n` +
+                  `If Ollama is already running, you may need to restart it with the correct CORS origin.`,
+              );
+            }
+            throw new Error(
+              `Ollama API error: ${ollamaResponse.status} ${ollamaResponse.statusText}`,
+            );
+          }
+
+          const ollamaData = await ollamaResponse.json();
+
+          if (!ollamaData.response) {
+            throw new Error("Invalid response from Ollama");
+          }
+
+          setExplanation(ollamaData.response);
+        } catch (ollamaError: any) {
+          const errorMessage =
+            ollamaError instanceof Error
+              ? ollamaError.message
+              : String(ollamaError) || "Unknown error";
+
+          // Log the full error for debugging
+          console.error("Ollama error details:", {
+            error: ollamaError,
+            message: errorMessage,
+            name: ollamaError?.name,
+            stack: ollamaError?.stack,
+          });
+
+          const isLocalhost =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+          const currentOrigin = window.location.origin;
+
+          // Check for various CORS/network error patterns
+          if (
+            errorMessage.includes("fetch failed") ||
+            errorMessage.includes("Failed to fetch") ||
+            errorMessage.includes("NetworkError") ||
+            errorMessage.includes("CORS") ||
+            errorMessage.includes("403") ||
+            errorMessage.includes("TypeError") ||
+            (ollamaError?.name === "TypeError" &&
+              errorMessage.includes("fetch"))
+          ) {
+            let setupInstructions =
+              "Ollama connection failed (likely CORS issue).\n\n";
+            setupInstructions += "To use Ollama explanations:\n";
+            setupInstructions +=
+              "1. Install Ollama: https://webinstall.dev/ollama/\n";
+
+            if (isLocalhost) {
+              setupInstructions +=
+                "2. Start Ollama: Run `ollama serve` in your terminal\n";
+              setupInstructions += "3. Refresh this page\n";
+            } else {
+              // Detect macOS
+              const isMac =
+                navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
+              if (isMac) {
+                setupInstructions += `2. On macOS, Ollama runs as a service. Set CORS:\n`;
+                setupInstructions += `   Run: launchctl setenv OLLAMA_ORIGINS "${currentOrigin}"\n`;
+                setupInstructions += `   Or allow all: launchctl setenv OLLAMA_ORIGINS "*"\n`;
+                setupInstructions += `3. Quit Ollama app completely (not just terminal)\n`;
+                setupInstructions += `4. Restart Ollama application\n`;
+                setupInstructions += `5. Refresh this page\n`;
+              } else {
+                setupInstructions += `2. Stop Ollama if running (Ctrl+C)\n`;
+                setupInstructions += `3. Start with CORS: Run \`OLLAMA_ORIGINS="${currentOrigin}" ollama serve\`\n`;
+                setupInstructions += `4. Verify origin matches exactly: ${currentOrigin}\n`;
+                setupInstructions += "5. Refresh this page\n";
+              }
+              setupInstructions += "\nTroubleshooting:\n";
+              setupInstructions += "- Check Ollama logs for 403 errors\n";
+              setupInstructions +=
+                "- Make sure there are no typos in the origin\n";
+              setupInstructions +=
+                "- On macOS, you must use launchctl, not terminal env vars\n";
+              setupInstructions +=
+                "- If 'address already in use': https://github.com/ollama/ollama/issues/707";
+            }
+
+            throw new Error(setupInstructions);
+          }
+
+          throw new Error(`Ollama connection failed: ${errorMessage}`);
+        }
+      } else if (responseData && responseData.explanation) {
+        setExplanation(responseData.explanation);
       } else {
-        console.error("Response does not contain explanation:", responseData);
+        throw new Error("No explanation received");
       }
     } catch (error) {
       console.error("Error fetching explanation:", error);
+      setExplanationError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate explanation",
+      );
     } finally {
       setIsThinking(false);
     }
@@ -158,13 +329,13 @@ const QuizForm: FC<Props> = ({
             <div className="space-y-4">
               <button
                 onClick={() => (window.location.href = "/")}
-                className="w-full sm:w-auto bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+                className="w-full sm:w-auto bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 cursor-pointer"
               >
                 🏠 Return to Home
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 ml-0 sm:ml-4"
+                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 ml-0 sm:ml-4 cursor-pointer"
               >
                 🔄 Start Over
               </button>
@@ -204,22 +375,17 @@ const QuizForm: FC<Props> = ({
 
   const noOfAnswers = options.filter((el) => el.isAnswer === true).length;
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form key={currentQuestionIndex} onSubmit={handleSubmit(onSubmit)}>
       <div className="relative min-h-40">
         <div className="flex justify-center ">
           <button
             type="button"
             onClick={() => {
-              if (currentQuestionIndex < lastIndex + 2) {
-                setShowCorrectAnswer(true);
-              } else {
-                setShowCorrectAnswer(false);
-              }
               reset();
               handleNextQuestion(currentQuestionIndex - 1);
             }}
             disabled={!(currentQuestionIndex > 1) || !canGoBack}
-            className="group"
+            className="group cursor-pointer disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -252,16 +418,11 @@ const QuizForm: FC<Props> = ({
           <button
             type="button"
             onClick={() => {
-              if (currentQuestionIndex < lastIndex) {
-                setShowCorrectAnswer(true);
-              } else {
-                setShowCorrectAnswer(false);
-              }
               reset();
               handleNextQuestion(currentQuestionIndex + 1);
             }}
             disabled={!(currentQuestionIndex < lastIndex)}
-            className="group"
+            className="group cursor-pointer disabled:cursor-not-allowed"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -279,9 +440,12 @@ const QuizForm: FC<Props> = ({
             </svg>
           </button>
         </div>
-        <p className="text-gray-900 dark:text-white md:px-12 pt-10 pb-5 select-none">
-          {question}
-        </p>
+        <div
+          className="text-gray-900 dark:text-white md:px-12 pt-10 pb-5 select-none"
+          suppressHydrationWarning
+        >
+          <MarkdownRenderer variant="question">{question}</MarkdownRenderer>
+        </div>
         {images && (
           <ul className="flex flex-row justify-center gap-2 mt-5 mb-8 select-none md:px-12 px-0">
             {images.map((image) => (
@@ -305,7 +469,7 @@ const QuizForm: FC<Props> = ({
         {selectedImage && (
           <div
             onClick={handleClickOutside}
-            className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black bg-opacity-50"
+            className="fixed top-0 left-0 z-50 w-full h-full flex justify-center items-center bg-black/30 backdrop-blur-sm"
           >
             <Image
               src={link + selectedImage.url}
@@ -317,7 +481,7 @@ const QuizForm: FC<Props> = ({
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md"
+              className="absolute top-3 right-5 px-3 py-1 bg-white text-black rounded-md cursor-pointer"
             >
               Close
             </button>
@@ -326,7 +490,7 @@ const QuizForm: FC<Props> = ({
       </div>
       <ul className="flex flex-col gap-2 mt-5 mb-16 select-none md:px-12 px-0 h-max min-h-[250px]">
         {options.map((option, index) => (
-          <li key={index}>
+          <li key={`${currentQuestionIndex}-${index}`}>
             <SelectionInput
               {...register(`options.${currentQuestionIndex}`)}
               index={`${currentQuestionIndex}.${index}`}
@@ -340,41 +504,112 @@ const QuizForm: FC<Props> = ({
           </li>
         ))}
       </ul>
-      {explanation && (
+      {(explanation || explanationError) && (
         <div className="md:px-12 mb-16">
-          <div className="bg-slate-800 border border-slate-600 rounded-lg p-6 shadow-lg">
+          <div
+            className={`border rounded-lg p-6 shadow-lg ${
+              explanationError
+                ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                : "bg-blue-50 dark:bg-slate-800 border-blue-200 dark:border-slate-600"
+            }`}
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-full flex items-center justify-center">
-                <SiHelpdesk className="w-5 h-5 text-white" />
+                {/* @ts-ignore - react-icons types incompatible with React 18.3 strict types */}
+                <SiHelpdesk
+                  className={`w-5 h-5 ${
+                    explanationError
+                      ? "text-red-500"
+                      : "text-blue-600 dark:text-white"
+                  }`}
+                />
               </div>
-              <h3 className="text-lg font-semibold text-white">Explanation</h3>
+              <h3
+                className={`text-lg font-semibold ${
+                  explanationError
+                    ? "text-red-700 dark:text-red-300"
+                    : "text-blue-900 dark:text-white"
+                }`}
+              >
+                {explanationError ? "Explanation Error" : "Explanation"}
+              </h3>
             </div>
-            <div className="text-slate-200 leading-relaxed whitespace-pre-line">
-              {explanation}
+            <div
+              className={`leading-relaxed overflow-visible ${
+                explanationError
+                  ? "text-red-700 dark:text-red-300 whitespace-pre-line"
+                  : "text-blue-900 dark:text-slate-200"
+              }`}
+              suppressHydrationWarning
+            >
+              {explanationError ? (
+                <p className="whitespace-pre-line">{explanationError}</p>
+              ) : (
+                <MarkdownRenderer variant="explanation">
+                  {explanation || ""}
+                </MarkdownRenderer>
+              )}
             </div>
+            {explanationError && (
+              <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  Try checking your profile settings or upgrading your plan for
+                  explanation access.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
       <div className="flex justify-center flex-col sm:flex-row">
         <Button
-          type="submit"
+          type="button"
           intent="secondary"
           size="medium"
           disabled={showCorrectAnswer}
+          onClick={() => {
+            // Save current answer if any is selected
+            if (watchInput) {
+              setSavedAnswers((prev) => ({
+                ...prev,
+                [currentQuestionIndex]: watchInput,
+              }));
+            }
+            setShowCorrectAnswer(true);
+            setCanGoBack(true);
+            reset();
+          }}
         >
           Reveal Answer
         </Button>
-        {ollamaAvailable && (
+        {explanationAvailable && questionSet && (
           <Button
             type="button"
             intent="secondary"
             size="medium"
             variant="outlined"
-            disabled={isThinking}
-            onClick={() => {
+            disabled={isThinking || !questionSet}
+            onClick={async () => {
+              if (!questionSet) {
+                setExplanationError(
+                  "Question data is not available. Please try again.",
+                );
+                return;
+              }
               setShowCorrectAnswer(true);
               setIsThinking(true);
-              explainCorrectAnswer();
+              // Save current answer if any is selected before explaining
+              if (watchInput) {
+                setSavedAnswers((prev) => ({
+                  ...prev,
+                  [currentQuestionIndex]: watchInput,
+                }));
+              }
+              // Update lastIndex to enable "Next Question" button
+              if (currentQuestionIndex >= lastIndex) {
+                setLastIndex(currentQuestionIndex);
+              }
+              await explainCorrectAnswer();
               reset();
             }}
           >
@@ -386,8 +621,9 @@ const QuizForm: FC<Props> = ({
             type="button"
             intent="primary"
             size="medium"
-            disabled={currentQuestionIndex < lastIndex}
+            disabled={currentQuestionIndex < lastIndex && !showCorrectAnswer}
             onClick={() => {
+              // Save answer if not already saved
               if (!showCorrectAnswer) {
                 setSavedAnswers((prev) => ({
                   ...prev,
@@ -396,6 +632,8 @@ const QuizForm: FC<Props> = ({
               }
               setShowCorrectAnswer(false);
               setExplanation(null);
+              setExplanationError(null);
+              setIsThinking(false); // Reset thinking state when navigating
               // Only navigate if we're not on the last question
               if (currentQuestionIndex < totalQuestions) {
                 handleNextQuestion(currentQuestionIndex + 1);

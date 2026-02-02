@@ -8,6 +8,8 @@ import Cookie from "@azure-fundamentals/components/Cookie";
 import { AuthProvider } from "@azure-fundamentals/contexts/AuthContext";
 import { ThemeProvider } from "@azure-fundamentals/contexts/ThemeContext";
 import { TrialWarning } from "@azure-fundamentals/components/TrialWarning";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "styles/globals.css";
 
 const philosopher = Philosopher({
@@ -42,12 +44,8 @@ export const metadata: Metadata = {
       name: "Daniel Danielecki",
       url: "https://github.com/danieldanielecki",
     },
-    {
-      name: "Eduard-Constantin Ibinceanu",
-      url: "https://github.com/eduardconstantin",
-    },
   ],
-  creator: "Eduard-Constantin Ibinceanu",
+  creator: "Ditectrev",
   description:
     "🎓 Practice Exams (Web) Platform developed by Ditectrev's Community. #Build Your Digital Future with us.",
   formatDetection: { telephone: true },
@@ -81,7 +79,9 @@ export const metadata: Metadata = {
     images: [
       {
         alt: "Ditectrev Logo",
-        url: "/logo.svg",
+        url: "https://education.ditectrev.com/icons/icon-512x512.png",
+        width: 512,
+        height: 512,
       },
     ],
     siteName: "🧪 Practice Exams Platform | Ditectrev",
@@ -107,7 +107,7 @@ export const metadata: Metadata = {
     images: [
       {
         alt: "Ditectrev Logo",
-        url: "/logo.svg",
+        url: "https://education.ditectrev.com/icons/icon-512x512.png",
       },
     ],
     site: "@ditectrev",
@@ -139,6 +139,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </ApolloProvider>
         </ThemeProvider>
       </body>
+      <Analytics />
+      <SpeedInsights />
     </html>
   );
 }

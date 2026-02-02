@@ -53,6 +53,7 @@ export default function ThemeSwitch() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* @ts-ignore - @theme-toggles/react types incompatible with React 18.3 strict types */}
       <Lightbulb
         toggle={handleToggle}
         toggled={theme === "dark"}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { gql, useQuery } from "@apollo/client";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import type { NextPage } from "next";
 import QuizForm from "@azure-fundamentals/components/QuizForm";
 import { useTrialAccess } from "@azure-fundamentals/hooks/useTrialAccess";
@@ -31,6 +32,13 @@ const questionsQuery = gql`
   }
 `;
 
+type QuestionByIdData = {
+  questionById: import("@azure-fundamentals/components/types").Question | null;
+};
+type QuestionsCountData = {
+  questions: { count: number };
+};
+
 const Practice: NextPage = () => {
   const { isAccessBlocked, isInTrial } = useTrialAccess();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
@@ -44,7 +52,7 @@ const Practice: NextPage = () => {
   const editedUrl =
     url && url.includes("/") ? url.substring(0, url.lastIndexOf("/") + 1) : "";
 
-  const { loading, error, data } = useQuery(questionQuery, {
+  const { loading, error, data } = useQuery<QuestionByIdData>(questionQuery, {
     variables: { id: currentQuestionIndex - 1, link: url },
     skip: !url, // Skip query if URL is not available
   });
@@ -58,7 +66,7 @@ const Practice: NextPage = () => {
     data: questionsData,
     loading: questionsLoading,
     error: questionsError,
-  } = useQuery(questionsQuery, {
+  } = useQuery<QuestionsCountData>(questionsQuery, {
     variables: { link: url },
     skip: !url, // Skip query if URL is not available
   });
@@ -199,7 +207,13 @@ const Practice: NextPage = () => {
       )}
       <QuizForm
         isLoading={loading || questionsLoading}
-        questionSet={data?.questionById}
+        questionSet={
+          data?.questionById ?? {
+            question: "",
+            options: [],
+            images: [],
+          }
+        }
         handleNextQuestion={handleNextQuestion}
         totalQuestions={Math.max(0, (questionsData?.questions?.count || 0) - 1)}
         currentQuestionIndex={currentQuestionIndex}

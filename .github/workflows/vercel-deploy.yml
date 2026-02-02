@@ -1,0 +1,142 @@
+name: Vercel Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+      - 'feature/*'
+
+jobs:
+  pr-review:
+    name: AI PR Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: AI-based PR Reviewer & Summarizer with Mistral 8x7B Chat Capabilities
+        uses: Onigam/ai-mistral-pr-reviewer@v0.7
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Vercel
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "24.x"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Sync Environment Variables to Vercel
+        run: |
+          ENV_TYPE=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+          echo "${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}" | vercel env add NEXT_PUBLIC_GA_TRACKING_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}" | vercel env add NEXT_PUBLIC_APPWRITE_ENDPOINT $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}" | vercel env add NEXT_PUBLIC_APPWRITE_PROJECT_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}" | vercel env add NEXT_PUBLIC_APPWRITE_API_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}" | vercel env add NEXT_PUBLIC_APPWRITE_DATABASE_ID $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS }}" | vercel env add NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.ENCRYPTION_SECRET }}" | vercel env add ENCRYPTION_SECRET $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.DITECTREV_AI_KEY }}" | vercel env add DITECTREV_AI_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}" | vercel env add NEXT_PUBLIC_STRIPE_SECRET_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}" | vercel env add NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_LOCAL $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_BYOK $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}" | vercel env add NEXT_PUBLIC_STRIPE_PRICE_DITECTREV $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_ENDPOINT }}" | vercel env add AZURE_COSMOSDB_ENDPOINT $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_KEY }}" | vercel env add AZURE_COSMOSDB_KEY $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+          echo "${{ secrets.AZURE_COSMOSDB_DATABASE }}" | vercel env add AZURE_COSMOSDB_DATABASE $ENV_TYPE --token=${{ secrets.VERCEL_TOKEN }} || true
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Pull Vercel Environment Information
+        id: vercel-pull
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project Artifacts
+        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # Google Analytics
+          NEXT_PUBLIC_GA_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_GA_TRACKING_ID }}
+
+          # Appwrite Configuration
+          NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+          NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+          NEXT_PUBLIC_APPWRITE_API_KEY: ${{ secrets.NEXT_PUBLIC_APPWRITE_API_KEY }}
+          NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.NEXT_PUBLIC_APPWRITE_DATABASE_ID }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS }}
+          NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS: ${{ secrets.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_EXPLANATIONS_API_KEYS }}
+
+          # Encryption & AI Keys
+          ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
+          DITECTREV_AI_KEY: ${{ secrets.DITECTREV_AI_KEY }}
+
+          # Stripe Configuration
+          NEXT_PUBLIC_STRIPE_SECRET_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET: ${{ secrets.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE }}
+          NEXT_PUBLIC_STRIPE_PRICE_LOCAL: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_LOCAL }}
+          NEXT_PUBLIC_STRIPE_PRICE_BYOK: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_BYOK }}
+          NEXT_PUBLIC_STRIPE_PRICE_DITECTREV: ${{ vars.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV }}
+
+          # Azure Cosmos DB Configuration
+          AZURE_COSMOSDB_ENDPOINT: ${{ secrets.AZURE_COSMOSDB_ENDPOINT }}
+          AZURE_COSMOSDB_KEY: ${{ secrets.AZURE_COSMOSDB_KEY }}
+          AZURE_COSMOSDB_DATABASE: ${{ secrets.AZURE_COSMOSDB_DATABASE }}
+
+      - name: Deploy Project Artifacts to Vercel
+        id: vercel-deploy
+        run: |
+          DEPLOYMENT_OUTPUT=$(vercel deploy ${{ github.ref == 'refs/heads/main' && '--prod' || '--prebuilt' }} --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1)
+          echo "$DEPLOYMENT_OUTPUT"
+          DEPLOYMENT_URL=$(echo "$DEPLOYMENT_OUTPUT" | grep -o 'https://[^[:space:]]*\.vercel\.app' | head -1)
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            # Fallback: try to extract from the last line
+            DEPLOYMENT_URL=$(echo "$DEPLOYMENT_OUTPUT" | tail -1 | grep -o 'https://[^[:space:]]*' | head -1)
+          fi
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployment URL: $DEPLOYMENT_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment PR with Deployment URL
+        if: github.event_name == 'pull_request' && steps.vercel-deploy.outcome == 'success' && steps.vercel-deploy.outputs.deployment_url != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const deploymentUrl = '${{ steps.vercel-deploy.outputs.deployment_url }}';
+            const comment = `🚀 **Vercel Preview Deployment Ready!**
+
+            Your stage site is ready! Visit it here: ${deploymentUrl}
+
+            ---
+            *This comment was automatically generated by GitHub Actions*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

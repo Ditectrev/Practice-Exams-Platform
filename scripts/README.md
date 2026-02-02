@@ -213,12 +213,22 @@ node scripts/test-trial-bypass-fix.js
 Make sure your `.env` file contains:
 
 ```env
-NEXT_PUBLIC_APPWRITE_API_KEY=your_api_key
-NEXT_PUBLIC_APPWRITE_COLLECTION_ID=your_collection_id
-NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
+# Appwrite Configuration
 NEXT_PUBLIC_APPWRITE_ENDPOINT=your_endpoint
 NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_APPWRITE_API_KEY=your_api_key
+NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
+
+# Collection IDs (separate collections in the same database)
+NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS=your_trials_collection_id
+NEXT_PUBLIC_APPWRITE_COLLECTION_ID_SUBSCRIPTIONS=your_subscriptions_collection_id
 ```
+
+**Note**:
+
+- `NEXT_PUBLIC_APPWRITE_DATABASE_NAME` is **not needed** (only used when creating a new database, which you're not doing)
+- Collection IDs use suffixes (`_TRIALS` and `_SUBSCRIPTIONS`) to distinguish between different collections
+- Both collections are in the same database but serve different purposes
 
 ---
 

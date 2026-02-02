@@ -1,9 +1,12 @@
+"use client";
+
 import SelectionInput from "@azure-fundamentals/components/SelectionInput";
 import { Button } from "@azure-fundamentals/components/Button";
 import { FC } from "react";
 import { useForm } from "react-hook-form";
 import { Question } from "@azure-fundamentals/components/types";
 import LoadingIndicator from "./LoadingIndicator";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 type Props = {
   isLoading: boolean;
@@ -59,9 +62,12 @@ const ExamQuizForm: FC<Props> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="relative min-h-40 mt-8">
-        <p className="text-white px-12 py-6 select-none">
-          {currentQuestionIndex}. {question}
-        </p>
+        <div
+          className="text-white px-12 py-6 select-none"
+          suppressHydrationWarning
+        >
+          <MarkdownRenderer variant="question">{question}</MarkdownRenderer>
+        </div>
       </div>
       <ul className="flex flex-col gap-2 mt-5 mb-16 select-none md:px-12 px-0 h-max min-h-[250px]">
         {options.map((option, index) => (

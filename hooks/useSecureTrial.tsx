@@ -8,7 +8,7 @@ import { Query } from "appwrite";
 const TRIAL_DURATION_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "";
 const TRIAL_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID || "";
+  process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_TRIALS || "";
 
 // Environment variables loaded
 

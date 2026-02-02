@@ -1,6 +1,5 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss";
+@config "../tailwind.config.js";
 @import '@theme-toggles/react/css/Around.css';
 
 /* CSS Variables for theming - matching blog exactly */
