@@ -223,7 +223,15 @@ const QuizForm: FC<Props> = ({
           const currentOrigin = window.location.origin;
 
           // Check for various CORS/network error patterns
+          const isPrivateNetworkAccess =
+            errorMessage.includes("unknown address space") ||
+            errorMessage.includes("Access-Control-Allow-Private-Network") ||
+            errorMessage.includes("private network");
+          const isSafariLoadFailed = errorMessage.includes("Load failed");
+
           if (
+            isPrivateNetworkAccess ||
+            isSafariLoadFailed ||
             errorMessage.includes("fetch failed") ||
             errorMessage.includes("Failed to fetch") ||
             errorMessage.includes("NetworkError") ||
@@ -233,43 +241,72 @@ const QuizForm: FC<Props> = ({
             (ollamaError?.name === "TypeError" &&
               errorMessage.includes("fetch"))
           ) {
-            let setupInstructions =
-              "Ollama connection failed (likely CORS issue).\n\n";
-            setupInstructions += "To use Ollama explanations:\n";
+            let setupInstructions = "Ollama connection failed.\n\n";
+            setupInstructions += "Browser compatibility:\n";
+            setupInstructions += "• Firefox – works out of the box\n";
             setupInstructions +=
-              "1. Install Ollama: https://webinstall.dev/ollama/\n";
+              "• Chrome, Edge – will ask for permission (click Allow)\n";
+            setupInstructions += "• Opera, Safari – does not work\n\n";
 
-            if (isLocalhost) {
+            if (isSafariLoadFailed) {
               setupInstructions +=
-                "2. Start Ollama: Run `ollama serve` in your terminal\n";
-              setupInstructions += "3. Refresh this page\n";
+                "Safari blocks HTTPS sites from accessing HTTP localhost (mixed content).\n\n";
+              setupInstructions += "Options:\n";
+              setupInstructions +=
+                "1. Use Firefox (works out of the box) or Chrome/Edge (click Allow on popup)\n";
+              setupInstructions +=
+                "2. Or use this site on localhost: http://localhost:3000 (run npm run dev)\n";
+              setupInstructions +=
+                "3. Or use BYOK/Ditectrev instead of Ollama on this site\n";
+            } else if (isPrivateNetworkAccess) {
+              setupInstructions +=
+                "Chrome blocks HTTPS sites from accessing localhost (Private Network Access).\n\n";
+              setupInstructions += "Setup steps:\n";
+              setupInstructions +=
+                "1. Enable CORS in Ollama (see https://objectgraph.com/blog/ollama-cors/ for macOS, Windows, Linux)\n";
+              setupInstructions +=
+                '   Example: OLLAMA_ORIGINS="*" ollama serve (quit Ollama app first, keep terminal open)\n\n';
+              setupInstructions +=
+                "2. Use Firefox (works out of the box) or Chrome/Edge (will ask for permission)\n\n";
+              setupInstructions +=
+                '3. If using Chrome/Edge: when popup appears "[site] wants to look for and connect to any device on your local network"\n';
+              setupInstructions +=
+                "   → Click ALLOW (required for Ollama to work)\n";
             } else {
-              // Detect macOS
-              const isMac =
-                navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+              setupInstructions += "To use Ollama explanations:\n";
+              setupInstructions +=
+                "1. Install Ollama: https://webinstall.dev/ollama/\n";
+              setupInstructions +=
+                "   CORS setup (macOS, Windows, Linux): https://objectgraph.com/blog/ollama-cors/\n";
 
-              if (isMac) {
-                setupInstructions += `2. On macOS, Ollama runs as a service. Set CORS:\n`;
-                setupInstructions += `   Run: launchctl setenv OLLAMA_ORIGINS "${currentOrigin}"\n`;
-                setupInstructions += `   Or allow all: launchctl setenv OLLAMA_ORIGINS "*"\n`;
-                setupInstructions += `3. Quit Ollama app completely (not just terminal)\n`;
-                setupInstructions += `4. Restart Ollama application\n`;
-                setupInstructions += `5. Refresh this page\n`;
+              if (isLocalhost) {
+                setupInstructions +=
+                  "2. Start Ollama: Run `ollama serve` in your terminal\n";
+                setupInstructions += "3. Refresh this page\n";
               } else {
-                setupInstructions += `2. Stop Ollama if running (Ctrl+C)\n`;
-                setupInstructions += `3. Start with CORS: Run \`OLLAMA_ORIGINS="${currentOrigin}" ollama serve\`\n`;
-                setupInstructions += `4. Verify origin matches exactly: ${currentOrigin}\n`;
-                setupInstructions += "5. Refresh this page\n";
+                const isMac =
+                  navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
+                if (isMac) {
+                  setupInstructions += `2. Enable CORS: OLLAMA_ORIGINS="*" ollama serve (see https://objectgraph.com/blog/ollama-cors/)\n`;
+                  setupInstructions += `   Quit Ollama app first, keep terminal open\n`;
+                  setupInstructions += `3. Use Firefox (works out of the box) or Chrome/Edge (click Allow on popup)\n`;
+                } else {
+                  setupInstructions += `2. Enable CORS: https://objectgraph.com/blog/ollama-cors/\n`;
+                  setupInstructions += `3. Use Firefox (works out of the box) or Chrome/Edge (click Allow on popup)\n`;
+                }
               }
-              setupInstructions += "\nTroubleshooting:\n";
-              setupInstructions += "- Check Ollama logs for 403 errors\n";
-              setupInstructions +=
-                "- Make sure there are no typos in the origin\n";
-              setupInstructions +=
-                "- On macOS, you must use launchctl, not terminal env vars\n";
-              setupInstructions +=
-                "- If 'address already in use': https://github.com/ollama/ollama/issues/707";
             }
+
+            setupInstructions += "\nTroubleshooting:\n";
+            setupInstructions +=
+              "- Full CORS setup (macOS, Windows, Linux): https://objectgraph.com/blog/ollama-cors/\n";
+            setupInstructions +=
+              "- Firefox: works out of the box | Chrome/Edge: click Allow on popup | Opera/Safari: not supported\n";
+            setupInstructions +=
+              "- Or use this site on localhost (http://localhost:3000) for Ollama\n";
+            setupInstructions +=
+              "- If 'address already in use': https://github.com/ollama/ollama/issues/707";
 
             throw new Error(setupInstructions);
           }
