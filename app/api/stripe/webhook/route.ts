@@ -5,20 +5,20 @@ import { Client, Databases } from "node-appwrite";
 // Force dynamic rendering for webhook endpoint
 export const dynamic = "force-dynamic";
 
-// Map Stripe price IDs to subscription types
+// Map Stripe price IDs to subscription types (trim env vars to avoid newline issues)
 const PRICE_ID_TO_SUBSCRIPTION: Record<string, string> = {
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || ""]: "ads-free",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || ""]: "local",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK || ""]: "byok",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV || ""]: "ditectrev",
+  [(process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || "").trim()]: "ads-free",
+  [(process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "").trim()]: "local",
+  [(process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK || "").trim()]: "byok",
+  [(process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV || "").trim()]: "ditectrev",
 };
 
-// Initialize Appwrite client
+// Initialize Appwrite client (trim env vars to avoid newline issues)
 function getAppwriteClient() {
   const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "")
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "")
-    .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY || "");
+    .setEndpoint((process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "").trim())
+    .setProject((process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "").trim())
+    .setKey((process.env.NEXT_PUBLIC_APPWRITE_API_KEY || "").trim());
 
   return new Databases(client);
 }
@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
         SUBSCRIPTIONS_COLLECTION_ID,
         ID.unique(),
         {
+          appwrite_user_id: "test_webhook_write",
           subscription_type: "free",
           subscription_status: "active",
           email: "test@example.com",
@@ -129,7 +130,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+  const stripeSecretKey = (
+    process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY || ""
+  ).trim();
   if (!stripeSecretKey) {
     return NextResponse.json(
       { error: "Stripe secret key not configured" },
@@ -147,7 +150,9 @@ export async function POST(request: NextRequest) {
     // Verify webhook signature
     // For localhost testing with Stripe CLI, set NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET to the Stripe CLI secret
     // (shown when you run: stripe listen --forward-to localhost:3000/api/stripe/webhook)
-    const webhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = (
+      process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET || ""
+    ).trim();
     if (!webhookSecret) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
       return NextResponse.json(
@@ -175,7 +180,7 @@ export async function POST(request: NextRequest) {
       const customerEmail =
         session.customer_email || session.customer_details?.email;
       const subscriptionId = session.subscription as string;
-      const priceId = session.metadata?.priceId || "";
+      const priceId = (session.metadata?.priceId || "").trim();
       const customerId = session.customer as string;
 
       // Get subscription type from price ID
