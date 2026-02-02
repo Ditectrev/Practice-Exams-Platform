@@ -19,7 +19,7 @@ const pricingTiers: PricingTier[] = [
     id: "ads-free",
     name: "Ads Free",
     price: "€1.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || "",
+    priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_ADS_FREE || "").trim(),
     description: "Remove ads and enjoy distraction-free learning",
     features: [
       "Ad-free experience",
@@ -32,7 +32,7 @@ const pricingTiers: PricingTier[] = [
     id: "local",
     name: "Local Explanations",
     price: "€2.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "",
+    priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "").trim(),
     description: "Get AI explanations using your local Ollama setup",
     features: [
       "Everything in Ads Free",
@@ -46,7 +46,7 @@ const pricingTiers: PricingTier[] = [
     id: "byok",
     name: "BYOK Explanations",
     price: "€4.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK || "",
+    priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_BYOK || "").trim(),
     description: "Bring Your Own Key - Use premium AI with your API keys",
     popular: true,
     features: [
@@ -63,7 +63,7 @@ const pricingTiers: PricingTier[] = [
     id: "ditectrev",
     name: "Ditectrev Explanations",
     price: "€9.99",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV || "",
+    priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_DITECTREV || "").trim(),
     description: "Premium AI explanations powered by our infrastructure",
     features: [
       "Everything in BYOK",
@@ -105,7 +105,7 @@ export default function PricingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          priceId,
+          priceId: priceId.trim(),
           appwriteUserId: user.$id, // Pass Appwrite user ID to link subscription to logged-in user
         }),
       });
@@ -214,7 +214,7 @@ export default function PricingPage() {
                 <Button
                   intent={tier.popular ? "primary" : "secondary"}
                   size="medium"
-                  onClick={() => handleSubscribe(tier.priceId, tier.id)}
+                  onClick={() => handleSubscribe(tier.priceId.trim(), tier.id)}
                   disabled={
                     loading === tier.id ||
                     !tier.priceId ||
@@ -225,8 +225,8 @@ export default function PricingPage() {
                   {loading === tier.id
                     ? "Processing..."
                     : !tier.priceId || tier.priceId.trim() === ""
-                    ? "Unavailable"
-                    : `Subscribe to ${tier.name}`}
+                      ? "Unavailable"
+                      : `Subscribe to ${tier.name}`}
                 </Button>
               </div>
             </div>
