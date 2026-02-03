@@ -1,7 +1,7 @@
 # 🧪 Practice Exams Platform
 
 <div align="center">
-  <img src="public/logoBlack.svg" alt="Practice Exams Platform" width="200" />
+  <img src="public/logoWhite.svg" alt="Practice Exams Platform" />
 </div>
 
 <div align="center">
