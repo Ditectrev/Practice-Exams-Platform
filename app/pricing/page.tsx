@@ -33,15 +33,13 @@ const pricingTiers: PricingTier[] = [
     name: "Local Explanations",
     price: "€2.99",
     priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "").trim(),
-    description:
-      "Get AI explanations using your local Ollama setup. Requires some technical setup; best with Firefox (works out of the box) or Chrome/Edge (permission popup). Not supported in Opera or Safari.",
+    description: "Get AI explanations using your local Ollama setup.",
     features: [
       "Everything in Ads Free",
       "Ollama explanations",
       "Privacy-focused (local AI)",
       "No API costs",
       "Offline explanations",
-      "Browser note: Firefox ✓ · Chrome/Edge ✓ (allow popup) · Opera/Safari ✗",
     ],
   },
   {
@@ -53,9 +51,12 @@ const pricingTiers: PricingTier[] = [
     popular: true,
     features: [
       "Everything in Local",
-      "OpenAI, Gemini, Mistral, DeepSeek access",
-      "API key management",
+
       "Multiple AI providers",
+      "DeepSeek supported",
+      "Google Gemini supported",
+      "Mistral AI supported",
+      "OpenAI supported",
     ],
   },
   {
@@ -152,11 +153,11 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
           {pricingTiers.map((tier) => (
             <div
               key={tier.id}
-              className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-2 transition-all duration-200 hover:shadow-xl ${
+              className={`relative flex flex-col h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-2 transition-all duration-200 hover:shadow-xl ${
                 tier.popular
                   ? "border-primary-500 scale-105"
                   : "border-gray-200 dark:border-gray-700"
@@ -170,45 +171,47 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {tier.name}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  {tier.description}
-                </p>
+              <div className="p-6 flex flex-col flex-1 min-h-0">
+                <div className="flex-1 min-h-0">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    {tier.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    {tier.description}
+                  </p>
 
-                <div className="mb-6">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {tier.price}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    /month
-                  </span>
+                  <div className="mb-6">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {tier.price}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      /month
+                    </span>
+                  </div>
+
+                  <ul className="space-y-3 mb-8">
+                    {tier.features.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <svg
+                          className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-
-                <ul className="space-y-3 mb-8">
-                  {tier.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <svg
-                        className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-gray-700 dark:text-gray-300 text-sm">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
 
                 <Button
                   intent={tier.popular ? "primary" : "secondary"}
@@ -219,7 +222,7 @@ export default function PricingPage() {
                     !tier.priceId ||
                     tier.priceId.trim() === ""
                   }
-                  className="w-full"
+                  className="w-full mt-auto"
                 >
                   {loading === tier.id
                     ? "Processing..."
@@ -264,6 +267,16 @@ export default function PricingPage() {
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Yes! Ollama runs locally on your machine, so there are no API
                 costs. You just need to install Ollama locally.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                How do I run Ollama?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                It requires some technical setup. Ollama works best with Firefox
+                (works out of the box) or Chrome/Edge (permission popup). Not
+                supported in Opera or Safari.
               </p>
             </div>
             <div>
