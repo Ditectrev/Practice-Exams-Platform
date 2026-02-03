@@ -1,36 +1,39 @@
-<h1 align="center">🧪 Practice Exams Platform</h1>
-<br />
+# 🧪 Practice Exams Platform
 
 <div align="center">
-This is a web application built with Next.js, TypeScript, CosmosDB, GraphQL and TailwindCSS. The application is a quiz
-that tests your knowledge of Azure fundamentals, specifically for the AZ-900 certification exam. The questions are
-stored in a Cosmos DB database and retrieved using GraphQL queries. The application is deployed on Microsoft Azure.
+  <img src="public/logoBlack.svg" alt="Practice Exams Platform" width="200" />
+</div>
 
-IMPORTANT: do not delete commented out code related to CosmosDB. We might use it to store questions soon in the future instead of from the repositories. Additionally, for the same reason let's keep Azure deployment, with that, the usage of NoSQL (CosmosDB) database is practically ready after commenting out some lines of code.
+<div align="center">
+
+**Open Source Practice Exams Platform developed by Ditectrev's Community.**
+
+[education.ditectrev.com](https://education.ditectrev.com)
 
 </div>
 
-<br />
-<img src="ace.gif"/>
+**Practice Exams Platform** is a web app for practising certification exams (e.g. Azure, AWS, and other cloud and IT certifications). It offers practice and exam modes, progress tracking, and AI-powered explanations so you can learn as you go.
+
+**Built with:** [Next.js](https://nextjs.org/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/), [Appwrite](https://appwrite.io/), [GraphQL](https://graphql.org/), [Azure Cosmos DB](https://azure.microsoft.com/products/cosmos-db), [Stripe](https://stripe.com/), and [React](https://react.dev/).
 
 <div align="center">
-<br />
 
 [![Contributors](https://img.shields.io/github/contributors/Ditectrev/Practice-Exams-Platform?style=flat-square)](../../graphs/contributors)
-[![Issue](https://img.shields.io/github/issues/Ditectrev/Practice-Exams-Platform?style=flat-square)](../../issues)
+[![Issues](https://img.shields.io/github/issues/Ditectrev/Practice-Exams-Platform?style=flat-square)](../../issues)
 [![PRs](https://img.shields.io/github/issues-pr/Ditectrev/Practice-Exams-Platform?style=flat-square)](../../pulls)
-<br>
-[![Project license](https://img.shields.io/github/license/Ditectrev/Practice-Exams-Platform?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/Ditectrev/Practice-Exams-Platform?style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/Ditectrev/Practice-Exams-Platform?style=flat-square)](../../Practice-Exams-Platform/stargazers)
 
 </div>
 
 ## 🌟 Features
 
-- Question sets scrapped from this
-  [repo](https://github.com/Ditectrev).
-- Correct answer displayed for each question.
-- Practice mode & Exam mode.
+- **Practice & exam modes** – Timed exam simulation and untimed practice
+- **Question sets** – Sourced from the [Ditectrev community repo](https://github.com/Ditectrev)
+- **Correct answers** – Reveal and review the right answer for each question
+- **AI explanations** – Ollama (local), OpenAI, Gemini, Mistral, DeepSeek, or Ditectrev-powered explanations
+- **Subscriptions** – Ads-free, Local, BYOK, and Ditectrev tiers (Stripe)
+- **Progress & trials** – Secure trial system and optional account for progress
 
 ## 🌱 Getting Started
 
@@ -52,13 +55,26 @@ Enable Git hooks:
 npm run prepare
 ```
 
+Copy environment variables and configure (see `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
 Run the app:
 
 ```bash
 npm run dev
 ```
 
-Open your browser and navigate to [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📚 Resources
+
+- [Contributing guidelines](CONTRIBUTING.md)
+- [Secure trial setup](SECURE_TRIAL_SETUP.md)
+- [Discussion tab](../../discussions)
+- [Contributors](../../contributors)
 
 ## Star History
 
@@ -72,17 +88,13 @@ Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 👥 Contributing
 
-I welcome feedback and contributions from other developers, which can help improve the quality of the code and the
-application overall.
+We welcome feedback and contributions. To report bugs, suggest features, or submit changes:
 
-In order to create an issue or a pull request with your changes, please read
-[our contribution guidelines](CONTRIBUTING.md), and thank you for being involved!
+1. Read [our contribution guidelines](CONTRIBUTING.md)
+2. Open an [issue](../../issues) or [pull request](../../pulls)
 
-There is also a [Discussion tab](../../discussions)
-
-For a full list of all authors and contributors, see
-[the contributors page](../../contributors).
+Thank you for being involved!
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
