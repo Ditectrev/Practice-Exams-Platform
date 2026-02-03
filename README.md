@@ -1,8 +1,8 @@
-# 🧪 Practice Exams Platform
-
 <div align="center">
   <img src="public/logoWhite.svg" alt="Practice Exams Platform" />
 </div>
+
+# 🧪 Practice Exams Platform
 
 <div align="center">
 
