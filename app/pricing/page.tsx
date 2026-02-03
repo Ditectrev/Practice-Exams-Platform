@@ -33,13 +33,15 @@ const pricingTiers: PricingTier[] = [
     name: "Local Explanations",
     price: "€2.99",
     priceId: (process.env.NEXT_PUBLIC_STRIPE_PRICE_LOCAL || "").trim(),
-    description: "Get AI explanations using your local Ollama setup",
+    description:
+      "Get AI explanations using your local Ollama setup. Requires some technical setup; best with Firefox (works out of the box) or Chrome/Edge (permission popup). Not supported in Opera or Safari.",
     features: [
       "Everything in Ads Free",
       "Ollama explanations",
       "Privacy-focused (local AI)",
       "No API costs",
       "Offline explanations",
+      "Browser note: Firefox ✓ · Chrome/Edge ✓ (allow popup) · Opera/Safari ✗",
     ],
   },
   {
@@ -51,10 +53,7 @@ const pricingTiers: PricingTier[] = [
     popular: true,
     features: [
       "Everything in Local",
-      "OpenAI GPT integration",
-      "Google Gemini support",
-      "Mistral AI access",
-      "DeepSeek integration",
+      "OpenAI, Gemini, Mistral, DeepSeek access",
       "API key management",
       "Multiple AI providers",
     ],

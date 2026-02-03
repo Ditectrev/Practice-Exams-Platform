@@ -255,9 +255,7 @@ const QuizForm: FC<Props> = ({
               setupInstructions +=
                 "1. Use Firefox (works out of the box) or Chrome/Edge (click Allow on popup)\n";
               setupInstructions +=
-                "2. Or use this site on localhost: http://localhost:3000 (run npm run dev)\n";
-              setupInstructions +=
-                "3. Or use BYOK/Ditectrev instead of Ollama on this site\n";
+                "2. Or use BYOK/Ditectrev instead of Ollama on this site\n";
             } else if (isPrivateNetworkAccess) {
               setupInstructions +=
                 "Chrome blocks HTTPS sites from accessing localhost (Private Network Access).\n\n";
@@ -303,8 +301,6 @@ const QuizForm: FC<Props> = ({
               "- Full CORS setup (macOS, Windows, Linux): https://objectgraph.com/blog/ollama-cors/\n";
             setupInstructions +=
               "- Firefox: works out of the box | Chrome/Edge: click Allow on popup | Opera/Safari: not supported\n";
-            setupInstructions +=
-              "- Or use this site on localhost (http://localhost:3000) for Ollama\n";
             setupInstructions +=
               "- If 'address already in use': https://github.com/ollama/ollama/issues/707";
 
