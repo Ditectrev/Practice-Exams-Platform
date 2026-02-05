@@ -8,7 +8,7 @@ test("Application should have correct initial state", async ({ page }) => {
   );
 
   await expect(page.locator(".text-xl").first()).toHaveText(
-    "🧪 Practice Exams Platform",
+    "🧪 Practice Tests Exams Platform",
   );
   await expect(page.locator(".text-lg").last()).toHaveText(
     "Select an exam from the list bellow.",

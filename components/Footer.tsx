@@ -102,7 +102,7 @@ const Footer = () => {
           data-icon="octicon-star"
           data-size="large"
           data-show-count="true"
-          aria-label="Star Practice Exams Platform on GitHub"
+          aria-label="Star Practice Tests Exams Platform on GitHub"
         >
           Star
         </GitHubButton>

@@ -35,10 +35,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
-    title: "🧪 Practice Exams Platform | Ditectrev",
+    title: "🧪 Practice Tests Exams Platform | Ditectrev",
     statusBarStyle: "black",
   },
-  applicationName: "🧪 Practice Exams Platform | Ditectrev",
+  applicationName: "🧪 Practice Tests Exams Platform | Ditectrev",
   authors: [
     {
       name: "Daniel Danielecki",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     "Exams Simulator",
     "GCP Exams",
     "ITIL4 Exams",
-    "Practice Exams Platform",
+    "Practice Tests Exams Platform",
     "Practice Tests Platform",
     "Scrum Exams",
   ],
@@ -84,8 +84,8 @@ export const metadata: Metadata = {
         height: 512,
       },
     ],
-    siteName: "🧪 Practice Exams Platform | Ditectrev",
-    title: "🧪 Practice Exams Platform | Ditectrev",
+    siteName: "🧪 Practice Tests Exams Platform | Ditectrev",
+    title: "🧪 Practice Tests Exams Platform | Ditectrev",
     type: "website",
     url: "https://education.ditectrev.com",
   },
@@ -96,8 +96,8 @@ export const metadata: Metadata = {
     index: true,
   },
   title: {
-    default: "🧪 Practice Exams Platform | Ditectrev",
-    template: "🧪 Practice Exams Platform | Ditectrev",
+    default: "🧪 Practice Tests Exams Platform | Ditectrev",
+    template: "🧪 Practice Tests Exams Platform | Ditectrev",
   },
   twitter: {
     card: "summary_large_image",
@@ -111,7 +111,7 @@ export const metadata: Metadata = {
       },
     ],
     site: "@ditectrev",
-    title: "🧪 Practice Exams Platform | Ditectrev",
+    title: "🧪 Practice Tests Exams Platform | Ditectrev",
   },
 };
 

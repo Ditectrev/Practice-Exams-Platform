@@ -1,18 +1,18 @@
-# 🧪 Practice Exams Platform
+# 🧪 Practice Tests Exams Platform
 
 <div align="center">
-  <img src="public/logoWhite.svg" alt="Practice Exams Platform" />
+  <img src="public/logoWhite.svg" alt="Practice Tests Exams Platform" />
 </div>
 
 <div align="center">
 
-**Open Source Practice Exams Platform developed by Ditectrev's Community.**
+**Open Source Practice Tests Exams Platform developed by Ditectrev's Community.**
 
 [education.ditectrev.com](https://education.ditectrev.com)
 
 </div>
 
-**Practice Exams Platform** is a web app for practising certification exams (e.g. Azure, AWS, and other cloud and IT certifications). It offers practice and exam modes, progress tracking, and AI-powered explanations so you can learn as you go.
+**Practice Tests Exams Platform** is a web app for practising certification exams (e.g. Azure, AWS, and other cloud and IT certifications). It offers practice and exam modes, progress tracking, and AI-powered explanations so you can learn as you go.
 
 **Built with:** [Next.js](https://nextjs.org/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/), [Appwrite](https://appwrite.io/), [GraphQL](https://graphql.org/), [Azure Cosmos DB](https://azure.microsoft.com/products/cosmos-db), [Stripe](https://stripe.com/), and [React](https://react.dev/).
 
