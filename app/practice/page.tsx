@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import type { NextPage } from "next";
-import QuizForm from "@azure-fundamentals/components/QuizForm";
-import { useTrialAccess } from "@azure-fundamentals/hooks/useTrialAccess";
-import LoadingIndicator from "@azure-fundamentals/components/LoadingIndicator";
+import QuizForm from "@practice-tests-exams-platform/components/QuizForm";
+import { useTrialAccess } from "@practice-tests-exams-platform/hooks/useTrialAccess";
+import LoadingIndicator from "@practice-tests-exams-platform/components/LoadingIndicator";
 
 const questionQuery = gql`
   query QuestionById($id: ID!, $link: String) {
@@ -33,7 +33,9 @@ const questionsQuery = gql`
 `;
 
 type QuestionByIdData = {
-  questionById: import("@azure-fundamentals/components/types").Question | null;
+  questionById:
+    | import("@practice-tests-exams-platform/components/types").Question
+    | null;
 };
 type QuestionsCountData = {
   questions: { count: number };

@@ -1,5 +1,3 @@
-import { fetchQuestions } from "@azure-fundamentals/lib/graphql/repoQuestions";
-
 const resolvers = {
   Query: {
     questions: async (

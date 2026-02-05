@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@azure-fundamentals/contexts/ThemeContext";
+import { useTheme } from "@practice-tests-exams-platform/contexts/ThemeContext";
 import "@theme-toggles/react/css/Lightbulb.css";
 import { Lightbulb } from "@theme-toggles/react";
 import { useRef, useEffect } from "react";

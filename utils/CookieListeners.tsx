@@ -17,6 +17,7 @@ const addCookieConsentListeners = () => {
   if (window._ccRun) return;
 
   const updateGtagConsent = () => {
+    if (typeof window.gtag !== "function") return;
     window.gtag("consent", "update", {
       analytics_storage: acceptedCategory("analytics") ? "granted" : "denied",
       security_storage: "granted", //necessary

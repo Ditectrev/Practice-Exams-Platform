@@ -1,12 +1,12 @@
 import {
   CombinedQuestionsDataSource,
   RepoQuestionsDataSource,
-} from "@azure-fundamentals/lib/graphql/questionsDataSource";
+} from "@practice-tests-exams-platform/lib/graphql/questionsDataSource";
 import { ApolloServer, BaseContext } from "@apollo/server";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
-import typeDefs from "@azure-fundamentals/lib/graphql/schemas";
-import resolvers from "@azure-fundamentals/lib/graphql/resolvers";
-import { fetchQuestions } from "@azure-fundamentals/lib/graphql/repoQuestions";
+import typeDefs from "@practice-tests-exams-platform/lib/graphql/schemas";
+import resolvers from "@practice-tests-exams-platform/lib/graphql/resolvers";
+import { fetchQuestions } from "@practice-tests-exams-platform/lib/graphql/repoQuestions";
 
 interface ContextValue {
   dataSources: {

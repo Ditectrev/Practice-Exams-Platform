@@ -1,4 +1,4 @@
-import { Question } from "@azure-fundamentals/components/types";
+import { Question } from "@practice-tests-exams-platform/components/types";
 import { useState } from "react";
 
 export type ResultsData = {

@@ -18,7 +18,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@azure-fundamentals/*": ["./*"]
+      "@practice-tests-exams-platform/*": ["./*"]
     },
     "plugins": [
       {

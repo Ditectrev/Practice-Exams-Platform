@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Question } from "./types";
 import { FieldArray, FormikProvider, Field, useFormik } from "formik";
 import { Button } from "./Button";
-import useResults from "@azure-fundamentals/hooks/useResults";
+import useResults from "@practice-tests-exams-platform/hooks/useResults";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkdownRenderer from "./MarkdownRenderer";
 

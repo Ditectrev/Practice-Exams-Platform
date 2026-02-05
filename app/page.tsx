@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { NextPage } from "next";
-import NameLink from "@azure-fundamentals/components/NameLink";
-import exams from "@azure-fundamentals/lib/exams.json";
-import useDebounce from "@azure-fundamentals/hooks/useDebounce";
+import NameLink from "@practice-tests-exams-platform/components/NameLink";
+import exams from "@practice-tests-exams-platform/lib/exams.json";
+import useDebounce from "@practice-tests-exams-platform/hooks/useDebounce";
 
 const Home: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState("");

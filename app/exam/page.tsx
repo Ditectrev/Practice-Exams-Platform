@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import useTimer from "@azure-fundamentals/hooks/useTimer";
-import { Button } from "@azure-fundamentals/components/Button";
-import QuizExamForm from "@azure-fundamentals/components/QuizExamFormUF";
-import { Question } from "@azure-fundamentals/components/types";
-import ExamResult from "@azure-fundamentals/components/ExamResult";
-import LoadingIndicator from "@azure-fundamentals/components/LoadingIndicator";
-import { useTrialAccess } from "@azure-fundamentals/hooks/useTrialAccess";
+import useTimer from "@practice-tests-exams-platform/hooks/useTimer";
+import { Button } from "@practice-tests-exams-platform/components/Button";
+import QuizExamForm from "@practice-tests-exams-platform/components/QuizExamFormUF";
+import { Question } from "@practice-tests-exams-platform/components/types";
+import ExamResult from "@practice-tests-exams-platform/components/ExamResult";
+import LoadingIndicator from "@practice-tests-exams-platform/components/LoadingIndicator";
+import { useTrialAccess } from "@practice-tests-exams-platform/hooks/useTrialAccess";
 
 const questionsQuery = gql`
   query RandomQuestions($range: Int!, $link: String) {

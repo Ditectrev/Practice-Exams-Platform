@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { NextPage } from "next";
-import ExamLink from "@azure-fundamentals/components/ExamLink";
+import ExamLink from "@practice-tests-exams-platform/components/ExamLink";
 
 const Modes: NextPage = () => {
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(

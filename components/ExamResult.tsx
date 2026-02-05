@@ -1,4 +1,4 @@
-import { Button } from "@azure-fundamentals/components/Button";
+import { Button } from "@practice-tests-exams-platform/components/Button";
 
 type Props = {
   status: boolean;

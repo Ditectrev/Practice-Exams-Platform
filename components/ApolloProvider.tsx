@@ -1,6 +1,6 @@
 "use client";
 
-import client from "@azure-fundamentals/lib/graphql/apollo-client";
+import client from "@practice-tests-exams-platform/lib/graphql/apollo-client";
 import { ReactNode } from "react";
 import { ApolloProvider as NextApolloProvider } from "@apollo/client/react";
 

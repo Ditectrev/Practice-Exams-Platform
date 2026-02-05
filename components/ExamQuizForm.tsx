@@ -1,10 +1,10 @@
 "use client";
 
-import SelectionInput from "@azure-fundamentals/components/SelectionInput";
-import { Button } from "@azure-fundamentals/components/Button";
+import SelectionInput from "@practice-tests-exams-platform/components/SelectionInput";
+import { Button } from "@practice-tests-exams-platform/components/Button";
 import { FC } from "react";
 import { useForm } from "react-hook-form";
-import { Question } from "@azure-fundamentals/components/types";
+import { Question } from "@practice-tests-exams-platform/components/types";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkdownRenderer from "./MarkdownRenderer";
 

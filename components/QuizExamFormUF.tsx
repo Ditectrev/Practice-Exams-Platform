@@ -4,8 +4,11 @@ import { useEffect, useState, type FC } from "react";
 import Image from "next/image";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Button } from "./Button";
-import useResults from "@azure-fundamentals/hooks/useResults";
-import { Question, Option } from "@azure-fundamentals/components/types";
+import useResults from "@practice-tests-exams-platform/hooks/useResults";
+import {
+  Question,
+  Option,
+} from "@practice-tests-exams-platform/components/types";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkdownRenderer from "./MarkdownRenderer";
 

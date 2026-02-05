@@ -1,13 +1,14 @@
 import { type ReactNode } from "react";
 import { type Metadata, type Viewport } from "next";
 import { Philosopher, Lora } from "next/font/google";
-import Header from "@azure-fundamentals/components/Header";
-import Footer from "@azure-fundamentals/components/Footer";
-import ApolloProvider from "@azure-fundamentals/components/ApolloProvider";
-import Cookie from "@azure-fundamentals/components/Cookie";
-import { AuthProvider } from "@azure-fundamentals/contexts/AuthContext";
-import { ThemeProvider } from "@azure-fundamentals/contexts/ThemeContext";
-import { TrialWarning } from "@azure-fundamentals/components/TrialWarning";
+import Header from "@practice-tests-exams-platform/components/Header";
+import Footer from "@practice-tests-exams-platform/components/Footer";
+import ApolloProvider from "@practice-tests-exams-platform/components/ApolloProvider";
+import Cookie from "@practice-tests-exams-platform/components/Cookie";
+import GoogleAnalytics from "@practice-tests-exams-platform/components/GoogleAnalytics";
+import { AuthProvider } from "@practice-tests-exams-platform/contexts/AuthContext";
+import { ThemeProvider } from "@practice-tests-exams-platform/contexts/ThemeContext";
+import { TrialWarning } from "@practice-tests-exams-platform/components/TrialWarning";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "styles/globals.css";
@@ -133,6 +134,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 {children}
                 <Footer />
                 <Cookie />
+                <GoogleAnalytics />
                 <TrialWarning />
               </main>
             </AuthProvider>
