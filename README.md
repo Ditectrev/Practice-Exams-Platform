@@ -4,6 +4,8 @@
   <img src="public/logoWhite.svg" alt="Practice Tests Exams Platform" />
 </div>
 
+# 🧪 Practice Exams Platform
+
 <div align="center">
 
 **Open Source Practice Tests Exams Platform developed by Ditectrev's Community.**
